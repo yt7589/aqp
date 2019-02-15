@@ -33,8 +33,8 @@ class MStock(object):
     def add_stock(ts_code, symbol, stock_name, area_id, 
                 industry_id, list_date):
         ''' 添加股票基本信息 '''
-        sql = 'insert into t_stock(ts_code, symbol, stock_name, '
-                'area_id, industry_id, list_date) values(%s, '
+        sql = 'insert into t_stock(ts_code, symbol, stock_name, '\
+                'area_id, industry_id, list_date) values(%s, '\
                 '%s, %s, %s, %s, %s)'
         params = (ts_code, symbol, stock_name, area_id, 
                     industry_id, list_date)

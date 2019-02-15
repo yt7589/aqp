@@ -28,8 +28,6 @@ class CStock(object):
             industry_id = CStock.process_industry(rec[4])
             stock_id = CStock.process_stock(rec[0], rec[1], rec[2], 
                         area_id, industry_id, rec[5])
-            if j > 5:
-                break
         print('^_^ End caller={0}'.format(ar.caller))
         
     @staticmethod

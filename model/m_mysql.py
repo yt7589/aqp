@@ -32,6 +32,7 @@ class Db_Pool_Cleaner(threading.Thread):
         time.sleep(self.duration + self.interval)
         if self.is_stopping or ar.is_stopping:
             return
+        ar.is_stopping = True
         self.run()
 
 def create_rdb_conn():
