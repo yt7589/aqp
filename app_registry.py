@@ -8,6 +8,7 @@ class AppRegistry(object):
         self.rdb = {'host': '127.0.0.1', 'user': 'quant', 'passwd':'Quant2019', 'db':'QuantDb', 'charset':'utf8', 'port':3306}
         self.wdb = self.rdb
         self.is_stopping = False
+        self.increase_threshold = 1.0
         
 appRegistry = AppRegistry()
         

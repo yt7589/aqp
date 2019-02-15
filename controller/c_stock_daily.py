@@ -13,7 +13,7 @@ class CStockDaily(object):
         self.name = 'CStockDaily'
         
     @staticmethod
-    def get_stock_daily_kline(stock_id, start_dt, end_dt):
+    def get_stock_daily_kline(ts_code, start_dt, end_dt):
         '''
         获取指定股票的日K线数据
         stock_id：股票编号
@@ -25,8 +25,6 @@ class CStockDaily(object):
         '''
         ts.set_token(ar.ts_token)
         pro = ts.pro_api()
-        # 由stock_id求出ts_code
-        ts_code = '300672.SZ'
         df = pro.daily(ts_code=ts_code, start_date=start_dt, end_date=end_dt)
         rec_nums = df.shape[0]
         for i in range(rec_nums):
@@ -60,7 +58,7 @@ class CStockDaily(object):
                         float(rows[i][5]), float(rows[i][6]), 
                         float(rows[i][7]), int(rows[i][8]), 
                         float(rows[i][9])])
-            if i>=1 and rows[i][4] / rows[i-1][4] > 1.01:
+            if i>=1 and rows[i][3] / rows[i-1][3] > ar.increase_threshold:
                 train_y.append(1)
             else:
                 train_y.append(0)
@@ -77,6 +75,10 @@ class CStockDaily(object):
         CStockDaily.validate_x = np.array([])
         CStockDaily.validate_y = np.array([])
         CStockDaily.test_x = np.array(test_x)
+        
+    @staticmethod
+    def get_stock_daily_from_db(ts_code, start_dt, end_dt):
+        return MStockDaily.get_stock_daily(ts_code, start_dt, end_dt)
         
         
         
