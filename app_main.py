@@ -8,6 +8,6 @@ def startup():
     CStock.get_stocks()
     
 if '__main__' == __name__:
-    db.init_db_pool()
+    db.init_db_pool() # 初始化数据库连接池
     startup()
-    ar.is_stopping = True
+    ar.is_stopping = True # 结束程序
