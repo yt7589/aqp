@@ -194,8 +194,18 @@ data = pro.query('stock_basic', exchange='', list_status='L',
 \end{lstlisting}
 
 \subsubsection{区域信息}
+如代码\ref{c000002}所示，地区是以字符串形式返回的。我们可能需要按地区来统计股票表现，因此需要将地区统计出来，放到单独的一个表中进行管理。
 \paragraph{数据库设计}
+数据库结构表结构如下所示：
+\lstset{language=SQL, caption={地区表数据结构}, label={c000003}}
+\begin{lstlisting}
+create table t_area(
+	area_id int primary key auto_increment,
+	area_name varchar(200)
+);
+\end{lstlisting}
 \paragraph{信息处理}
+当我们读到返回结果的一行时，我们取出地区信息，然后查询t\_area表中是否包含该地区，如果包含则返回对应的area\_id，否则将该地区添加到t\_area表中，并返回其area\_id。
 \subsubsection{行业信息}
 \paragraph{数据库设计}
 \paragraph{信息处理}
