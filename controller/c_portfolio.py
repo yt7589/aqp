@@ -31,7 +31,23 @@ class CPortfolio(object):
             con_temp = []
             con_temp.append(ans_index[k])
             content_temp1 = ans[1][ np.argwhere(ans[0] == ans_index[k])[0][0] ]
-            break
+            content_temp1[content_temp1<=0] = 0
+            sum = np.sum(content_temp1)
+            content_temp1 /= sum
+            con_temp.append(content_temp1)
+            # 计算Sharp ratio
+            sharp_temp = np.array(copy.copy(matrix_a)) * content_temp1
+            sharp_exp = sharp_temp.mean()
+            sharp_base = 0.0004
+            sharp_std = np.std(sharp_temp)
+            if sharp_std == 0.00:
+                sharp = 0.00
+            else:
+                sharp = (sharp_exp - sharp_base) / sharp_std
+            con_temp.append(sharp)
+            resu.append(con_temp)
+        for ii in resu:
+            print(ii)
         print('v0.0.6')
         
     @staticmethod

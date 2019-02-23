@@ -216,6 +216,30 @@ create table t_area(
 \section{量化模型}
 \subsection{时间序列分析}
 \section{回测系统}
+\subsection{数据库系统设计}
+客户是自然人，用t\_customer表示。客户加上账户再加上量化策略，形成我们系统的用户，用t\_user来表示。
+账户中具有现金资产和股票资产。
+账户具有资金的入和出，有股票的买入和卖出。
+用户持有一些股票，可以对股票进行买卖。
+用户可以买入和卖出指定数量股票，与账户资金变动相关联
+股票参数表：买入费率、印花税；卖出费率、印花税等，计入交易成本中。
+\subsubsection{ER图}
+\begin{figure}[H]
+	\caption{数据库表ER图}
+	\label{f000001}
+	\centering
+	\includegraphics[height=10cm]{images/f000001}
+\end{figure}
+\subsubsection{客户表}
+表示自然人客户，结构如下所示：
+\begin{table}[h]
+    \caption{客户表(t\_custome)}
+    \label{t000001}
+    \begin{tabular}{|p{2cm}|p{3cm}|p{2cm}|p{5cm}|} \hline
+    字段 & 名称 & 类型 & 描述 \\ \hline 
+    customer\_id & 客户编号 & bigint & 主键且自增长 \\ \hline
+    \end{tabular}
+    \end{table}
 
 参考文献：
 \cite{ex1}---\cite{ex2}---\cite{refa001}

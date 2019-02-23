@@ -10,4 +10,8 @@
 \BOOKMARK [3][-]{subsubsection.2.1.4}{股票信息}{subsection.2.1}% 10
 \BOOKMARK [2][-]{subsection.2.2}{获取日线行情数据}{section.2}% 11
 \BOOKMARK [1][-]{section.3}{量化模型}{}% 12
-\BOOKMARK [1][-]{section.4}{回测系统}{}% 13
+\BOOKMARK [2][-]{subsection.3.1}{时间序列分析}{section.3}% 13
+\BOOKMARK [1][-]{section.4}{回测系统}{}% 14
+\BOOKMARK [2][-]{subsection.4.1}{数据库系统设计}{section.4}% 15
+\BOOKMARK [3][-]{subsubsection.4.1.1}{ER图}{subsection.4.1}% 16
+\BOOKMARK [3][-]{subsubsection.4.1.2}{客户表}{subsection.4.1}% 17
