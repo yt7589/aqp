@@ -29,3 +29,11 @@ class MStockDaily(object):
                     'and state_dt>=%s and state_dt<%s'
         params = (stock_code, start_dt, end_dt)
         return db.query(sql, params)
+        
+    @staticmethod
+    def get_rate_of_returns(ts_codes, start_dt, end_dt):
+        stocks = '\',\''.join(ts_codes)
+        stock_codes = '\'{0}\''.format(stocks)
+        sql = 'select pct_chg/100.0 from t_stock_daily where stock_code in ({0}) and state_dt>=%s and state_dt<%s order by stock_code'.format(stock_codes)
+        params = (start_dt, end_dt)
+        return db.query(sql, params)

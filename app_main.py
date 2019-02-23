@@ -4,6 +4,7 @@ from controller.c_stock_daily import CStockDaily
 from ann.svm import Svm
 import model.m_mysql as db
 from util.stock_daily_svm_model_evaluator import StockDailySvmModelEvaluator
+from controller.c_portfolio import CPortfolio
 
 def startup():
     print('hello world {0} db={1}'.format(ar.version, ar.rdb['host']))
@@ -22,8 +23,15 @@ def startup():
     rst = Svm.predict(CStockDaily.test_x)
     print('svm_rst:{0}'.format(rst))
     '''
+    # ts_code = '603912.SH'
+    # StockDailySvmModelEvaluator.evaluate_model(ts_code)
     
-    StockDailySvmModelEvaluator.evaluate_model()
+    # 投资组合
+    ts_codes = ['603912.SH', '300666.SZ', '300618.SZ', '002049.SZ', '300672.SZ']
+    start_dt = '20180101'
+    duration = 90
+    CPortfolio.get_portfolio(ts_codes, start_dt, duration)
+    
     
 if '__main__' == __name__:
     db.init_db_pool() # 初始化数据库连接池
