@@ -236,11 +236,187 @@ create table t_area(
     \caption{客户表(t\_custome)}
     \label{t000001}
     \begin{tabular}{|p{2cm}|p{3cm}|p{2cm}|p{5cm}|} \hline
-    字段 & 名称 & 类型 & 描述 \\ \hline 
-    customer\_id & 客户编号 & bigint & 主键且自增长 \\ \hline
-    customer\_name & 客户姓名 & varchar & 真实姓名 \\ \hline
+        字段 & 名称 & 类型 & 描述 \\ \hline 
+        customer\_id & 客户编号 & bigint & 主键且自增长 \\ \hline
+        customer\_name & 客户姓名 & varchar & 真实姓名 \\ \hline
     \end{tabular}
-    \end{table}
+\end{table}
+\subsubsection{策略表}
+主要包括股票交易策略：包括SVM、XGBoost、LSTM、ARIMA、GARCH等，客户可以订购某个策略而成为我们的用户。
+\begin{table}[h]
+    \caption{策略表(t\_strategy)}
+    \label{t000002}
+    \begin{tabular}{|p{2cm}|p{3cm}|p{2cm}|p{5cm}|} \hline
+        字段 & 名称 & 类型 & 描述 \\ \hline 
+        strategy\_id & 策略编号 & bigint & 主键且自增长 \\ \hline
+        strategy\_name & 策略名称 & varchar & 真实姓名 \\ \hline
+    \end{tabular}
+\end{table}
+\subsubsection{账户表}
+客户拥有账户，每个客户对应的用户具有唯一的账户。账户中有现金和股票资产。
+\begin{table}[h]
+    \caption{账户表(t\_account)}
+    \label{t000003}
+    \begin{tabular}{|p{2cm}|p{3cm}|p{2cm}|p{5cm}|} \hline
+        字段 & 名称 & 类型 & 描述 \\ \hline 
+        account\_id & 账户编号 & bigint & 主键且自增长 \\ \hline
+        account\_name & 账户名称 & varchar & 易于记忆的名称 \\ \hline
+        cash\_amount & 现金资产 & bigint & 以分为单位 \\ \hline
+        stock\_amount & 股票资产 & bigint & 以分为单位 \\ \hline
+    \end{tabular}
+\end{table}
+其有对应的历史表t\_account\_hist，除上述字段外，还加上hist\_date字段，用于记录每一天的资产。
+\subsubsection{账户流水表}
+显示用户现金账户资金进出情况，与股票流水表主键相同，用于表示股票买卖过程中资金的变化情况。
+\begin{table}[h]
+    \caption{账户流水表(t\_account\_io)}
+    \label{t000004}
+    \begin{tabular}{|p{2cm}|p{3cm}|p{2cm}|p{5cm}|} \hline
+        字段 & 名称 & 类型 & 描述 \\ \hline 
+        account\_io\_id & 账户流水编号 & bigint & 主键且自增长 \\ \hline
+        account\_id & 账户编号 & bigint & t\_account表外键 \\ \hline
+        in\_amount & 转入金额 & bigint & 以分为单位 \\ \hline
+        out\_amount & 转出金额 & bigint & 以分为单位 \\ \hline
+        balance & 余额 & bigint & 以分为单位  \\ \hline
+        io\_date & 发生日期 & datetime & \\ \hline
+    \end{tabular}
+\end{table}
+\subsubsection{用户股票表}
+用于表示用户当前拥有的股票。
+\begin{table}[h]
+    \caption{用户股票表(t\_user\_stock)}
+    \label{t000005}
+    \begin{tabular}{|p{2cm}|p{3cm}|p{2cm}|p{5cm}|} \hline
+        字段 & 名称 & 类型 & 描述 \\ \hline 
+        user\_stock\_id & 账户流水编号 & bigint & 主键且自增长 \\ \hline
+        user\_id & 用户编号 & bigint & t\_account表外键 \\ \hline
+        stock\_id & 股票编号 & bigint & 以分为单位 \\ \hline
+        hold\_vol & 持有量 & bigint & \\ \hline
+        price & 价格 & bigint & \\ \hline
+        hold\_amount & 转出金额 & bigint & 以分为单位 \\ \hline
+        balance & 余额 & bigint & 以分为单位  \\ \hline
+        io\_date & 发生日期 & datetime & \\ \hline
+    \end{tabular}
+\end{table}
+有对应的历史表，在上述字段基础上添加hist\_date字段，用于记录每一天的资产。
+\subsubsection{用户股票流水表}
+记录用户股票买卖情况，主键与t\_account\_id相同，股票买卖是账户流水的一个子类。
+\begin{table}[h]
+    \caption{用户股票表(t\_user\_stock\_io)}
+    \label{t000006}
+    \begin{tabular}{|p{2cm}|p{3cm}|p{2cm}|p{5cm}|} \hline
+        字段 & 名称 & 类型 & 描述 \\ \hline 
+        user\_stock\_io\_id & 账户流水编号 & bigint & 主键且自增长 \\ \hline
+        user\_stock\_id & 用户编号 & bigint & t\_account表外键 \\ \hline
+        buy\_vol & 买入量 & bigint & 手数 \\ \hline
+        buy\_price & 买入价格 & bigint & \\ \hline
+        buy\_cost & 买入成本 & bigint & \\ \hline
+        buy\_amount & 买入金额 & bigint & 包括印花税、手续费、所得税等成本 \\ \hline
+        sell\_vol & 卖出量 & bigint & 以分为单位 \\ \hline
+        sell\_price & 卖出价格 & bigint & 以分为单位  \\ \hline
+        sell\_cost & 卖出成本 & bigint & 包括印花税、手续费、所得税等成本 \\ \hline
+        sell\_amount & 卖出金额 & bigint & \\ \hline
+        hold\_vol & 持仓量 & bigint & \\ \hline
+        hold\_price & 收盘价 & bigint & \\ \hline
+        hold\_amount & 市值 & bigint & \\ \hline
+    \end{tabular}
+\end{table}
+对应有历史表，除上述字段外，还有hist\_date字段。
+\subsection{准备实验数据}
+创建一个新客户：
+\lstset{language=SQL, caption={创建新客户}, label={c000004}}
+\begin{lstlisting}
+\end{lstlisting}
+
+
+
+股票预测：
+https://medium.com/m/global-identity?redirectUrl=https%3A%2F%2Ftowardsdatascience.com%2Faifortrading-2edd6fac689d
+
+
+\section{深度学习入门}
+\subsection{线性回归}
+线性回归的定义：假设有一个问题，观察到的样本为$\boldsymbol{x} \in R^{n}$且共有$m$个训练样本，同时每个
+样本$\boldsymbol{x}_{i}$对应一个数值$y_{i}$，并且我们假设其对应关系为：
+$y=\boldsymbol{w} \cdot \boldsymbol{x}+b$，整个问题可以表示为：
+\begin{equation}
+    \begin{aligned}
+        \boldsymbol{y} = X \cdot \boldsymbol{w} + \boldsymbol{b}
+    \end{aligned}
+    \label{e000001}
+\end{equation}
+其中矩阵$X \in R^{m \times n}$，每一行代表一个样本。\newline
+我们的代价函数定义为最小平方误差函数：
+\begin{equation}
+    \begin{aligned}
+        \mathcal{L}=\frac{1}{n}\sum_{i=1}^{m}(y_{i} - \boldsymbol{w} \boldsymbol{x}_{i} + b_{i})
+    \end{aligned}
+    \label{e000002}
+\end{equation}
+
+
+
+这时我们的任务就变为：
+\begin{equation}
+    \begin{aligned}
+        \mathop{\arg \min}_{\boldsymbol{w}, \boldsymbol{b}} \frac{1}{n}\sum_{i=1}^{m}(y_{i} - \boldsymbol{w} \boldsymbol{x}_{i} + b_{i})
+    \end{aligned}
+    \label{e000003}
+\end{equation}
+由于这个问题比较简单，解这个问题有两种方法：解析法和迭代法。其中解析法的解为：
+\begin{equation}
+    \begin{aligned}
+        \bar{\boldsymbol{x}}=\frac{1}{n} \sum_{i=1}^{n} \boldsymbol{x}_{i} \\
+        \bar{y}=\frac{1}{n} \sum_{i=1}^{n} y_{i}
+    \end{aligned}
+    \label{e000004}
+\end{equation}
+其解析解为：
+\begin{equation}
+    \begin{aligned}
+        \hat{\boldsymbol{w}}=\frac{\sum_{i=1}^{n}(\boldsymbol{x} - \bar{\boldsymbol{x}})(y_{i}-\bar{y})}{\sum_{i=1}^{n}(\boldsymbol{x}_{i} - \bar{\boldsymbol{x}})^{2}} \\
+        \hat{\boldsymbol{b}}=\bar{y}-\boldsymbol{w} \bar{\boldsymbol{x}}
+    \end{aligned}
+    \label{e000005}
+\end{equation}
+如果是迭代法则为梯度下降算法，参数更新公式为：
+\begin{equation}
+    \begin{aligned}
+        \boldsymbol{w}_{t+1}=\boldsymbol{w}_{t}  - \alpha \frac{\partial{\mathcal{L}}}{\partial{\boldsymbol{w}_{t}}} \\
+        \boldsymbol{b}_{t+1} = \boldsymbol{b}_{t} - \alpha \frac{\partial{\mathcal{L}}}{\partial{\boldsymbol{b}_{t}}}
+    \end{aligned}
+    \label{e000006}
+\end{equation}
+
+
+在讲解具体的代码之前，我们先来讲解一下Python中的\_\_call\_\_函数。我们知道，在Python中，类实例也是可调用对象，
+只需要在类定义中添加\_\_call\_\_函数定义，即使用类实例加括号的形式进行调用了。我们利用这一特性定义线性回归类，如
+下所示：
+\lstset{language=PYTHON, caption={线性回归类定义}, label={c000005}}
+\begin{lstlisting}
+    class LinearRegression(object):
+    def __init__(self):
+        self.w = tf.get_variable('w', 
+                    dtype=tf.float32, shape=[], 
+                    initializer=tf.zeros_initializer()
+        )
+        self.b = tf.get_variable(
+            'b', dtype=tf.float32, shape=[],
+            initializer=tf.zeros_initializer()
+        )
+
+    def __call(self, x):
+        return self.w * x + self.b
+\end{lstlisting}
+
+
+
+
+
+
+
+
+
 
 参考文献：
 \cite{ex1}---\cite{ex2}---\cite{refa001}
