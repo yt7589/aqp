@@ -10,7 +10,8 @@ class LinearRegressionEngine(object):
     def startup(self):
         # 生成测试数据
         self.generate_ds()
-        self.run_analysis()
+        #self.run_analysis()
+        self.run_gd()
 
     def generate_ds(self):
         self.num_samples, self.w, self.b = 20, 0.5, 2
@@ -32,6 +33,31 @@ class LinearRegressionEngine(object):
         solve_b = model.b.assign(tf.reduce_mean(ytf) - w_hat*tf.reduce_mean(xtf))
         with tf.train.MonitoredSession() as sess:
             sess.run([solve_w, solve_b], feed_dict={xtf: self.xs, ytf: self.ys})
+            preds = sess.run(model_output, feed_dict={xtf: self.xs, ytf: self.ys})
+        plt.scatter(self.xs, self.ys)
+        plt.plot(self.xs, preds)
+        plt.show()
+
+    def run_gd(self):
+        xtf = tf.placeholder(tf.float32, [self.num_samples], 'xs')
+        ytf = tf.placeholder(tf.float32, [self.num_samples], 'ys')
+        model = LinearRegression()
+        model_output = model(xtf)
+        loss = tf.losses.mean_squared_error(ytf, model_output)
+        '''
+        # use code 
+        grads = tf.gradients(loss, [model.w, model.b])
+        alpha = 0.001
+        update_w = tf.assign(model.w, model.w - alpha * grads[0])
+        update_b = tf.assign(model.b, model.b - alpha * grads[1])
+        update = tf.group(update_w, update_b)
+        '''
+        update = tf.train.GradientDescentOptimizer(learning_rate=0.001).minimize(loss)
+        init = tf.global_variables_initializer()
+        with tf.train.MonitoredSession() as sess:
+            sess.run(init)
+            for epoch in range(1000):
+                sess.run([update], feed_dict={xtf: self.xs, ytf: self.ys})
             preds = sess.run(model_output, feed_dict={xtf: self.xs, ytf: self.ys})
         plt.scatter(self.xs, self.ys)
         plt.plot(self.xs, preds)

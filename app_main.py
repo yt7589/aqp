@@ -8,6 +8,8 @@ import model.m_mysql as db
 from util.stock_daily_svm_model_evaluator import StockDailySvmModelEvaluator
 from controller.c_portfolio import CPortfolio
 from ann.linear_regression_engine import LinearRegressionEngine
+from app.kelly_demo import KellyDemo
+from util.learn import Learn
 
 def startup():
     print('hello world {0} db={1}'.format(ar.version, ar.rdb['host']))
@@ -37,8 +39,13 @@ def startup():
     CPortfolio.get_portfolio(ts_codes, start_dt, duration)
     '''
 
-    lre = LinearRegressionEngine()
-    lre.startup()
+    #lre = LinearRegressionEngine()
+    #lre.startup()
+
+    learn = Learn()
+    learn.startup()
+
+
     
     
 if '__main__' == __name__:
