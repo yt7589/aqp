@@ -11,11 +11,7 @@ class StockBacktest(object):
         self.name = 'StockBacktest'
 
     def startup(self):
-        print('股票回测研究平台 v0.0.1')
-        tp = 0 # 预测上涨且实际上涨
-        fp = 0 # 预测上涨但实际下跌
-        tn = 0 # 预测下跌且实际下跌
-        fn = 0 # 预测下跌但实际上涨
+        print('股票回测研究平台 v0.0.2')
         # 选定股票
         stock_id = 69 # 603912.SH
         ts_code = '603912.SH'
@@ -63,16 +59,25 @@ class StockBacktest(object):
             # 根据预测结果进行股票买卖
             print('result:{0} yesterday:{1} today:{2}'.format(rst, CStockDaily.train_x[-1, 3], CStockDaily.test_x[0, 3]))
             if rst[0] > 0:
-                if CStockDaily.test_x[0][3] / CStockDaily.train_x[-1][3] > ar.increase_threshold:
-                    tp += 1
-                else:
-                    fp += 1
+                print('{0}买入股票'.format(current_date))
+                # 取出本日收盘价
+                # 获取现金资产值
+                # 在t_account_io中转出10%
+                # 根据收盘价计算10%金额可以买的股票数，得出实际金额
+                # 现金资产减少实际金额
+                # 根据股价增加相应持股量
+                # 在股票流水表中添加买入记录
+                # 增加账户中的股票资产，增加值为实际金额
             else:
-                if CStockDaily.test_x[0][3] / CStockDaily.train_x[-1][3] > ar.increase_threshold:
-                    fn += 1
-                else:
-                    tn += 1
-            # 统计到tp,fp,tn,fn中
+                print('{0}卖出股票'.format(current_date))
+                # 取出本日收盘价
+                # 计算卖出10%的发生金额
+                # 减少股票持股量
+                # 在股票流水表中添加卖出记录
+                # 减少账户中股示资产
+                # 在账户流水中增加充入记录，金额为发生金额
+                # 增加账户现金资产
+            # 将账户信息存入当前日期的历史表
             # 将当前交易日数据添加到训练样本集
             # 将下一个交易日作为当前交易日
             next_date = current_date + timedelta(days=1)
@@ -85,18 +90,6 @@ class StockBacktest(object):
                 today = date.today()
                 if next_date >= today:
                     break
-            
-        
-        if tp==0 and fp==0 and fn==0:
-            return
-        
-        # 计算准确率、召回率、F1值
-        precision = tp / (tp + fp)
-        recall = tp / (tp + fn)
-        f1 = (2*precision*recall) / (precision + recall)
-        print('precision:{0}; recall:{1}; f1:{2} tp={3}; '
-                    'fp={4}; fn={5}'.format(precision, 
-                    recall, f1, tp, fp, fn))
         
 
 
