@@ -326,7 +326,27 @@ create table t_area(
 创建一个新客户：
 \lstset{language=SQL, caption={创建新客户}, label={c000004}}
 \begin{lstlisting}
+    INSERT INTO `QuantDb`.`t_customer` (`customer_id`, `customer_name`) VALUES (1, '王俊锋');
 \end{lstlisting}
+添加一个新策略：
+\lstset{language=SQL, caption={创建新策略}, label={c000005}}
+\begin{lstlisting}
+    INSERT INTO `QuantDb`.`t_customer` (`customer_id`, `customer_name`) VALUES (1, '王俊锋');
+\end{lstlisting}
+创建账户并添加初始现金：
+\lstset{language=SQL, caption={创建账户并入资}, label={c000006}}
+\begin{lstlisting}
+    INSERT INTO `QuantDb`.`t_account_io` (`account_io_id`, `account_id`, `io_date`, `in_amount`, `out_amount`, `balance`) VALUES (1, 100000000, '2019-02-26', 100000000, 0, 1);
+    INSERT INTO `QuantDb`.`t_account` (`account_id`, `account_name`, `cash_amount`, `stock_amount`) VALUES (1, '股票投资账户', 100000000, 0);
+\end{lstlisting}
+有了上述数据之后，我们就可以从2018-01-01开始，利用SVM模型，以收盘价为成交价，进行回测研究了。\newline
+具体股票买卖逻辑为：
+选定某一支股票，利用50\%现金购买该股票；
+每日利用SVM进行预测，如果涨则拿剩余现金的10\%买入，如果跌卖出持有股份的10\%
+买入：先将钱从账户现金中转出，减少账户现金资产；在股票流水中增加进项，然后增加股票持有量，将钱加入的账户的股票资产下
+卖出：先减少股票持有量，股票流水中转出资金，账户股票资金减少，账户增加资金进入，将现金增加到现金资产上
+交易的结算价格按每日收盘价计算
+绘制每日用户总资产（现金资产加股票资产）
 
 
 

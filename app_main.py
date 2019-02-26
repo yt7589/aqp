@@ -10,10 +10,14 @@ from controller.c_portfolio import CPortfolio
 from ann.linear_regression_engine import LinearRegressionEngine
 from app.kelly_demo import KellyDemo
 from util.learn import Learn
+from app.stock_backtest import StockBacktest
+
+def call_stock_backtest():
+    stock_backtest = StockBacktest()
+    stock_backtest.startup()
 
 def startup():
-    print('hello world {0} db={1}'.format(ar.version, ar.rdb['host']))
-    ar.caller = 'app_main'
+    call_stock_backtest()
     #CStock.get_stocks()
     #CStockDaily.get_stock_daily_kline(1, '20180101', '20190214')
     #CStockDaily.generate_stock_daily_ds('603912.SH', '20180101', '20190213')
@@ -42,8 +46,10 @@ def startup():
     #lre = LinearRegressionEngine()
     #lre.startup()
 
+    '''
     learn = Learn()
     learn.startup()
+    '''
 
 
     
