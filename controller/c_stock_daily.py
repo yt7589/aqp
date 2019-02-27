@@ -79,6 +79,17 @@ class CStockDaily(object):
     @staticmethod
     def get_stock_daily_from_db(ts_code, start_dt, end_dt):
         return MStockDaily.get_stock_daily(ts_code, start_dt, end_dt)
+
+    @staticmethod
+    def get_close(ts_code, dt):
+        '''
+        获取指定股票在指定日期的收盘价
+        '''
+        rc, recs = MStockDaily.get_close(ts_code, dt)
+        if rc > 0:
+            return recs[0][0]
+        else:
+            return -1.0
         
         
         

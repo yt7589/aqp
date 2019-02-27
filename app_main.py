@@ -13,8 +13,10 @@ from util.learn import Learn
 from app.stock_backtest import StockBacktest
 
 def call_stock_backtest():
-    stock_backtest = StockBacktest()
-    stock_backtest.startup()
+    #stock_backtest = StockBacktest()
+    #stock_backtest.startup()
+    close = CStockDaily.get_close('603912.SH', '20190102')
+    print('收盘价：{0}'.format(close))
 
 def startup():
     call_stock_backtest()

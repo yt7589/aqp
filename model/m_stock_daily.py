@@ -37,3 +37,15 @@ class MStockDaily(object):
         sql = 'select pct_chg/100.0 from t_stock_daily where stock_code in ({0}) and state_dt>=%s and state_dt<%s order by stock_code'.format(stock_codes)
         params = (start_dt, end_dt)
         return db.query(sql, params)
+
+    @staticmethod
+    def get_close(ts_code, dt):
+        '''
+        获取指定股票在指定日期的收盘价
+        '''
+        sql = 'select close from t_stock_daily where '\
+                    'stock_code=%s and state_dt>=%s and state_dt<%s'
+        today = dt
+        next_day = '20190103'
+        params = (ts_code, today, next_day)
+        return db.query(sql, params)
