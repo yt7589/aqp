@@ -58,9 +58,9 @@ class StockBacktest(object):
             rst = StockDailySvm.predict(CStockDaily.test_x)
             # 根据预测结果进行股票买卖
             print('result:{0} yesterday:{1} today:{2}'.format(rst, CStockDaily.train_x[-1, 3], CStockDaily.test_x[0, 3]))
+            close_price = CStockDaily.get_close(ts_code, current_date)
             if rst[0] > 0:
                 print('{0}买入股票'.format(current_date))
-                # 取出本日收盘价
                 # 获取现金资产值
                 # 在t_account_io中转出10%
                 # 根据收盘价计算10%金额可以买的股票数，得出实际金额
@@ -70,7 +70,6 @@ class StockBacktest(object):
                 # 增加账户中的股票资产，增加值为实际金额
             else:
                 print('{0}卖出股票'.format(current_date))
-                # 取出本日收盘价
                 # 计算卖出10%的发生金额
                 # 减少股票持股量
                 # 在股票流水表中添加卖出记录

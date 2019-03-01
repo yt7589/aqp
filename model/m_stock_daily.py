@@ -1,3 +1,6 @@
+import time
+import datetime
+from datetime import date
 import model.m_mysql as db
 
 '''
@@ -45,7 +48,8 @@ class MStockDaily(object):
         '''
         sql = 'select close from t_stock_daily where '\
                     'stock_code=%s and state_dt>=%s and state_dt<%s'
-        today = dt
-        next_day = '20190103'
+        today = datetime.datetime.strptime(dt, '%Y%m%d')
+        next_date = today + datetime.timedelta(days=1)
+        next_day = datetime.date.strftime(next_date, '%Y%m%d')
         params = (ts_code, today, next_day)
         return db.query(sql, params)

@@ -11,15 +11,32 @@ from ann.linear_regression_engine import LinearRegressionEngine
 from app.kelly_demo import KellyDemo
 from util.learn import Learn
 from app.stock_backtest import StockBacktest
+from controller.c_account import CAccount
 
 def call_stock_backtest():
     #stock_backtest = StockBacktest()
     #stock_backtest.startup()
-    close = CStockDaily.get_close('603912.SH', '20190102')
+    close = CStockDaily.get_close('603912.SH', '20190103')
     print('收盘价：{0}'.format(close))
 
+def test_get_amounts():
+    account_id = 1
+    info = CAccount.get_current_amounts(account_id)
+    print('现金：{0}; 股票：{1}; 总资产：{2}'.format(info[0], info[1], (info[0]+info[1])))
+
+def test_get_hist_amounts():
+    account_id = 1
+    account_date = '2019-03-01'
+    info = CAccount.get_hist_amounts(account_id, account_date)
+    print('现金：{0}; 股票：{1}; 总资产：{2}; 日期：{3}'.format(info[0], 
+            info[1], (info[0]+info[1]), account_date))
+
 def startup():
-    call_stock_backtest()
+    #call_stock_backtest()
+    #test_get_amounts()
+    test_get_hist_amounts()
+
+
     #CStock.get_stocks()
     #CStockDaily.get_stock_daily_kline(1, '20180101', '20190214')
     #CStockDaily.generate_stock_daily_ds('603912.SH', '20180101', '20190213')
