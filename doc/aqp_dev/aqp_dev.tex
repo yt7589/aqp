@@ -183,6 +183,78 @@ python -m unittest -v app_test.py
 	\centering
 	\includegraphics[height=3cm]{images/f000002}
 \end{figure}
+\subsection{Flask入门}
+Flask框架目前已经超越Django，成为Python语言Web开发中最流行的框架。
+\subsubsection{入门程序}
+使用flask进行Web开发非常简单，因为实际应用中python只用于提供API接口，因此我们以API服务器为例：
+\lstset{language=PYTHON, caption={Hello World级Flask程序}, label={c000011}}
+\begin{lstlisting}
+import json
+from flask import Flask
+
+app = Flask(__name__)
+
+@app.route('/')
+def hello_world():
+    resp = {'code': 1}
+    resp['result'] = {}
+    resp['result']['userId'] = 101
+    return json.dumps(resp)
+
+app.run(port=5080, debug=True)
+\end{lstlisting}
+上述程序中，监听在5080端口，返回值为JSON格式。
+\subsubsection{路径中的参数}
+在很多情况下，我们需要将路径中的部分作为参数，具体处理方式如下所示：
+\lstset{language=PYTHON, caption={处理path中的参数}, label={c000012}}
+\begin{lstlisting}
+@app.route('/user/<int:user_id>/<string:user_name>/<email>', methods=['GET'])
+def process_path_params(user_id, user_name, email):
+    resp = {'code': 1}
+    resp['result'] = {}
+    resp['result']['userId'] = user_id
+    resp['result']['userName'] = user_name
+    resp['result']['email'] = email
+    return json.dumps(resp)
+\end{lstlisting}
+参数可以带类型说明也可以不带，同时分号两边不能有空格。methods可以为GET或POST。
+\subsubsection{处理QueryString}
+获取URL中的参数可以采用下面的方法：
+\lstset{language=PYTHON, caption={获取URL中的参数}, label={c000013}}
+\begin{lstlisting}
+@app.route('/get_url_params/t1', methods=['GET'])
+def get_url_params():
+    resp = {'code': 1}
+    resp['result'] = {}
+    resp['result']['url'] = url_for('get_url_params')
+    resp['result']['userId'] = request.args['userId']
+    # args类型为ImmutableMultiDict
+    params = request.args.to_dict()
+    resp['result']['params'] = params
+    return json.dumps(resp)
+\end{lstlisting}
+如上所示，url\_for可以打印出完整的URL路径，参数为路径中第一个分量。request.args为不可变字典，也可以将其转变为
+普通字典。
+\subsubsection{处理form}
+当请求为POST时，参数是通过form来传递的，这时需要解析form中的参数：
+\lstset{language=PYTHON, caption={获取URL中的参数}, label={c000013}}
+\begin{lstlisting}
+@app.route('/get_post_params/t2', methods=['POST'])
+def get_post_params():
+    resp = {'code': 1}
+    resp['result'] = {}
+    resp['result']['userName'] = request.form['userName']
+    params = request.form.to_dict()
+    return json.dumps(json)
+\end{lstlisting}
+\subsubsection{session处理}
+略。
+\subsubsection{cookie处理}
+略。
+\subsubsection{文件上传处理}
+略。
+\subsubsection{数据库连接池}
+
 
 
 

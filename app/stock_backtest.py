@@ -3,6 +3,7 @@ from datetime import timedelta
 import numpy as np
 from app_registry import appRegistry as ar
 from controller.c_stock_daily import CStockDaily
+from controller.c_account import CAccount
 from ann.stock_daily_svm import StockDailySvm
 from util.stock_daily_svm_model_evaluator import StockDailySvmModelEvaluator
 
@@ -12,6 +13,7 @@ class StockBacktest(object):
 
     def startup(self):
         print('股票回测研究平台 v0.0.2')
+        account_id = 1
         # 选定股票
         stock_id = 69 # 603912.SH
         ts_code = '603912.SH'
@@ -59,9 +61,9 @@ class StockBacktest(object):
             # 根据预测结果进行股票买卖
             print('result:{0} yesterday:{1} today:{2}'.format(rst, CStockDaily.train_x[-1, 3], CStockDaily.test_x[0, 3]))
             close_price = CStockDaily.get_close(ts_code, current_date)
+            cash_amount, stock_amount = CAccount.get_current_amounts(account_id)
             if rst[0] > 0:
                 print('{0}买入股票'.format(current_date))
-                # 获取现金资产值
                 # 在t_account_io中转出10%
                 # 根据收盘价计算10%金额可以买的股票数，得出实际金额
                 # 现金资产减少实际金额
