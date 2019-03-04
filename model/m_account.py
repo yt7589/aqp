@@ -25,3 +25,15 @@ class MAccount(object):
                         'where account_id=%s and account_date=%s'
         params = (account_id, account_date)
         return db.query(sql, params)
+
+    @staticmethod
+    def update_cash_amount(account_id, cash_amount):
+        '''
+        更新账户现金资产数值
+        @param account_id：账户
+        @param cash_amount：新的现金资产数
+        @version v0.0.1 闫涛 2019-03-04
+        '''
+        sql = 'update t_account set cash_amount=%s where account_id=%s'
+        params = (cash_amount, account_id)
+        return db.update(sql, params)

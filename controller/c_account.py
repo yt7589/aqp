@@ -37,3 +37,11 @@ class CAccount(object):
             return rows[0]
         else:
             return 0.0, 0.0
+
+    @staticmethod
+    def update_cash_amount(account_id, cash_amount):
+        pk, affected_rows = MAccount.update_cash_amount(account_id, cash_amount)
+        if 1 == affected_rows:
+            return True
+        else:
+            return False

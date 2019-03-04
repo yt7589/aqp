@@ -11,5 +11,11 @@ class TMAccountIo(unittest.TestCase):
             print('错误：没有流水记录')
         self.assertEqual('a', 'a')
 
+    def test_withdraw(self):
+        account_id = 1
+        amount = 10000
+        MAccountIo.withdraw(account_id, amount)
+        self.assertTrue(True)
+
 if '__main__' == __name__:
     unittest.main()

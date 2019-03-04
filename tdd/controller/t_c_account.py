@@ -15,3 +15,9 @@ class TCAccount(unittest.TestCase):
         print('现金：{0}; 股票：{1}; 总资产：{2}; 日期：{3}'.format(info[0], 
                 info[1], (info[0]+info[1]), account_date))
         self.assertTrue(True)
+
+    def test_update_cash_amount(self):
+        account_id = 1
+        cash_amount = 200
+        rst = CAccount.update_cash_amount(account_id, cash_amount)
+        self.assertEqual(rst, True)

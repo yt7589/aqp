@@ -13,14 +13,15 @@ from util.learn import Learn
 from app.stock_backtest import StockBacktest
 from controller.c_account import CAccount
 
+
+
 def call_stock_backtest():
     stock_backtest = StockBacktest()
     stock_backtest.startup()
 
 def startup():
-    #call_stock_backtest()
+    call_stock_backtest()
     #test_get_amounts()
-    test_get_hist_amounts()
 
 
     #CStock.get_stocks()
@@ -60,6 +61,4 @@ def startup():
     
     
 if '__main__' == __name__:
-    db.init_db_pool() # 初始化数据库连接池
     startup()
-    ar.is_stopping = True # 结束程序
