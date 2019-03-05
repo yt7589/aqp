@@ -5,6 +5,7 @@ from app_registry import appRegistry as ar
 from model.m_area import MArea
 from model.m_industry import MIndustry
 from model.m_stock import MStock
+from model.m_user_stock import MUserStock
 
 '''
 获取沪深两市所有挂牌股票基本信息，并保存到数据库中
@@ -73,6 +74,20 @@ class CStock(object):
                         stock_name, area_id, industry_id, list_date)
             print('添加股票：{0}---{1}'.format(stock_id, stock_name))
         return stock_id
+
+    @staticmethod
+    def get_user_stock_hold(user_stock_id):
+        '''
+        获取指定用户当前指定股票的持有量
+        @param user_stock_id：用户股票组合编号，可以通过user_id和stock_id求出
+        @return 股票持有量
+        @version v0.0.1 闫涛 2019-03-04
+        '''
+        rc, rows = MUserStock.get_user_stock_hold(user_stock_id)
+        if rc <= 0:
+            return 0
+        else:
+            return rows[0][0]
         
         
         

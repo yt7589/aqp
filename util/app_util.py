@@ -1,0 +1,24 @@
+import time
+import datetime
+from datetime import date
+
+class AppUtil(object):
+    DF_COMPACT = '%Y%m%d' # 日期格式为：20190305
+    DF_HYPHEN = '%Y-%m-%d' # 日期格式为：2019-03-05
+
+    def __init__(self):
+        self.name = 'AppUtil'
+
+    @staticmethod
+    def get_delta_date(curr_date, delta, df=DF_COMPACT):
+        '''
+        获取指定日期前或后几天字符串
+        @param curr_date：指定日期，格式为20190305
+        @param delta：1为明天，-1为昨天
+        @param df：日期格式，可以取值为DF_COMPACT或DF_HYPHEN
+        @return 指定日期字符串，格式为20190306
+        @version v0.0.1 闫涛 2019-03-05
+        '''
+        curr_date_obj = datetime.datetime.strptime(curr_date, df)
+        prev_date_obj = curr_date_obj + datetime.timedelta(days=delta)
+        return datetime.date.strftime(prev_date_obj, df)
