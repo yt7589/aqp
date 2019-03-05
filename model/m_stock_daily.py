@@ -51,9 +51,6 @@ class MStockDaily(object):
                     'stock_code=%s and state_dt>=%s and state_dt<%s'
         curr_date = dt
         next_date = AppUtil.get_delta_date(dt, 1)
-
-        #next_date = today + datetime.timedelta(days=1)
-        #next_day = datetime.date.strftime(next_date, '%Y%m%d')
         print('today:{0}; next_date:{1}; sql:{2}'.format(curr_date, next_date, sql))
         params = (ts_code, curr_date, next_date)
         return db.query(sql, params)

@@ -22,3 +22,13 @@ class AppUtil(object):
         curr_date_obj = datetime.datetime.strptime(curr_date, df)
         prev_date_obj = curr_date_obj + datetime.timedelta(days=delta)
         return datetime.date.strftime(prev_date_obj, df)
+
+    @staticmethod
+    def get_current_date_str(df=DF_COMPACT):
+        '''
+        获取当前日期字符串，
+        @param df：格式为DF_COMPACT或DF_HYPHEN
+        @return 日期字符串
+        @version v0.0.1 闫涛 2019-03-05
+        '''
+        return time.strftime(df, time.localtime())

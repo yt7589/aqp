@@ -1,5 +1,7 @@
 import model.m_mysql as db
 from controller.c_stock import CStock
+from controller.c_stock_daily import CStockDaily
+from util.app_util import AppUtil
 
 '''
 股票具体买入或卖出流水记录
@@ -42,7 +44,7 @@ class MUserStockIo(object):
         # 获取当前持股数量
         hold_vol = CStock.get_user_stock_hold(user_stock_id)
         # 获取前一日收盘价格
-        raw_close_price = 11.3
+        raw_close_price = CStockDaily.get_close(ts_code, AppUtil.get_current_date_str())
         close_price = raw_close_price * 100
         # 获取交易成本
         if MUserStockIo.USER_STOCK_BUY == io_type:
