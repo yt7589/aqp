@@ -109,6 +109,20 @@ class CStock(object):
             rc, rows = MStockDaily.get_close(ts_code, prev_date)
             print('处理日期：{0}; rc={1}'.format(prev_date, rc))
         return rows[0][0]
+
+    @staticmethod
+    def get_stock_vo_of_user(user_stock_id):
+        '''
+        通过用户持股代码查询股票基本信息
+        @param user_stock_id：用户持股编号
+        @return 股票基本信息
+        @version v0.0.1 闫涛 2019-03-05
+        '''
+        rc, rows = MUserStock.get_stock_vo(user_stock_id)
+        if rc <= 0:
+            return []
+        else:
+            return rows[0]
         
         
         

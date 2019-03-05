@@ -1,5 +1,6 @@
 import unittest
 from controller.c_stock_daily import CStockDaily
+from util.app_util import AppUtil
 
 class TCStockDaily(unittest.TestCase):
     def test_get_close(self):
@@ -8,6 +9,12 @@ class TCStockDaily(unittest.TestCase):
         close_price = CStockDaily.get_close(ts_code, current_date)
         print('{0}收盘价：{1}'.format(current_date, close_price))
         self.assertEqual('a', 'a')
+
+    def test_get_real_close(self):
+        ts_code = '603912.SH'
+        close_price = CStockDaily.get_real_close(ts_code, AppUtil.get_current_date_str())
+        print('收盘价：{0}'.format(close_price))
+        self.assertTrue(True)
 
 if '__main__' == __name__:
     unittest.main()

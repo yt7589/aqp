@@ -22,3 +22,17 @@ class TMUserStock(unittest.TestCase):
         hold = rows[0][0]
         print('持股数量：{0}'.format(hold))
         self.assertTrue(True)
+
+    def test_get_stock_vo(self):
+        user_stock_id = 1
+        rc, rows = MUserStock.get_stock_vo(user_stock_id)
+        if rc <= 0:
+            self.assertFalse(False)
+        else:
+            print('股票编号:{0}； 股票编码：{1}; 股票代码：{2}；'\
+                        '股票名称：{3}'.format(rows[0][0],
+                            rows[0][1],
+                            rows[0][2],
+                            rows[0][3]
+                        ))
+            self.assertTrue(True)

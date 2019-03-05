@@ -21,3 +21,14 @@ class TCStock(unittest.TestCase):
         close_price = CStock.get_prev_day_close_price(ts_code, curr_date)
         print('前日收盘价：{0}'.format(close_price))
         self.assertTrue(True)
+
+    def test_get_stock_vo_of_user(self):
+        user_stock_id = 1
+        vo = CStock.get_stock_vo_of_user(user_stock_id)
+        if len(vo) <= 0:
+            self.assertFalse(False)
+        else:
+            print('股票编号：{0}；股票编码：{1}；股票代码：{2}；'\
+                        '股票名称：{3}'.format(
+                            vo[0], vo[1], vo[2], vo[3]
+                        ))

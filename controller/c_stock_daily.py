@@ -4,6 +4,7 @@ import tushare as ts
 import pymysql
 from app_registry import appRegistry as ar
 from model.m_stock_daily import MStockDaily
+from util.app_util import AppUtil
 
 '''
 获取沪深两市指定股票（股票代码）的日K线数据
@@ -90,6 +91,26 @@ class CStockDaily(object):
             return recs[0][0]
         else:
             return -1.0
+
+    @staticmethod
+    def get_real_close(ts_code, dt):
+        '''
+        获取指定日期收盘价，若当天没有收盘价，则取前一交易日的收盘价
+        @param ts_code：股票编码
+        @param dt：日期
+        @return 当前或前一交易日的收盘价
+        @version v0.0.1 闫涛 2019-03-05
+        '''
+        rc, rows = MStockDaily.get_close(ts_code, dt)
+        while rc <= 0:
+            prev_date = AppUtil.get_delta_date(dt, -1)
+            dt = prev_date
+            rc, rows = MStockDaily.get_close(ts_code, prev_date)
+        if len(rows) > 0:
+            return rows[0][0]
+        else:
+            return -1.0
+
         
         
         
