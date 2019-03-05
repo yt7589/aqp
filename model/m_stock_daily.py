@@ -2,6 +2,7 @@ import time
 import datetime
 from datetime import date
 import model.m_mysql as db
+from util.app_util import AppUtil
 
 '''
 股票日行情信息模型类，负责t_stock_daily表的增、删、改操作
@@ -48,8 +49,11 @@ class MStockDaily(object):
         '''
         sql = 'select close from t_stock_daily where '\
                     'stock_code=%s and state_dt>=%s and state_dt<%s'
-        today = datetime.datetime.strptime(dt, '%Y%m%d')
-        next_date = today + datetime.timedelta(days=1)
-        next_day = datetime.date.strftime(next_date, '%Y%m%d')
-        params = (ts_code, today, next_day)
+        curr_date = dt
+        next_date = AppUtil.get_delta_date(dt, 1)
+
+        #next_date = today + datetime.timedelta(days=1)
+        #next_day = datetime.date.strftime(next_date, '%Y%m%d')
+        print('today:{0}; next_date:{1}; sql:{2}'.format(curr_date, next_date, sql))
+        params = (ts_code, curr_date, next_date)
         return db.query(sql, params)
