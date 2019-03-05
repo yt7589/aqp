@@ -98,7 +98,7 @@ class CStock(object):
         产易日为止
         @param curr_date：当前日期，格式为20190304
         @return 前一交易日的收盘价（以分为单位）
-        @version v0.0.1 闫涛 2019-03-04
+        @version v0.0.1 闫涛 2019-03-05
         '''
         prev_date = AppUtil.get_delta_date(curr_date, delta=-1)
         curr_date = prev_date

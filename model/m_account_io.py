@@ -13,8 +13,10 @@ class MAccountIo(object):
         找出指定账户最新一条流水记录
         @version v0.0.1 闫涛 2019.03.02
         '''
-        sql = 'select balance from t_account_io where account_id=%s'
-        params = (account_id)
+        sql = 'select balance from t_account_io where account_id=%s '\
+                    'and account_io_id = (select max(account_io_id) '\
+                    'from t_account_io where account_id=%s)'
+        params = (account_id, account_id)
         return db.query(sql, params)
 
     @staticmethod
@@ -45,4 +47,4 @@ class MAccountIo(object):
         if 1 == affected_rows:
             return True
         else:
-            return True
+            return False

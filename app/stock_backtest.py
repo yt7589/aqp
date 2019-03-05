@@ -6,10 +6,33 @@ from controller.c_stock_daily import CStockDaily
 from controller.c_account import CAccount
 from ann.stock_daily_svm import StockDailySvm
 from util.stock_daily_svm_model_evaluator import StockDailySvmModelEvaluator
+from app.ashare.ashare_strategy1 import AshareStrategy1
+from controller.c_account import CAccount
 
 class StockBacktest(object):
     def __init__(self):
         self.name = 'StockBacktest'
+
+    def buy_stock(self, account_id, ts_code, curr_date):
+        '''
+        在指定日期买入指定股票
+        @param ts_code：股票编码
+        @param curr_date：指定日期
+        @version v0.0.1 闫涛 2019-03-05
+        '''
+        close_price = float(CStockDaily.get_real_close(ts_code, curr_date))
+        close_price = int(close_price * 100)
+        cash_amount, stock_amount = CAccount.get_current_amounts(account_id)
+        percent = 0.1
+        buy_shares = AshareStrategy1.calculate_buy_money(cash_amount, percent, close_price)
+        buy_amount = buy_shares * close_price
+        print('{0}={1}*{2}'.format(buy_amount, buy_shares, close_price))
+        rst = CAccount.withdraw(account_id, buy_amount)
+        if not rst:
+            return
+        print('买入股票')
+
+
 
     def startup(self):
         print('股票回测研究平台 v0.0.2')
@@ -60,11 +83,11 @@ class StockBacktest(object):
             rst = StockDailySvm.predict(CStockDaily.test_x)
             # 根据预测结果进行股票买卖
             print('result:{0} yesterday:{1} today:{2}'.format(rst, CStockDaily.train_x[-1, 3], CStockDaily.test_x[0, 3]))
-            close_price = CStockDaily.get_close(ts_code, current_date)
+            close_price = CStockDaily.get_real_close(ts_code, current_date)
             cash_amount, stock_amount = CAccount.get_current_amounts(account_id)
             if rst[0] > 0:
                 print('{0}买入股票'.format(current_date))
-                # 在t_account_io中转出10%
+                # 在t_account_io中转出
                 # 根据收盘价计算10%金额可以买的股票数，得出实际金额
                 # 现金资产减少实际金额
                 # 根据股价增加相应持股量

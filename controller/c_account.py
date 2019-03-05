@@ -4,6 +4,7 @@ import tushare as ts
 import pymysql
 from app_registry import appRegistry as ar
 from model.m_account import MAccount
+from model.m_account_io import MAccountIo
 
 '''
 管理用户现金、股票等资产
@@ -45,3 +46,10 @@ class CAccount(object):
             return True
         else:
             return False
+
+    @staticmethod
+    def withdraw(account_id, amount):
+        '''
+        从指定账户取出指定金额，增加资金转出金额记录，并更新用户现金资产
+        '''
+        return MAccountIo.withdraw(account_id, amount)
