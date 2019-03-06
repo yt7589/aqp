@@ -8,6 +8,7 @@ from ann.stock_daily_svm import StockDailySvm
 from util.stock_daily_svm_model_evaluator import StockDailySvmModelEvaluator
 from app.ashare.ashare_strategy1 import AshareStrategy1
 from controller.c_account import CAccount
+from controller.c_stock import CStock
 from controller.c_user_stock import CUserStock
 
 class StockBacktest(object):
@@ -34,6 +35,7 @@ class StockBacktest(object):
         # 更新用户现金资产
         CAccount.update_cash_amount(account_id, cash_amount - buy_amount)
         # 增加用户股票持有量
+        stock_id = CStock.get_stock_id_by_ts_code(ts_code)
         CUserStock.buy_stock_for_user(user_id, stock_id, buy_shares, close_price)
         print('买入股票')
 

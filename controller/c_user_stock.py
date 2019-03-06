@@ -36,3 +36,11 @@ class CUserStock(object):
             return False
         else:
             return True
+
+    @staticmethod
+    def buy_stock_for_user(user_id, stock_id, vol, price):
+        rc, rows = MUserStock.get_user_stock_id(user_id, stock_id)
+        if rc <= 0:
+            print('生成新记录并返回')
+        #user_stock_id = rows[0][0]
+        MUserStock.insert_user_stock(user_id, stock_id, vol, price)
