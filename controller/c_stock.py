@@ -137,6 +137,20 @@ class CStock(object):
             return []
         else:
             return rows[0]
+
+    @staticmethod
+    def get_stock_id_by_ts_code(ts_code):
+        '''
+        根据ts_code求出股票编号stock_id
+        @param ts_code：股票编码
+        @return stock_id
+        @version v0.0.1 闫涛 2019-03-06
+        '''
+        rc, rows = MStock.get_stock_id_by_ts_code(ts_code)
+        if rc <= 0:
+            return 0
+        else:
+            return rows[0][0]
         
         
         

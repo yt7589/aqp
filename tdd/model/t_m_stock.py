@@ -11,3 +11,12 @@ class TMStock(unittest.TestCase):
             print('{0} - {1} - {2}'.format(rows[0][0], 
                     rows[0][1], rows[0][2]))
             self.assertTrue(True)
+
+    def test_get_stock_id_by_ts_code(self):
+        ts_code = '603912.SH'
+        rc, rows = MStock.get_stock_id_by_ts_code(ts_code)
+        if rc <= 0:
+            self.assertFalse(False)
+        else:
+            print('股票编号：{0}'.format(rows[0][0]))
+            self.assertTrue(True)

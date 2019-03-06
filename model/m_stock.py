@@ -52,3 +52,15 @@ class MStock(object):
                     ' from t_stock where stock_id=%s'
         params = (stock_id)
         return db.query(sql, params)
+
+    @staticmethod
+    def get_stock_id_by_ts_code(ts_code):
+        '''
+        根据ts_code求出股票编号stock_id
+        @param ts_code：股票编码
+        @return stock_id
+        @version v0.0.1 闫涛 2019-03-06
+        '''
+        sql = 'select stock_id from t_stock where ts_code=%s'
+        params = (ts_code)
+        return db.query(sql, params)

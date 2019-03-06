@@ -41,3 +41,12 @@ class TCStock(unittest.TestCase):
         else:
             print('{0} - {1} - {2}'.format(vo[0], vo[1], vo[2]))
             self.assertTrue(True)
+
+    def test_get_stock_id_by_ts_code(self):
+        ts_code = '603912.SH'
+        stock_id = CStock.get_stock_id_by_ts_code(ts_code)
+        if stock_id <= 0:
+            self.assertFalse(False)
+        else:
+            print('stock_id={0}'.format(stock_id))
+            self.assertTrue(True)
