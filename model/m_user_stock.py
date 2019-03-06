@@ -1,5 +1,4 @@
 import model.m_mysql as db
-from controller.c_stock_daily import CStockDaily
 from util.app_util import AppUtil
 
 '''
@@ -21,7 +20,7 @@ class MUserStock(object):
         sql = 'select user_stock_id from t_user_stock where user_id=%s and stock_id=%s'
         params = (user_id, stock_id)
         return db.query(sql, params)
-
+        
     @staticmethod
     def get_user_stock_hold(user_stock_id):
         '''
@@ -55,7 +54,7 @@ class MUserStock(object):
         return db.query(sql, params)
 
     @staticmethod
-    def insert_user_stock(user_id, stock_id, vol):
+    def insert_user_stock(user_id, stock_id, vol, price):
         '''
         如果用户初始时没有持有该股票，则插入相应记录，如果用户已经持有该股票，
         则增加用户持有数量，价格取前一交易日的收盘价
@@ -67,8 +66,5 @@ class MUserStock(object):
         sql = 'insert into t_user_stock(user_id, stock_id, '\
                     'hold_vol, price, hold_amount) '\
                     'values(%s, %s, %s, %s, %s)'
-        curr_date = AppUtil.get_current_date_str()
-        close_price = float(CStockDaily.get_real_close(ts_code, curr_date))
-        close_price = int(close_price * 100)
-        params = (user_id, stock_id, vol, close_price, vol*close_price)
+        params = (user_id, stock_id, vol, price, vol*price)
         return db.insert(sql, params)

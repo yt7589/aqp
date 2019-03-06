@@ -36,3 +36,15 @@ class TMUserStock(unittest.TestCase):
                             rows[0][3]
                         ))
             self.assertTrue(True)
+
+    def test_insert_user_stock(self):
+        user_id = 1
+        stock_id = 69
+        vol = 88
+        price = 1100
+        pk, affected_rows = MUserStock.insert_user_stock(user_id, stock_id, vol, price)
+        print('主键：{0}; ar={1}'.format(pk, affected_rows))
+        if pk <= 0:
+            self.assertFalse(False)
+        else:
+            self.assertTrue(True)
