@@ -30,6 +30,8 @@ class StockBacktest(object):
         rst = CAccount.withdraw(account_id, buy_amount)
         if not rst:
             return
+        # 更新用户现金资产
+        CAccount.update_cash_amount(account_id, cash_amount - buy_amount)
         print('买入股票')
 
 
