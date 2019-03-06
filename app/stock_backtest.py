@@ -13,7 +13,7 @@ class StockBacktest(object):
     def __init__(self):
         self.name = 'StockBacktest'
 
-    def buy_stock(self, account_id, ts_code, curr_date):
+    def buy_stock(self, user_id, account_id, ts_code, curr_date):
         '''
         在指定日期买入指定股票
         @param ts_code：股票编码
@@ -32,6 +32,7 @@ class StockBacktest(object):
             return
         # 更新用户现金资产
         CAccount.update_cash_amount(account_id, cash_amount - buy_amount)
+        # 增加用户股票持有量
         print('买入股票')
 
 

@@ -123,6 +123,20 @@ class CStock(object):
             return []
         else:
             return rows[0]
+
+    @staticmethod
+    def get_stock_vo_by_id(stock_id):
+        '''
+        通过股票编号查询股票基本信息
+        @param stock_id：股票编号
+        @return 若存在返回：股票编码、股票代码、股票名称
+        @version v0.0.1 闫涛 2019-03-06
+        '''
+        rc, rows = MStock.get_stock_vo_by_id(stock_id)
+        if rc <= 0:
+            return []
+        else:
+            return rows[0]
         
         
         

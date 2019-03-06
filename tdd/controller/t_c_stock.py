@@ -32,3 +32,12 @@ class TCStock(unittest.TestCase):
                         '股票名称：{3}'.format(
                             vo[0], vo[1], vo[2], vo[3]
                         ))
+
+    def test_get_stock_vo_by_id(self):
+        stock_id = 69
+        vo = CStock.get_stock_vo_by_id(stock_id)
+        if len(vo)<=0:
+            self.assertFalse(False)
+        else:
+            print('{0} - {1} - {2}'.format(vo[0], vo[1], vo[2]))
+            self.assertTrue(True)

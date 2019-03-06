@@ -40,3 +40,15 @@ class MStock(object):
                     industry_id, list_date)
         industry_id, affected_rows = db.insert(sql, params)
         return industry_id
+
+    @staticmethod
+    def get_stock_vo_by_id(stock_id):
+        '''
+        根据股票编号查询股票基本信息
+        @param stock_id；股票编号
+        @version v0.0.1 闫涛 2019-03-06
+        '''
+        sql = 'select ts_code, symbol, stock_name, area_id, industry_id'\
+                    ' from t_stock where stock_id=%s'
+        params = (stock_id)
+        return db.query(sql, params)
