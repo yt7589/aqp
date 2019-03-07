@@ -37,6 +37,8 @@ class StockBacktest(object):
         # 增加用户股票持有量
         stock_id = CStock.get_stock_id_by_ts_code(ts_code)
         CUserStock.buy_stock_for_user(user_id, stock_id, buy_shares, close_price)
+        # 增加股票持有量
+        
         print('买入股票')
 
 

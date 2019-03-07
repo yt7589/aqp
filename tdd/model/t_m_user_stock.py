@@ -48,3 +48,14 @@ class TMUserStock(unittest.TestCase):
             self.assertFalse(False)
         else:
             self.assertTrue(True)
+
+    def test_update_user_stock(self):
+        user_id = 1
+        stock_id = 69
+        vol = 18
+        price = 2828
+        pk, affected_rows = MUserStock.update_user_stock(user_id, stock_id, vol, price)
+        if affected_rows==1 :
+            self.assertTrue(True)
+        else:
+            self.assertFalse(False)

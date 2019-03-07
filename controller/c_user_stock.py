@@ -1,5 +1,8 @@
 from model.m_user_stock import MUserStock
 from model.m_user_stock_io import MUserStockIo
+from controller.c_stock import CStock
+from controller.c_stock_daily import CStockDaily
+from util.app_util import AppUtil
 
 class CUserStock(object):
     def __init__(self):
@@ -39,10 +42,17 @@ class CUserStock(object):
 
     @staticmethod
     def buy_stock_for_user(user_id, stock_id, vol, price):
+        stock_vo = CStock.get_stock_vo_by_id(stock_id)
+        ts_code = stock_vo[0]
+        curr_date = AppUtil.get_current_date_str()
         rc, rows = MUserStock.get_user_stock_id(user_id, stock_id)
         if rc <= 0:
             print('生成新记录并返回')
-            MUserStock.insert_user_stock(user_id, stock_id, vol, price)
-            return
-        #user_stock_id = rows[0][0]
+            close_price = CStockDaily.get_real_close(ts_code, curr_date)
+            MUserStock.insert_user_stock(user_id, stock_id, vol, close_price)
+        else:
+            user_stock_id = rows[0][0]
+            hold_vol = MUserStock.get_user_stock_hold(user_stock_id)
+            MUserStock.update_user_stock(user_id, stock_id, vol+hold_vol, close_price)
+        MUserStockIo.buy_user_stock(user_stock_id, vol, price)
         

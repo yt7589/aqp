@@ -53,3 +53,17 @@ class CAccount(object):
         从指定账户取出指定金额，增加资金转出金额记录，并更新用户现金资产
         '''
         return MAccountIo.withdraw(account_id, amount)
+
+    @staticmethod
+    def update_stock_amount(account_id, stock_amount):
+        '''
+        更新用户的股票资产，值为用户持股量乘以前一个交易日收盘价，可以直接取用户持股表的数值
+        @param account_id：账户编号
+        @param stock_amount：股票资产值
+        @version v0.0.1 闫涛 2019-03-07
+        '''
+        pk, affected_rows = MAccount.update_stock_amount(account_id, stock_amount)
+        if 1 == affected_rows:
+            return True
+        else:
+            return False

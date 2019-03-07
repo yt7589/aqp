@@ -68,3 +68,20 @@ class MUserStock(object):
                     'values(%s, %s, %s, %s, %s)'
         params = (user_id, stock_id, vol, price, vol*price)
         return db.insert(sql, params)
+
+    @staticmethod
+    def update_user_stock(user_id, stock_id, vol, price):
+        '''
+        更新t_user_stock表中股票持有量信息，由调用者保证用户确实持有该股票，本方法不作
+        合法性检查
+        @param user_id：用户编号
+        @param stock_id：股票编号
+        @param vol：持有量
+        @param price：价格，以分为单位，上一交易日收盘价
+        @version v0.0.1 闫涛 2019-03-07
+        '''
+        sql = 'update t_user_stock set hold_vol=%s, price=%s, '\
+                    'hold_amount=%s where user_id=%s and '\
+                    'stock_id=%s'
+        params = (vol, price, vol*price, user_id, stock_id)
+        return db.update(sql, params)

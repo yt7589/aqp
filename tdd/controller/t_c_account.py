@@ -27,3 +27,12 @@ class TCAccount(unittest.TestCase):
         amount = 20000
         rst = CAccount.withdraw(account_id, amount)
         self.assertTrue(True)
+
+    def test_update_stock_amount(self):
+        account_id = 1
+        stock_amount = 999
+        rst = CAccount.update_stock_amount(account_id, stock_amount)
+        if rst:
+            self.assertTrue(True)
+        else:
+            self.assertFalse(False)

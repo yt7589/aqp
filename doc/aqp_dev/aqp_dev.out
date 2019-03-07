@@ -31,7 +31,9 @@
 \BOOKMARK [3][-]{subsubsection.4.1.6}{用户股票表}{subsection.4.1}% 31
 \BOOKMARK [3][-]{subsubsection.4.1.7}{用户股票流水表}{subsection.4.1}% 32
 \BOOKMARK [2][-]{subsection.4.2}{准备实验数据}{section.4}% 33
-\BOOKMARK [1][-]{section.5}{深度学习入门}{}% 34
-\BOOKMARK [2][-]{subsection.5.1}{Tensorflow底层技术}{section.5}% 35
-\BOOKMARK [3][-]{subsubsection.5.1.1}{依赖控制}{subsection.5.1}% 36
-\BOOKMARK [2][-]{subsection.5.2}{线性回归}{section.5}% 37
+\BOOKMARK [2][-]{subsection.4.3}{回测平台开发}{section.4}% 34
+\BOOKMARK [3][-]{subsubsection.4.3.1}{买入股票}{subsection.4.3}% 35
+\BOOKMARK [1][-]{section.5}{深度学习入门}{}% 36
+\BOOKMARK [2][-]{subsection.5.1}{Tensorflow底层技术}{section.5}% 37
+\BOOKMARK [3][-]{subsubsection.5.1.1}{依赖控制}{subsection.5.1}% 38
+\BOOKMARK [2][-]{subsection.5.2}{线性回归}{section.5}% 39

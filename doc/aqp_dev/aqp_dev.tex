@@ -573,6 +573,76 @@ create table t_area(
 卖出：先减少股票持有量，股票流水中转出资金，账户股票资金减少，账户增加资金进入，将现金增加到现金资产上
 交易的结算价格按每日收盘价计算
 绘制每日用户总资产（现金资产加股票资产）
+\subsection{回测平台开发}
+\subsubsection{买入股票}
+获取前一个交易日的收盘价
+\lstset{language=PYTHON, caption={获取收盘价}, label={c000016}}
+\begin{lstlisting}
+class StockBacktest(object):
+    def __init__(self):
+        self.name = 'StockBacktest'
+
+    def buy_stock(self, ts_code, curr_date):
+        '''
+        在指定日期买入指定股票
+        @param ts_code：股票编码
+        @param curr_date：指定日期
+        @version v0.0.1 闫涛 2019-03-05
+        '''
+        close_price = CStockDaily.get_real_close(ts_code, current_date)
+        cash_amount, stock_amount = CAccount.get_current_amounts(account_id)
+\end{lstlisting}
+获取客户现金资产，根据用户现金资产，使用10\%的现金购买股票，如下所示：
+\lstset{language=PYTHON, caption={确定需要购买的数量}, label={c000017}}
+\begin{lstlisting}
+    cash_amount, stock_amount = CAccount.get_current_amounts(account_id)
+    percent = 0.1
+    buy_shares = AshareStrategy1.calculate_buy_money(cash_amount, percent, close_price)
+\end{lstlisting}
+buy\_shares是将要购买的股票数，这里使用了A股的第一个策略，这个也是用户购买的策略。\newline
+在t\_account\_io表中产生一条资金转出记录，减少用户现金资产，如下所示：
+\lstset{language=PYTHON, caption={账户流水表产生资金流出记录}, label={c000018}}
+\begin{lstlisting}
+    rst = CAccount.withdraw(account_id, buy_amount)
+\end{lstlisting}
+减少用户的现金资产，如下所示：
+\lstset{language=PYTHON, caption={减少现金资产}, label={c000019}}
+\begin{lstlisting}
+    CAccount.update_cash_amount(account_id, cash_amount - buy_amount)
+\end{lstlisting}
+增加用户持股量：
+\lstset{language=PYTHON, caption={增加用户持股量}, label={c000020}}
+\begin{lstlisting}
+    stock_id = CStock.get_stock_id_by_ts_code(ts_code)
+    CUserStock.buy_stock_for_user(user_id, stock_id, buy_shares, close_price)
+\end{lstlisting}
+增加用户股票资产：
+
+
+
+
+更新用户股票持有量
+
+6222020200107856128
+
+
+
+
+在t\_user\_stock\_io表中产生一条股票购买记录，增加t\_user\_stock表中持股量，增加客户股票资产
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
