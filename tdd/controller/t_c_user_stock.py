@@ -21,3 +21,10 @@ class TCUserStock(unittest.TestCase):
             self.assertTrue(True)
         else:
             self.assertFalse(False)
+
+    def test_get_user_stock_vol(self):
+        user_id = 1
+        stock_id = 69
+        hold_vol = CUserStock.get_user_stock_vol(user_id, stock_id)
+        print('持股量：{0}'.format(hold_vol))
+        self.assertTrue(True)
