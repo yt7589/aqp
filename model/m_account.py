@@ -37,3 +37,15 @@ class MAccount(object):
         sql = 'update t_account set cash_amount=%s where account_id=%s'
         params = (cash_amount, account_id)
         return db.update(sql, params)
+
+    @staticmethod
+    def update_stock_amount(account_id, stock_amount):
+        '''
+        更新用户的股票资产，值为用户持股量乘以前一个交易日收盘价，可以直接取用户持股表的数值
+        @param account_id：账户编号
+        @param stock_amount：股票资产值
+        @version v0.0.1 闫涛 2019-03-07
+        '''
+        sql = 'update t_account set stock_amount=%s where account_id=%s'
+        params = (stock_amount, account_id)
+        return db.update(sql, params)
