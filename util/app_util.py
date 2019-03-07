@@ -32,3 +32,14 @@ class AppUtil(object):
         @version v0.0.1 闫涛 2019-03-05
         '''
         return time.strftime(df, time.localtime())
+
+    @staticmethod
+    def change_date_compact_to_hyphen(dt):
+        '''
+        将20190102格式的日期转变为2019-01-02格式日期字符串
+        @param dt：20190102格式日期字符串
+        @return 2019-01-02格式字符串
+        @version v0.0.1 闫涛 2019-03-07
+        '''
+        date_obj = datetime.datetime.strptime(dt, AppUtil.DF_COMPACT)
+        return datetime.date.strftime(date_obj, AppUtil.DF_HYPHEN)

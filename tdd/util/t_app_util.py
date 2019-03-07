@@ -14,3 +14,9 @@ class TAppUtil(unittest.TestCase):
         dt = AppUtil.get_current_date_str()
         print('当前日期：{0}'.format(dt))
         self.assertTrue(True)
+
+    def test_change_date_compact_to_hyphen(self):
+        dt = '20190102'
+        dt1 = AppUtil.change_date_compact_to_hyphen(dt)
+        print('新格式：{0}'.format(dt1))
+        self.assertTrue('2019-01-02'==dt1)

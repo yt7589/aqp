@@ -41,29 +41,40 @@ class CUserStock(object):
             return True
 
     @staticmethod
-    def buy_stock_for_user(user_id, stock_id, vol, price):
+    def buy_stock_for_user(user_id, stock_id, vol, price, buy_date):
         stock_vo = CStock.get_stock_vo_by_id(stock_id)
         ts_code = stock_vo[0]
-        curr_date = AppUtil.get_current_date_str()
         rc, rows = MUserStock.get_user_stock_id(user_id, stock_id)
+        user_stock_id = 0
         if rc <= 0:
-            print('生成新记录并返回')
-            close_price = CStockDaily.get_real_close(ts_code, curr_date)
-            MUserStock.insert_user_stock(user_id, stock_id, vol, close_price)
+            print('生成新记录并返回：购买日期：{0}'.format(buy_date))
+            close_price = CStockDaily.get_real_close(ts_code, buy_date)
+            close_price = int(close_price * 100)
+            user_stock_id, _ = MUserStock.insert_user_stock(
+                        user_id, stock_id, vol, close_price
+            )
         else:
             user_stock_id = rows[0][0]
             hold_vol = MUserStock.get_user_stock_hold(user_stock_id)
             MUserStock.update_user_stock(user_id, stock_id, vol+hold_vol, close_price)
-        MUserStockIo.buy_user_stock(user_stock_id, vol, price)
+        MUserStockIo.buy_user_stock(user_stock_id, vol, price, buy_date)
 
     @staticmethod
     def get_user_stock_vol(user_id, stock_id):
         '''
         获取用户当前的持股量
+        @param user_id；用户编号
+        @param stock_id：股票编号
+        @return 用户持有股票数
+        @version v0.0.1 闫涛 2019-03-07
         '''
         rc, rows = MUserStock.get_user_stock_id(user_id, stock_id)
         user_stock_id = 0
         if rc > 0:
             user_stock_id = rows[0][0]
-        return MUserStock.get_user_stock_hold(user_stock_id)
+        rc, rows = MUserStock.get_user_stock_hold(user_stock_id)
+        if rc > 0:
+            return rows[0][0]
+        else:
+            return 0
         

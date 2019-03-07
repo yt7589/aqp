@@ -24,7 +24,7 @@ class StockBacktest(object):
         '''
         close_price = float(CStockDaily.get_real_close(ts_code, curr_date))
         close_price = int(close_price * 100)
-        cash_amount, stock_amount = CAccount.get_current_amounts(account_id)
+        cash_amount, _ = CAccount.get_current_amounts(account_id)
         percent = 0.1
         buy_shares = AshareStrategy1.calculate_buy_money(cash_amount, percent, close_price)
         buy_amount = buy_shares * close_price
@@ -36,10 +36,11 @@ class StockBacktest(object):
         CAccount.update_cash_amount(account_id, cash_amount - buy_amount)
         # 增加用户股票持有量
         stock_id = CStock.get_stock_id_by_ts_code(ts_code)
-        CUserStock.buy_stock_for_user(user_id, stock_id, buy_shares, close_price)
-        # 增加股票持有量
-        
-        print('买入股票')
+        CUserStock.buy_stock_for_user(user_id, stock_id, buy_shares, close_price, curr_date)
+        # 增加股票资产
+        hold_vol = CUserStock.get_user_stock_vol(user_id, stock_id)
+        CAccount.update_stock_amount(account_id, hold_vol*close_price)
+        print('买入股票 hold_vol={0}'.format(hold_vol))
 
 
 
