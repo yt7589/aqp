@@ -15,7 +15,7 @@ class StockBacktest(object):
     def __init__(self):
         self.name = 'StockBacktest'
 
-    def buy_stock(self, user_id, account_id, ts_code, curr_date):
+    def buy_stock(self, user_id, account_id, ts_code, curr_date, buy_vol):
         '''
         在指定日期买入指定股票
         @param ts_code：股票编码
@@ -25,10 +25,8 @@ class StockBacktest(object):
         close_price = float(CStockDaily.get_real_close(ts_code, curr_date))
         close_price = int(close_price * 100)
         cash_amount, _ = CAccount.get_current_amounts(account_id)
-        percent = 0.1
-        buy_shares = AshareStrategy1.calculate_buy_money(cash_amount, percent, close_price)
-        buy_amount = buy_shares * close_price
-        print('{0}={1}*{2}'.format(buy_amount, buy_shares, close_price))
+        buy_amount = buy_vol * close_price
+        print('{0}={1}*{2}'.format(buy_amount, buy_vol, close_price))
         rst = CAccount.withdraw(account_id, buy_amount)
         if not rst:
             return
@@ -36,11 +34,38 @@ class StockBacktest(object):
         CAccount.update_cash_amount(account_id, cash_amount - buy_amount)
         # 增加用户股票持有量
         stock_id = CStock.get_stock_id_by_ts_code(ts_code)
-        CUserStock.buy_stock_for_user(user_id, stock_id, buy_shares, close_price, curr_date)
+        CUserStock.buy_stock_for_user(user_id, stock_id, buy_vol, close_price, curr_date)
         # 增加股票资产
         hold_vol = CUserStock.get_user_stock_vol(user_id, stock_id)
         CAccount.update_stock_amount(account_id, hold_vol*close_price)
         print('回测引擎之买入股票')
+
+    def sell_stock(self, user_id, account_id, ts_code, trade_date, sell_vol):
+        '''
+        在指定日期卖出指定股票
+        @param user_id：用户编号
+        @param account_id：账户编号
+        @param ts_code：股票编号
+        @param trade_date：交易日期
+        @param sell_vol：卖出数量
+        '''
+        close_price = float(CStockDaily.get_real_close(ts_code, trade_date))
+        close_price = int(close_price * 100)
+        cash_amount, _ = CAccount.get_current_amounts(account_id)
+        sell_amount = sell_vol * close_price
+        print('卖出股票：{0}={1}*{2}'.format(sell_amount, sell_vol, close_price))
+        rst = CAccount.deposit(account_id, sell_amount)
+        if not rst:
+            return
+        # 更新用户现金资产
+        CAccount.update_cash_amount(account_id, cash_amount + sell_amount)
+        # 减少用户股票持有量
+        stock_id = CStock.get_stock_id_by_ts_code(ts_code)
+        CUserStock.sell_stock_for_user(user_id, stock_id, sell_vol, close_price, trade_date)
+        # 更新股票资产
+        hold_vol = CUserStock.get_user_stock_vol(user_id, stock_id)
+        CAccount.update_stock_amount(account_id, hold_vol*close_price)
+        print('回测引擎之卖出股票 v0.0.1')
 
 
 

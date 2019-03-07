@@ -28,6 +28,17 @@ class MAccountIo(object):
         return MAccountIo._do_account_io(account_id, MAccountIo.IO_OUT, amount)
 
     @staticmethod
+    def deposit(account_id, amount):
+        '''
+        向指定账户存一笔钱
+        @param account_id：账户编号
+        @param amount：存款数量
+        @return 成功或失败
+        @version v0.0.1 闫涛 2019-03-07
+        '''
+        return MAccountIo._do_account_io(account_id, MAccountIo.IO_IN, amount)
+
+    @staticmethod
     def _do_account_io(account_id, io_type, amount):
         rc, rows = MAccountIo.get_latest_io(account_id)
         balance = 0

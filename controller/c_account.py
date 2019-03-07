@@ -55,6 +55,17 @@ class CAccount(object):
         return MAccountIo.withdraw(account_id, amount)
 
     @staticmethod
+    def deposit(account_id, amount):
+        '''
+        向指定账户存一笔钱
+        @param account_id：账户编号
+        @param amount：存款数量
+        @return 成功或失败
+        @version v0.0.1 闫涛 2019-03-07
+        '''
+        return MAccountIo.deposit(account_id, amount)
+
+    @staticmethod
     def update_stock_amount(account_id, stock_amount):
         '''
         更新用户的股票资产，值为用户持股量乘以前一个交易日收盘价，可以直接取用户持股表的数值

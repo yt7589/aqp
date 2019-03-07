@@ -17,5 +17,11 @@ class TMAccountIo(unittest.TestCase):
         MAccountIo.withdraw(account_id, amount)
         self.assertTrue(True)
 
+    def test_deposit(self):
+        account_id = 1
+        amount = 10000
+        MAccountIo.deposit(account_id, amount)
+        self.assertTrue(True)
+
 if '__main__' == __name__:
     unittest.main()

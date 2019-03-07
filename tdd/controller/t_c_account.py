@@ -36,3 +36,9 @@ class TCAccount(unittest.TestCase):
             self.assertTrue(True)
         else:
             self.assertFalse(False)
+
+    def test_deposit(self):
+        account_id = 1
+        amount = 20000
+        rst = CAccount.deposit(account_id, amount)
+        self.assertTrue(rst)
