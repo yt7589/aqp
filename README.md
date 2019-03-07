@@ -1,36 +1,12 @@
 # aqp
 arxanfintech quant platform
-v0.0.1
 
-https://github.com/joshua-wu/deepfakes_faceswap
-
-c000021
-
-select close from t_stock_daily where stock_code='603912.SH' and state_dt>='20190101' and state_dt<'20190102';
-
-select close from t_stock_daily where stock_code='603912.SH' and state_dt>='2018-12-31 00:00:00' and state_dt<'2019-01-01 00:00:00';
+股票量化交易研究平台
+通常研究股票量化交易研究是在宽客网站中进行，但是宽客网站仅提供基本的Python编程环境，如numpy、pandas、matplotlib等，这对于进行一般的策略研究是非常方便的，但是如果要进行深度学习的策略研究，由于这些平台不支持TensorFlow或PyTorch，所以不能进行深度学习策略研究。实际上，基于深度学习的量化交易策略研究，还没有成为一种主流的量化交易技术。本平台旨在本地搭建一个完整的股票量化交易研究平台，可以使用TensorFlow等深度学习框架，进行量化交易策略研究，支持完整的回测，用于评估策略的优劣。
 
 
 
 
-        '''
-        
-        
-        @version v0.0.1 闫涛 2019-03-04
-        '''
-
-
-select close from t_stock_daily where stock_code='603912.SH' and state_dt>='20190214' and state_dt<'20190215';
-
-MGQHttpHelper.m Ln142
-
-urlStr	__NSCFString *	@"http://192.168.199.128:8090/api/v1/getAllowWithdraw"	0x0000600001ed0150
-
-创建ProxyApi类，使用该类的请求均访问proxy
-创建getAllowWithdraw请求：
-1 ApiServer.getAllowWithdraw
-2 创建GetAllowWithdrawRepository类，在其中使用ProxyApi
-3 
 
 
 
