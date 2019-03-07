@@ -40,7 +40,7 @@ class StockBacktest(object):
         # 增加股票资产
         hold_vol = CUserStock.get_user_stock_vol(user_id, stock_id)
         CAccount.update_stock_amount(account_id, hold_vol*close_price)
-        print('买入股票 hold_vol={0}'.format(hold_vol))
+        print('回测引擎之买入股票')
 
 
 
