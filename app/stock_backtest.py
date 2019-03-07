@@ -65,7 +65,7 @@ class StockBacktest(object):
         # 更新股票资产
         hold_vol = CUserStock.get_user_stock_vol(user_id, stock_id)
         CAccount.update_stock_amount(account_id, hold_vol*close_price)
-        print('回测引擎之卖出股票 v0.0.1')
+        print('回测引擎之卖出股票')
 
 
 
