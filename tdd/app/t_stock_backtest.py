@@ -35,3 +35,10 @@ class TStockBacktest(unittest.TestCase):
                     len(stock_vo['train_x']), len(stock_vo['test_x']))
         )
         self.assertTrue(True)
+
+    def test_get_stocks(self):
+        sbt = StockBacktest()
+        start_dt, end_dt = '20180101', '20181231'
+        stocks = sbt.get_stocks(start_dt, end_dt)
+        for stock in stocks:
+            print('{0} {1}:{2}'.format(stock['stock_id'], stock['ts_code'], len(stock['train_x'])))

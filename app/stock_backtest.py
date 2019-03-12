@@ -69,9 +69,18 @@ class StockBacktest(object):
 
 
     def get_stocks(self, start_dt, end_dt):
+        '''
+        获取股票池中股票的基本信息、均值、方差、训练样本集、验证样本集和测试样本集
+        @param start_dt：开始时间
+        @param end_dt：结束时间
+        @return 股票池中股票信息列表
+        @version v0.0.1 闫涛 2019-03-12
+        '''
         stocks = []
         stock_vo = self.get_stock_vo(69, '603912.SH', start_dt, end_dt)
         stocks.append(stock_vo)
+        #stock_vo = self.get_stock_vo(1569, '300666.SZ', start_dt, end_dt)
+        #stocks.append(stock_vo)
         return stocks
     
     def get_stock_vo(self, stock_id, ts_code, start_dt, end_dt):
