@@ -68,20 +68,44 @@ class StockBacktest(object):
         print('回测引擎之卖出股票')
 
 
+    def get_stocks(self, start_dt, end_dt):
+        stocks = []
+        stock_vo = self.get_stock_vo(69, '603912.SH', start_dt, end_dt)
+        stocks.append(stock_vo)
+        return stocks
+    
+    def get_stock_vo(self, stock_id, ts_code, start_dt, end_dt):
+        '''
+        获取单支股票的基本信息和数据集
+        @param stock：股票编号
+        @param ts_code；股票编码
+        @param start_dt：开始日期
+        @param end_dt：结束日期
+        @return 返回股票基本信息，均值、方差和训练样本集、验证样本集、测试样本集
+        @version v0.0.1 闫涛 2019.03.12
+        '''
+        stock_vo = {'stock_id': stock_id, 'ts_code': ts_code}
+        # 求出均值和方差
+        stock_vo['mus'], stock_vo['stds'] = StockDailySvmModelEvaluator\
+                        .get_mean_stds(ts_code, start_dt, end_dt)
+        stock_vo['train_x'], stock_vo['train_y'], \
+                    stock_vo['validate_x'], stock_vo['validate_y'], \
+                    stock_vo['test_x'] = CStockDaily.\
+                        generate_stock_daily_ds(ts_code, start_dt, end_dt)
+        return stock_vo
 
     def startup(self):
         print('股票回测研究平台 v0.0.2')
         account_id = 1
-        # 选定股票
-        stock_id = 69 # 603912.SH
-        ts_code = '603912.SH'
         # 求出已知数据均值和方差
         start_dt = '20180101'
         end_dt = '20181231'
-        mus, stds = StockDailySvmModelEvaluator.get_mean_stds(
-                    ts_code, start_dt, end_dt
-        )
-        CStockDaily.generate_stock_daily_ds(ts_code, start_dt, end_dt)
+
+        stocks = self.get_stocks(start_dt, end_dt)
+
+    def org_code(self):
+        pass
+        '''
         StockDailySvmModelEvaluator.normalize_datas(CStockDaily.train_x, mus, stds)        
         StockDailySvmModelEvaluator.normalize_datas(CStockDaily.test_x, mus, stds)
         # 将2019年第一个交易日作为当前数据作为测试数据
@@ -149,6 +173,7 @@ class StockBacktest(object):
                 today = date.today()
                 if next_date >= today:
                     break
+        '''
         
 
 

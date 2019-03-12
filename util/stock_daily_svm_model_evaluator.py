@@ -106,7 +106,8 @@ class StockDailySvmModelEvaluator(object):
         print('precision:{0}; recall:{1}; f1:{2} tp={3}; '
                     'fp={4}; fn={5}'.format(precision, 
                     recall, f1, tp, fp, fn))
-        
+
+    @staticmethod 
     def get_mean_stds(ts_code, start_dt, end_dt):
         ''' 求出训练样本集中开盘价、最高价、最低价、
         收盘价、前日收盘价、涨跌量、涨跌幅、交易量、金额的均值和标准差
@@ -122,19 +123,12 @@ class StockDailySvmModelEvaluator(object):
             StockDailySvmModelEvaluator.open_idx, 
             row_num
         )
-        print('v0.0.1: open:{0} {1}'.format(
-                mus[StockDailySvmModelEvaluator.open_idx], 
-                stds[StockDailySvmModelEvaluator.open_idx])
-        )
         # high
         StockDailySvmModelEvaluator.get_mean_std(
             mus, stds,
             CStockDaily.train_x, 
             StockDailySvmModelEvaluator.high_idx, 
             row_num
-        )
-        print('high: {0}, {1}'.format(mus[StockDailySvmModelEvaluator.high_idx],
-                    stds[StockDailySvmModelEvaluator.high_idx])
         )
         # low
         StockDailySvmModelEvaluator.get_mean_std(
@@ -143,18 +137,12 @@ class StockDailySvmModelEvaluator(object):
             StockDailySvmModelEvaluator.low_idx, 
             row_num
         )
-        print('low: {0}, {1}'.format(mus[StockDailySvmModelEvaluator.low_idx],
-                    stds[StockDailySvmModelEvaluator.low_idx])
-        )
         # close
         StockDailySvmModelEvaluator.get_mean_std(
             mus, stds,
             CStockDaily.train_x, 
             StockDailySvmModelEvaluator.close_idx, 
             row_num
-        )
-        print('close: {0}, {1}'.format(mus[StockDailySvmModelEvaluator.close_idx],
-                    stds[StockDailySvmModelEvaluator.close_idx])
         )
         # pre_close
         StockDailySvmModelEvaluator.get_mean_std(
@@ -163,18 +151,12 @@ class StockDailySvmModelEvaluator(object):
             StockDailySvmModelEvaluator.pre_close_idx, 
             row_num
         )
-        print('pre_close: {0}, {1}'.format(mus[StockDailySvmModelEvaluator.pre_close_idx],
-                    stds[StockDailySvmModelEvaluator.pre_close_idx])
-        )
         # amt_chg
         StockDailySvmModelEvaluator.get_mean_std(
             mus, stds,
             CStockDaily.train_x, 
             StockDailySvmModelEvaluator.amt_chg_idx, 
             row_num
-        )
-        print('amt_chg: {0}, {1}'.format(mus[StockDailySvmModelEvaluator.amt_chg_idx],
-                    stds[StockDailySvmModelEvaluator.amt_chg_idx])
         )
         # pct_chg
         StockDailySvmModelEvaluator.get_mean_std(
@@ -183,18 +165,12 @@ class StockDailySvmModelEvaluator(object):
             StockDailySvmModelEvaluator.pct_chg_idx, 
             row_num
         )
-        print('pct_chg: {0}, {1}'.format(mus[StockDailySvmModelEvaluator.pct_chg_idx],
-                    stds[StockDailySvmModelEvaluator.pct_chg_idx])
-        )
         # vol
         StockDailySvmModelEvaluator.get_mean_std(
             mus, stds,
             CStockDaily.train_x, 
             StockDailySvmModelEvaluator.vol_idx, 
             row_num
-        )
-        print('vol: {0}, {1}'.format(mus[StockDailySvmModelEvaluator.vol_idx],
-                    stds[StockDailySvmModelEvaluator.vol_idx])
         )
         # amount
         StockDailySvmModelEvaluator.get_mean_std(
@@ -203,12 +179,9 @@ class StockDailySvmModelEvaluator(object):
             StockDailySvmModelEvaluator.amount_idx, 
             row_num
         )
-        print('amount: {0}, {1}'.format(
-                    mus[StockDailySvmModelEvaluator.amount_idx],
-                    stds[StockDailySvmModelEvaluator.amount_idx])
-        )
         return mus, stds
-        
+
+    @staticmethod   
     def get_mean_std(mus, stds, x, idx, count):
         ''' 获取开盘价、最高价、最低价等单独列的均值和标准差 '''
         data = x[:, idx:idx+1].reshape(count)

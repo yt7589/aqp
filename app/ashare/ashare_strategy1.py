@@ -1,9 +1,12 @@
 import numpy as np
+from controller.c_stock_daily import CStockDaily
 
 '''
 策略类
 '''
 class AshareStrategy1(object):
+    models = []
+    
     def __init__(self):
         self.name = 'AshareStrategy1'
 
@@ -22,3 +25,20 @@ class AshareStrategy1(object):
         buy_shares = int(shares)
         buy_money = int(buy_shares * price * 100)
         return buy_shares
+
+    @staticmethod
+    def initialize():
+        '''
+        初始化预测模型
+        @version v0.0.1 闫涛 2019-03-08
+        '''
+        pass
+
+    @staticmethod
+    def run():
+        '''
+        以每天的行情数据作为输入，根据量化交易模型，决定指定股票的买入或卖出，以及
+        买入或卖出的数量
+        @version v0.0.1 闫涛 2019-03-08
+        '''
+        pass

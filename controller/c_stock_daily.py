@@ -50,6 +50,14 @@ class CStockDaily(object):
         
     @staticmethod
     def generate_stock_daily_ds(stock_code, start_dt, end_dt):
+        '''
+        求出并返回指定股票在指定时间段的训练样本集、验证样本集、试验样本集
+        @param stock_code：股票编码
+        @param start_dt：开始时间
+        @param end_dt：结束时间
+        @return 训练样本集、验证样本集、测试样本集
+        @author v0.0.2 闫涛 2019-03-12 作适用于策略引擎的修改
+        '''
         rc, rows = MStockDaily.get_stock_daily(stock_code, start_dt, end_dt)
         train_x = []
         train_y = []
@@ -65,7 +73,8 @@ class CStockDaily(object):
                 train_y.append(0)
         CStockDaily.train_x = np.array(train_x)
         CStockDaily.train_y = np.array(train_y)
-        v1 = np.array(train_y)
+        validate_x = np.array([])
+        validate_y = np.array([])
         test_x = [[
             float(rows[rc-1][1]), 
             float(rows[rc-1][2]), float(rows[rc-1][3]), 
@@ -73,9 +82,10 @@ class CStockDaily(object):
             float(rows[rc-1][6]), float(rows[rc-1][7]), 
             int(rows[rc-1][8]), float(rows[rc-1][9])
         ]]
-        CStockDaily.validate_x = np.array([])
-        CStockDaily.validate_y = np.array([])
+        CStockDaily.validate_x = validate_x
+        CStockDaily.validate_y = validate_y
         CStockDaily.test_x = np.array(test_x)
+        return train_x, train_y, validate_x, validate_y, test_x
         
     @staticmethod
     def get_stock_daily_from_db(ts_code, start_dt, end_dt):
