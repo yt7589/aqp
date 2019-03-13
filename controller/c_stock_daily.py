@@ -85,7 +85,9 @@ class CStockDaily(object):
         CStockDaily.validate_x = validate_x
         CStockDaily.validate_y = validate_y
         CStockDaily.test_x = np.array(test_x)
-        return train_x, train_y, validate_x, validate_y, test_x
+        return np.array(train_x), np.array(train_y), \
+                validate_x, validate_y, \
+                np.array(test_x)
         
     @staticmethod
     def get_stock_daily_from_db(ts_code, start_dt, end_dt):
