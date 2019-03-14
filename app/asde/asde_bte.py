@@ -12,6 +12,7 @@ from controller.c_account import CAccount
 from controller.c_stock import CStock
 from controller.c_user_stock import CUserStock
 from app.asde.asde_ds import AsdeDs
+from app.asde.ml.asde_svm import AsdeSvm
 
 class AsdeBte(object):
     def startup(self):
@@ -22,6 +23,35 @@ class AsdeBte(object):
         end_dt = '20181231'
         # 获取股票池
         stocks = self.get_stocks(start_dt, end_dt)
+        # 训练初始模型
+        for stock in stocks:
+            stock['svm'] = AsdeSvm()
+            stock['svm'].train(stock['train_x'], stock['train_y'])
+        print('svm:{0}'.format(stocks[0]['svm']))
+        test_x = [stocks[0]['train_x'][0]]
+        rst = stocks[0]['svm'].predict(test_x)
+        print('预测结果：{0}'.format(rst))
+        i_debug = 1
+        if 1 == i_debug:
+            return
+        # 开始进行回测
+        backtest_date = date(2019, 1, 1)
+        BT_DAYS = 365 * 100
+        for i in range(BT_DAYS):
+            next_date = backtest_date + timedelta(days=i+1)
+            for stock in stocks:
+                rc, rows = CStockDaily.get_stock_daily_from_db(stock[0], 
+                    '{0}'.format(backtest_date), '{0}'.format(next_date))
+                while rc < 1 or rows is None:
+                    backtest_date = next_date
+                    next_date = backtest_date + timedelta(days=i+1)
+                    rc, rows = CStockDaily.get_stock_daily_from_db(stock[0], 
+                                '{0}'.format(backtest_date), 
+                                '{0}'.format(next_date))
+                # 将单支股票行情数据传给策略类
+            # 调用策略类决定买入卖出股票
+            backtest_date = next_date
+
 
     def get_stocks(self, start_dt, end_dt):
         '''

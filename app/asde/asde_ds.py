@@ -64,41 +64,14 @@ class AsdeDs(object):
     @staticmethod
     def normalize_datas(datas, mus, stds):
         ''' 对开盘价、最高价、最低价、收盘价等进行归一化 '''
-        AsdeDs.normalize_data(datas, 
-                    AsdeDs.open_idx,
-                    mus, stds
-        )
-        AsdeDs.normalize_data(datas, 
-                    AsdeDs.high_idx,
-                    mus, stds
-        )
-        AsdeDs.normalize_data(datas, 
-                    AsdeDs.low_idx,
-                    mus, stds
-        )
-        AsdeDs.normalize_data(datas, 
-                    AsdeDs.close_idx,
-                    mus, stds
-        )
-        AsdeDs.normalize_data(datas, 
-                    AsdeDs.pre_close_idx,
-                    mus, stds
-        )
-        AsdeDs.normalize_data(datas, 
-                    AsdeDs.amt_chg_idx,
-                    mus, stds
-        )
-        AsdeDs.normalize_data(datas, 
-                    AsdeDs.pct_chg_idx,
-                    mus, stds
-        )
-        AsdeDs.normalize_data(datas, 
-                    AsdeDs.vol_idx,
-                    mus, stds
-        )
-        AsdeDs.normalize_data(datas, 
-                    AsdeDs.amount_idx,
-                    mus, stds
-        )
+        AsdeDs.normalize_data(datas, AsdeDs.open_idx, mus, stds)
+        AsdeDs.normalize_data(datas, AsdeDs.high_idx, mus, stds)
+        AsdeDs.normalize_data(datas, AsdeDs.low_idx, mus, stds)
+        AsdeDs.normalize_data(datas, AsdeDs.close_idx, mus, stds)
+        AsdeDs.normalize_data(datas, AsdeDs.pre_close_idx, mus, stds)
+        AsdeDs.normalize_data(datas, AsdeDs.amt_chg_idx, mus, stds)
+        AsdeDs.normalize_data(datas, AsdeDs.pct_chg_idx, mus, stds)
+        AsdeDs.normalize_data(datas, AsdeDs.vol_idx, mus, stds)
+        AsdeDs.normalize_data(datas, AsdeDs.amount_idx, mus, stds)
 
     

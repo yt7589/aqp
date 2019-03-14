@@ -2,6 +2,11 @@ import unittest
 from app.asde.asde_bte import AsdeBte
 
 class TAsdeBte(unittest.TestCase):
+    def test_startup(self):
+        asde_bte = AsdeBte()
+        asde_bte.startup()
+        self.assertTrue(True)
+
     def test_get_stock_vo(self):
         stock_id, ts_code, start_dt, end_dt = 69, '603912.SH',\
                     '20180101', '20181231'

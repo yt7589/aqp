@@ -636,9 +636,72 @@ buy\_shares是将要购买的股票数，这里使用了A股的第一个策略�
 每个应用在app下是一个目录，对于A股日线策略研究，对应的目录为asde。该类以startup为入口。
 \subsubsection{获取要研究的股票池}
 我们首先需要实现获取股票池中单一股票的信息，如下所示：
-每个应用如果需要处理数据集，可以通过相应的数据集类来实现。我们这里定义asde\_dataset类，在其中定义对数据集进行归一
+\lstset{language=PYTHON, caption={读出单支股票信息}, label={c000021}}
+\begin{lstlisting}
+# app.asde.asde_btn.py
+    def get_stock_vo(self, stock_id, ts_code, start_dt, end_dt):
+        '''
+        获取单支股票的基本信息和数据集
+        @param stock：股票编号
+        @param ts_code；股票编码
+        @param start_dt：开始日期
+        @param end_dt：结束日期
+        @return 返回股票基本信息，均值、方差和训练样本集、验证样本集、测试样本集
+        @version v0.0.1 闫涛 2019.03.12
+        '''
+        stock_vo = {'stock_id': stock_id, 'ts_code': ts_code}
+        # 求出均值和方差
+        stock_vo['train_x'], stock_vo['train_y'], \
+                    stock_vo['validate_x'], stock_vo['validate_y'], \
+                    stock_vo['test_x'] = CStockDaily.\
+                        generate_stock_daily_ds(ts_code, start_dt, end_dt)
+        stock_vo['mus'], stock_vo['stds'] = AsdeDs.get_mean_stds(stock_vo['train_x'])
+        # 对原始数据集进行归一化
+        AsdeDs.normalize_datas(stock_vo['train_x'], stock_vo['mus'], stock_vo['stds'])
+        return stock_vo
+\end{lstlisting}
+为了保证模型的效果，这里对原始数据进行了归一化，具体方法为减去均值然后再除以方差，代码如下所示：
+\lstset{language=PYTHON, caption={数据集归一化}, label={c000022}}
+\begin{lstlisting}
+# app.asde.asde_ds.py
+    @staticmethod
+    def normalize_data(datas, idx, mus, stds):
+        ''' 归一化方法：减去均值再除以标准差 '''
+        datas[:, idx:idx+1] = (datas[:, idx:idx+1] - mus[idx]) / stds[idx]
+        
+    @staticmethod
+    def normalize_datas(datas, mus, stds):
+        ''' 对开盘价、最高价、最低价、收盘价等进行归一化 '''
+        AsdeDs.normalize_data(datas, AsdeDs.open_idx, mus, stds)
+        AsdeDs.normalize_data(datas, AsdeDs.high_idx, mus, stds)
+        AsdeDs.normalize_data(datas, AsdeDs.low_idx, mus, stds)
+        AsdeDs.normalize_data(datas, AsdeDs.close_idx, mus, stds)
+        AsdeDs.normalize_data(datas, AsdeDs.pre_close_idx, mus, stds)
+        AsdeDs.normalize_data(datas, AsdeDs.amt_chg_idx, mus, stds)
+        AsdeDs.normalize_data(datas, AsdeDs.pct_chg_idx, mus, stds)
+        AsdeDs.normalize_data(datas, AsdeDs.vol_idx, mus, stds)
+        AsdeDs.normalize_data(datas, AsdeDs.amount_idx, mus, stds)
+
+\end{lstlisting}
+每个应用如果需要处理数据集，可以通过相应的数据集类来实现。我们这里定义asde\_ds类，在其中定义对数据集进行归一
 化的方法，如下所示：
-依次获取股票池中的所有股票数据，就可以得到我们要研究的股票池：
+\lstset{language=PYTHON, caption={获取股票池信息}, label={c000023}}
+\begin{lstlisting}
+    def get_stocks(self, start_dt, end_dt):
+        '''
+        获取股票池中股票的基本信息、均值、方差、训练样本集、验证样本集和测试样本集
+        @param start_dt：开始时间
+        @param end_dt：结束时间
+        @return 股票池中股票信息列表
+        @version v0.0.1 闫涛 2019-03-12
+        '''
+        stocks = []
+        stock_vo = self.get_stock_vo(69, '603912.SH', start_dt, end_dt)
+        stocks.append(stock_vo)
+        #stock_vo = self.get_stock_vo(1569, '300666.SZ', start_dt, end_dt)
+        #stocks.append(stock_vo)
+        return stocks
+\end{lstlisting}
 
 
 
