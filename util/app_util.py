@@ -14,6 +14,11 @@ class AppUtil(object):
         return datetime.date.strftime(dt, df)
 
     @staticmethod
+    def get_today_obj():
+        time_str = time.strftime(AppUtil.DF_COMPACT, time.localtime())
+        return datetime.datetime.strptime(time_str, AppUtil.DF_COMPACT)
+
+    @staticmethod
     def get_delta_date(curr_date, delta, df=DF_COMPACT):
         '''
         获取指定日期前或后几天字符串

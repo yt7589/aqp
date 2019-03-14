@@ -1,4 +1,5 @@
 # A股日线环境回测引擎
+import time
 from datetime import date
 from datetime import timedelta
 import numpy as np
@@ -14,6 +15,7 @@ from controller.c_user_stock import CUserStock
 from app.asde.asde_ds import AsdeDs
 from app.asde.ml.asde_svm import AsdeSvm
 from util.app_util import AppUtil
+from app.asde.strategy.asde_strategy_1 import AsdeStrategy1
 
 class AsdeBte(object):
     def startup(self):
@@ -22,29 +24,17 @@ class AsdeBte(object):
         # 求出已知数据均值和方差
         start_dt = '20180101'
         end_dt = '20181231'
+        # 初始化策略
+        strategy = AsdeStrategy1()
         # 获取股票池
         stocks = self.get_stocks(start_dt, end_dt)
         # 训练初始模型
         for stock in stocks:
-            stock['svm'] = AsdeSvm()
-            stock['svm'].train(stock['train_x'], stock['train_y'])
+            strategy.setup_stock_ml_model(stock)
         # 开始进行回测
         backtest_date = date(2019, 1, 1)
-        BT_DAYS = 365 * 100
-        for i in range(BT_DAYS):
-            next_date = backtest_date + timedelta(days=i+1)
-            for stock in stocks:
-                rc, rows = CStockDaily.get_stock_daily_from_db(stock[0], 
-                    '{0}'.format(backtest_date), '{0}'.format(next_date))
-                while rc < 1 or rows is None:
-                    backtest_date = next_date
-                    next_date = backtest_date + timedelta(days=i+1)
-                    rc, rows = CStockDaily.get_stock_daily_from_db(stock[0], 
-                                '{0}'.format(backtest_date), 
-                                '{0}'.format(next_date))
-                # 将单支股票行情数据传给策略类
-            # 调用策略类决定买入卖出股票
-            backtest_date = next_date
+        # 运行回测引擎
+        self.run_engine(backtest_date)
 
     def run_engine(self, start_date):
         '''
@@ -52,17 +42,22 @@ class AsdeBte(object):
         @param start_date：开始回测日期
         @version v0.0.1 闫涛 2019-03-14
         '''
-        BT_DAYS = 7
+        BT_DAYS = 50000
         backtest_date = start_date
+        today = date.today() + timedelta(days=-1)
         for i in range(BT_DAYS):
-            next_date = backtest_date + timedelta(days=1)
+            if today <= backtest_date:
+                break
             # 求出当天的收收盘价，送到策略类中进行预测
+            # 求出next_date收盘价作为交易价格
+            next_date = backtest_date + timedelta(days=1)
             print('询价日：{0}; 交易日：{1}'.format(
                 AppUtil.format_date(backtest_date),
                 AppUtil.format_date(next_date)
             ))
-            # 求出next_date收盘价作为交易价格
             backtest_date = next_date
+
+    #def process_stock(self, stock, )
 
     def get_stocks(self, start_dt, end_dt):
         '''
