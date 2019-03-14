@@ -13,6 +13,7 @@ from controller.c_stock import CStock
 from controller.c_user_stock import CUserStock
 from app.asde.asde_ds import AsdeDs
 from app.asde.ml.asde_svm import AsdeSvm
+from util.app_util import AppUtil
 
 class AsdeBte(object):
     def startup(self):
@@ -27,13 +28,6 @@ class AsdeBte(object):
         for stock in stocks:
             stock['svm'] = AsdeSvm()
             stock['svm'].train(stock['train_x'], stock['train_y'])
-        print('svm:{0}'.format(stocks[0]['svm']))
-        test_x = [stocks[0]['train_x'][0]]
-        rst = stocks[0]['svm'].predict(test_x)
-        print('预测结果：{0}'.format(rst))
-        i_debug = 1
-        if 1 == i_debug:
-            return
         # 开始进行回测
         backtest_date = date(2019, 1, 1)
         BT_DAYS = 365 * 100
@@ -52,6 +46,23 @@ class AsdeBte(object):
             # 调用策略类决定买入卖出股票
             backtest_date = next_date
 
+    def run_engine(self, start_date):
+        '''
+        从开始日期开始，一直到当前日期为止
+        @param start_date：开始回测日期
+        @version v0.0.1 闫涛 2019-03-14
+        '''
+        BT_DAYS = 7
+        backtest_date = start_date
+        for i in range(BT_DAYS):
+            next_date = backtest_date + timedelta(days=1)
+            # 求出当天的收收盘价，送到策略类中进行预测
+            print('询价日：{0}; 交易日：{1}'.format(
+                AppUtil.format_date(backtest_date),
+                AppUtil.format_date(next_date)
+            ))
+            # 求出next_date收盘价作为交易价格
+            backtest_date = next_date
 
     def get_stocks(self, start_dt, end_dt):
         '''

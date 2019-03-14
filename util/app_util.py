@@ -10,6 +10,10 @@ class AppUtil(object):
         self.name = 'AppUtil'
 
     @staticmethod
+    def format_date(dt, df=DF_COMPACT):
+        return datetime.date.strftime(dt, df)
+
+    @staticmethod
     def get_delta_date(curr_date, delta, df=DF_COMPACT):
         '''
         获取指定日期前或后几天字符串

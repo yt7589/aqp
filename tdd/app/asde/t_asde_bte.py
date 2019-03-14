@@ -1,4 +1,6 @@
 import unittest
+from datetime import date
+from datetime import timedelta
 from app.asde.asde_bte import AsdeBte
 
 class TAsdeBte(unittest.TestCase):
@@ -6,6 +8,12 @@ class TAsdeBte(unittest.TestCase):
         asde_bte = AsdeBte()
         asde_bte.startup()
         self.assertTrue(True)
+
+    def test_run_engine(self):
+        backtest_date = date(2019, 1, 1)
+        asde_bte = AsdeBte()
+        asde_bte.run_engine(backtest_date)
+
 
     def test_get_stock_vo(self):
         stock_id, ts_code, start_dt, end_dt = 69, '603912.SH',\
