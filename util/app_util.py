@@ -14,6 +14,10 @@ class AppUtil(object):
         return datetime.date.strftime(dt, df)
 
     @staticmethod
+    def parse_date(dts, df=DF_COMPACT):
+        return datetime.datetime.strptime(dts, df)
+
+    @staticmethod
     def get_today_obj():
         time_str = time.strftime(AppUtil.DF_COMPACT, time.localtime())
         return datetime.datetime.strptime(time_str, AppUtil.DF_COMPACT)

@@ -16,5 +16,14 @@ class TCStockDaily(unittest.TestCase):
         print('收盘价：{0}'.format(close_price))
         self.assertTrue(True)
 
+    def test_get_daily_quotation(self):
+        ts_code = '603912.SH'
+        ask_date = AppUtil.parse_date('20181230')
+        trade_date, quotation = CStockDaily.get_daily_quotation(ts_code, ask_date)
+        print('trade_date:{0}'.format(trade_date))
+        print('quotation:{0}'.format(quotation))
+        self.assertTrue(True)
+
+
 if '__main__' == __name__:
     unittest.main()

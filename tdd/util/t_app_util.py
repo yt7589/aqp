@@ -20,3 +20,8 @@ class TAppUtil(unittest.TestCase):
         dt1 = AppUtil.change_date_compact_to_hyphen(dt)
         print('新格式：{0}'.format(dt1))
         self.assertTrue('2019-01-02'==dt1)
+
+    def test_parse_date(self):
+        dt = '20190101'
+        dt1 = AppUtil.parse_date(dt)
+        print('type:{0} --- {1}'.format(type(dt1), AppUtil.format_date(dt1)))

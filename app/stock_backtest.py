@@ -113,8 +113,10 @@ class StockBacktest(object):
         stocks = self.get_stocks(start_dt, end_dt)
 
     def org_code(self):
-        pass
-        '''
+        mus = None
+        stds = None
+        ts_code = ''
+        account_id = 1
         StockDailySvmModelEvaluator.normalize_datas(CStockDaily.train_x, mus, stds)        
         StockDailySvmModelEvaluator.normalize_datas(CStockDaily.test_x, mus, stds)
         # 将2019年第一个交易日作为当前数据作为测试数据
@@ -182,7 +184,6 @@ class StockBacktest(object):
                 today = date.today()
                 if next_date >= today:
                     break
-        '''
         
 
 

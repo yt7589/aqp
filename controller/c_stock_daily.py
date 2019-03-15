@@ -1,4 +1,5 @@
 import datetime
+from datetime import timedelta
 import numpy as np
 import tushare as ts
 import pymysql
@@ -92,6 +93,39 @@ class CStockDaily(object):
     @staticmethod
     def get_stock_daily_from_db(ts_code, start_dt, end_dt):
         return MStockDaily.get_stock_daily(ts_code, start_dt, end_dt)
+
+    @staticmethod
+    def get_daily_quotation(ts_code, ask_date):
+        '''
+        求出ask_date的行情数据，如果ask_date不是交易日，就取ask_date的下一个
+        交易日
+        @param ts_code：股票编码
+        @param ask_date：要查询的日期
+        @return 交易日（date类型）和行情数据
+        '''
+        next_date = ask_date + timedelta(days=1)
+        print('next_date:{0}'.format(AppUtil.format_date(next_date)))
+        rc, rows = CStockDaily.get_stock_daily_from_db(ts_code, 
+                        AppUtil.format_date(ask_date), 
+                        AppUtil.format_date(next_date))
+        while rc < 1 or rows is None:
+            ask_date = next_date
+            next_date = ask_date + timedelta(days=1)
+            rc, rows = CStockDaily.get_stock_daily_from_db(ts_code, 
+                        AppUtil.format_date(ask_date), 
+                        AppUtil.format_date(next_date))
+        print('rows;{0}'.format(rows[0]))
+        quotation = []
+        quotation.append(float(rows[0][1])) # open
+        quotation.append(float(rows[0][2]))
+        quotation.append(float(rows[0][3]))
+        quotation.append(float(rows[0][4]))
+        quotation.append(float(rows[0][5]))
+        quotation.append(float(rows[0][6]))
+        quotation.append(float(rows[0][7]))
+        quotation.append(float(rows[0][8]))
+        quotation.append(float(rows[0][9]))
+        return ask_date, np.array(quotation)
 
     @staticmethod
     def get_close(ts_code, dt):

@@ -57,7 +57,16 @@ class AsdeBte(object):
             ))
             backtest_date = next_date
 
-    #def process_stock(self, stock, )
+    def process_stocks_daily(self, stocks, backtest_date):
+        '''
+        求出backtest_date的行情数据，传递给策略类（历史数据由策略类自己维护），策略类根据业务
+        逻辑，返回买入卖出每支股票的数量，获取下一个交易日next_date的收盘价，执行相应的交易，
+        @param backtest_date：必须是具有行情数据的日期，由调用者保证
+        @return 下一个具有行情的交易日
+        @version v0.0.1 闫涛 2019-03-15
+        '''
+        next_date = None
+        return next_date
 
     def get_stocks(self, start_dt, end_dt):
         '''
