@@ -2,6 +2,7 @@ import unittest
 from datetime import date
 from datetime import timedelta
 from app.asde.asde_bte import AsdeBte
+from app.asde.strategy.asde_strategy_1 import AsdeStrategy1
 
 class TAsdeBte(unittest.TestCase):
     def test_startup(self):
@@ -10,9 +11,12 @@ class TAsdeBte(unittest.TestCase):
         self.assertTrue(True)
 
     def test_run_engine(self):
+        user_id = 1
+        account_id = 1
         backtest_date = date(2019, 1, 1)
         asde_bte = AsdeBte()
-        asde_bte.run_engine(backtest_date)
+        stocks = asde_bte.get_stocks('20180101', '20181231')
+        asde_bte.run_engine(user_id, account_id, stocks, backtest_date)
 
 
     def test_get_stock_vo(self):
@@ -42,3 +46,13 @@ class TAsdeBte(unittest.TestCase):
         stocks = asdeBte.get_stocks(start_dt, end_dt)
         for stock in stocks:
             print('{0} {1}:{2}'.format(stock['stock_id'], stock['ts_code'], len(stock['train_x'])))
+
+    def test_process_stocks_daily(self):
+        user_id = 1
+        account_id = 1
+        asde_bte = AsdeBte()
+        asde_bte.strategy = AsdeStrategy1()
+        stocks = asde_bte.get_stocks('20180101', '20181231')
+        for stock in stocks:
+            asde_bte.strategy.setup_stock_ml_model(stock)
+        asde_bte.process_stocks_daily(user_id, account_id, stocks, '20190101')

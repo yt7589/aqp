@@ -702,6 +702,48 @@ buy\_shares是将要购买的股票数，这里使用了A股的第一个策略�
         #stocks.append(stock_vo)
         return stocks
 \end{lstlisting}
+\subsubsection{训练模型}
+在上一步中，我们已经获取到了每支股票的训练样本集、验证样本集和测试样本集，接下来我们需要为
+每个股票训练一个机器学习模型，代码如下所示：
+\lstset{language=PYTHON, caption={训练svm模型}, label={c000024}}
+\begin{lstlisting}
+    # 训练初始模型
+    for stock in stocks:
+        stock['svm'] = AsdeSvm()
+        stock['svm'].train(stock['train_x'], stock['train_y'])
+    print('svm:{0}'.format(stocks[0]['svm']))
+    test_x = [stocks[0]['train_x'][0]]
+    rst = stocks[0]['svm'].predict(test_x)
+    print('预测结果：{0}'.format(rst))
+\end{lstlisting}
+\subsubsection{策略类}
+策略类负责训练机器学习模型，根据行情数据决定购买还是卖出，以具体数量，是量化交易平台的核心。在实际应用中会有
+多个策略类，客户根据自己的判断选择不同的策略类，形成系统的用户。\newline
+\lstset{language=PYTHON, caption={策略类之机器模型训练}, label={c000025}}
+\begin{lstlisting}
+# A股日线策略类
+class AsdeStrategy1(object):
+    def __init__(self):
+        self.name = 'AsdeStrategy1'
+
+    def setup_stock_ml_model(self, stock):
+        '''
+        初始化每支股票的机器学习模型，在本策略中使用支撑向量机
+        @param stock：股票值对象，有样本集
+        @version v0.0.1 闫涛 2019-03-15
+        '''
+        stock['svm'] = AsdeSvm()
+        stock['svm'].train(stock['train_x'], stock['train_y'])
+        print('svm:{0}'.format(stock['svm']))
+        test_x = [stock['train_x'][0]]
+        rst = stock['svm'].predict(test_x)
+        print('rst:{0}'.format(rst))
+
+# 在回测引擎中的调用
+# 训练初始模型
+for stock in stocks:
+    strategy.setup_stock_ml_model(stock)
+\end{lstlisting}
 
 
 

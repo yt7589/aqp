@@ -22,6 +22,7 @@ class AsdeBte(object):
     def startup(self):
         print('A股日线回测研究平台 v0.0.1')
         account_id = 1
+        user_id = 1
         # 求出已知数据均值和方差
         start_dt = '20180101'
         end_dt = '20181231'
@@ -35,9 +36,9 @@ class AsdeBte(object):
         # 开始进行回测
         backtest_date = AppUtil.parse_date('20190101') 
         # 运行回测引擎
-        self.run_engine(account_id, stocks, backtest_date)
+        self.run_engine(user_id, account_id, stocks, backtest_date)
 
-    def run_engine(self, account_id, stocks, start_date):
+    def run_engine(self, user_id, account_id, stocks, start_date):
         '''
         从开始日期开始，一直到当前日期为止
         @param start_date：开始回测日期
@@ -51,9 +52,9 @@ class AsdeBte(object):
                 break
             # 求出当天的收收盘价，送到策略类中进行预测
             # 求出next_date收盘价作为交易价格
-            backtest_date = self.process_stocks_daily(account_id, stocks, backtest_date)
+            backtest_date = self.process_stocks_daily(user_id, account_id, stocks, backtest_date)
 
-    def process_stocks_daily(self, account_id, stocks, backtest_date):
+    def process_stocks_daily(self, user_id, account_id, stocks, curr_date):
         '''
         求出backtest_date的行情数据，传递给策略类（历史数据由策略类自己维护），策略类根据业务
         逻辑，返回买入卖出每支股票的数量，获取下一个交易日next_date的收盘价，执行相应的交易，
@@ -61,19 +62,22 @@ class AsdeBte(object):
         @return 下一个具有行情的交易日，执行交易的日期
         @version v0.0.1 闫涛 2019-03-15
         '''
+        backtest_date = AppUtil.parse_date(curr_date)
         for stock in stocks:
             trade_date, quotation = CStockDaily.get_daily_quotation(
-                        stocks['ts_code'], backtest_date)
+                        stock['ts_code'], backtest_date)
             # 传给策略类做决策
-            direction, shares = self.strategy.run(account_id, stock, trade_date, quotation)
+            direction, vol = self.strategy.run(user_id, account_id, stock, trade_date, quotation)
+            next_date = trade_date + timedelta(days=1)
+            do_date, qvo = CStockDaily.get_daily_quotation(
+                        stock['ts_code'], next_date)
             if app_registry.ASDE_BTE_BUY == direction:
                 # 买入指定数量股票
-                pass
+                self.buy_stock(user_id, account_id, stock['ts_code'], do_date, vol)
             if app_registry.ASDE_BTE_SELL == direction:
                 # 卖出指定数量股票
-                pass
-        next_date = None
-        return next_date
+                self.sell_stock(user_id, account_id, stock['ts_code'], do_date, vol)
+        return do_date
 
     def get_stocks(self, start_dt, end_dt):
         '''
@@ -131,7 +135,7 @@ class AsdeBte(object):
         @param curr_date：指定日期
         @version v0.0.1 闫涛 2019-03-05
         '''
-        close_price = float(CStockDaily.get_real_close(ts_code, curr_date))
+        close_price = float(CStockDaily.get_real_close(ts_code, AppUtil.format_date(curr_date)))
         close_price = int(close_price * 100)
         cash_amount, _ = CAccount.get_current_amounts(account_id)
         buy_amount = buy_vol * close_price
@@ -143,7 +147,8 @@ class AsdeBte(object):
         CAccount.update_cash_amount(account_id, cash_amount - buy_amount)
         # 增加用户股票持有量
         stock_id = CStock.get_stock_id_by_ts_code(ts_code)
-        CUserStock.buy_stock_for_user(user_id, stock_id, buy_vol, close_price, curr_date)
+        CUserStock.buy_stock_for_user(user_id, stock_id, buy_vol, 
+                    close_price, AppUtil.format_date(curr_date))
         # 增加股票资产
         hold_vol = CUserStock.get_user_stock_vol(user_id, stock_id)
         CAccount.update_stock_amount(account_id, hold_vol*close_price)
@@ -158,7 +163,7 @@ class AsdeBte(object):
         @param trade_date：交易日期
         @param sell_vol：卖出数量
         '''
-        close_price = float(CStockDaily.get_real_close(ts_code, trade_date))
+        close_price = float(CStockDaily.get_real_close(ts_code, AppUtil.format_date(trade_date)))
         close_price = int(close_price * 100)
         cash_amount, _ = CAccount.get_current_amounts(account_id)
         sell_amount = sell_vol * close_price

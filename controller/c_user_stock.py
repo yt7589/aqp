@@ -46,10 +46,10 @@ class CUserStock(object):
         ts_code = stock_vo[0]
         rc, rows = MUserStock.get_user_stock_id(user_id, stock_id)
         user_stock_id = 0
+        close_price = CStockDaily.get_real_close(ts_code, buy_date)
+        close_price = int(close_price * 100)
         if rc <= 0:
             print('生成新记录并返回：购买日期：{0}'.format(buy_date))
-            close_price = CStockDaily.get_real_close(ts_code, buy_date)
-            close_price = int(close_price * 100)
             user_stock_id, _ = MUserStock.insert_user_stock(
                         user_id, stock_id, vol, close_price
             )

@@ -13,6 +13,7 @@ class TAsdeStrategy1(unittest.TestCase):
         self.assertTrue(True)
 
     def test_run(self):
+        user_id = 1
         account_id = 1
         start_dt = '20180101'
         end_dt = '20181231'
@@ -23,7 +24,8 @@ class TAsdeStrategy1(unittest.TestCase):
         trade_date = AppUtil.parse_date('20190102')
         quotation = np.array([1.3320000e+01, 1.3950000e+01, 1.3320000e+01, 1.3700000e+01, 1.3360000e+01,
  3.4000000e-01, 2.5449000e+00, 4.0978000e+04, 5.5958183e+04])
-        strategy.run(account_id, stock, trade_date, quotation)
+        direction, vol = strategy.run(user_id, account_id, stock, trade_date, quotation)
+        print('{0}    {1}'.format(direction, vol))
         self.assertTrue(True)
 
     def test_calculate_buy_vol(self):

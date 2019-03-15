@@ -3,6 +3,7 @@ import numpy as np
 import app_registry
 from app_registry import appRegistry as ar
 from controller.c_account import CAccount
+from controller.c_user_stock import CUserStock
 from app.asde.ml.asde_svm import AsdeSvm
 from app.asde.asde_ds import AsdeDs
 
@@ -26,7 +27,7 @@ class AsdeStrategy1(object):
         rst = stock['ml_model'].predict(test_x)
         print('rst:{0}'.format(rst))
 
-    def run(self, account_id, stock, trade_date, quotation):
+    def run(self, user_id, account_id, stock, trade_date, quotation):
         '''
         根据历史行情数据，决定买卖操作，并确定购买股数
         @param stock：股票对象
@@ -34,6 +35,7 @@ class AsdeStrategy1(object):
         @return direction：买卖方向；shares：股数
         @version v0.0.1 闫涛 2019-03-15
         '''
+        close_price = quotation[3] * 100
         stock['train_x'] = np.append(stock['train_x'], 
                     stock['test_x'], axis=0)
         if stock['train_x'][-1][3] / stock['train_x'][-2][3] > ar.increase_threshold:
@@ -49,7 +51,6 @@ class AsdeStrategy1(object):
         ]])
         stock['ml_model'].train(stock['train_x'], stock['train_y'])
         rst = stock['ml_model'].predict(stock['test_x'])
-        close_price = quotation[3]
         cash_amount, stock_amount = CAccount.get_current_amounts(account_id)
         if rst[0] > 0:
             # 买入股票
@@ -58,7 +59,9 @@ class AsdeStrategy1(object):
         else:
             # 卖出股票
             print('卖出股票')
-        return direction, 100
+            stock_vol = CUserStock.get_user_stock_vol(user_id, stock['stock_id'])
+            vol = self.calculate_sell_vol(stock_vol)
+        return direction, vol
 
     def calculate_buy_vol(self, cash_amount, price):
         '''
@@ -68,6 +71,7 @@ class AsdeStrategy1(object):
         @return 建议购买的股数
         @version v0.0.1 闫涛 2019-03-15
         '''
+        print('cash_amount={0}; price={1}; perce={2}'.format(cash_amount, price, self.cash_percent))
         plan_amount = int(cash_amount * self.cash_percent)
         return int(plan_amount / price)
 
