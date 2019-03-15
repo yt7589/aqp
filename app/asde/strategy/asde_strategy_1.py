@@ -10,6 +10,8 @@ from app.asde.asde_ds import AsdeDs
 class AsdeStrategy1(object):
     def __init__(self):
         self.name = 'AsdeStrategy1'
+        self.cash_percent = 0.1
+        self.stock_percent = 0.1
 
     def setup_stock_ml_model(self, stock):
         '''
@@ -51,8 +53,26 @@ class AsdeStrategy1(object):
         cash_amount, stock_amount = CAccount.get_current_amounts(account_id)
         if rst[0] > 0:
             # 买入股票
-            print('买入股票')
+            direction = app_registry.ASDE_BTE_BUY
+            vol = self.calculate_buy_vol(cash_amount, close_price)
         else:
             # 卖出股票
             print('卖出股票')
-        return app_registry.ASDE_BTE_BUY, 100
+        return direction, 100
+
+    def calculate_buy_vol(self, cash_amount, price):
+        '''
+        拿出当前现金资产10%来购买股票，计算出最多可购买的股数
+        @param cash_amount：现金资产总数
+        @param price：价格
+        @return 建议购买的股数
+        @version v0.0.1 闫涛 2019-03-15
+        '''
+        plan_amount = int(cash_amount * self.cash_percent)
+        return int(plan_amount / price)
+
+    def calculate_sell_vol(self, stock_vol):
+        '''
+        将持股量的10%卖出
+        '''
+        return int(stock_vol * self.stock_percent)

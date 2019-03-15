@@ -25,3 +25,16 @@ class TAsdeStrategy1(unittest.TestCase):
  3.4000000e-01, 2.5449000e+00, 4.0978000e+04, 5.5958183e+04])
         strategy.run(account_id, stock, trade_date, quotation)
         self.assertTrue(True)
+
+    def test_calculate_buy_vol(self):
+        cash_amount = 100000
+        price = 1280
+        strategy = AsdeStrategy1()
+        buy_vol = strategy.calculate_buy_vol(cash_amount, price)
+        self.assertEqual(buy_vol, 7)
+
+    def test_calculate_sell_vol(self):
+        stock_vol = 2832
+        strategy = AsdeStrategy1()
+        sell_vol = strategy.calculate_sell_vol(stock_vol)
+        self.assertEqual(sell_vol, 283)
