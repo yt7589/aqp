@@ -1,5 +1,8 @@
 # 保存程序所需全局变量
 
+ASDE_BTE_BUY = 1001 # 买入股票
+ASDE_BTE_SELL = 1002 # 卖出股票
+
 class AppRegistry(object):
     def __init__(self):
         self.name = 'AppRegistry'

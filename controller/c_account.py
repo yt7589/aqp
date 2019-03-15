@@ -20,7 +20,6 @@ class CAccount(object):
         @author 闫涛 2019-02-15 v0.0.1
         '''
         rc, rows = MAccount.get_current_amounts(account_id)
-        print('rows:{0} type:{1}'.format(rows, type(rows)))
         if rc > 0:
             return rows[0]
         else:

@@ -3,6 +3,7 @@ import time
 from datetime import date
 from datetime import timedelta
 import numpy as np
+import app_registry
 from app_registry import appRegistry as ar
 from controller.c_stock_daily import CStockDaily
 from controller.c_account import CAccount
@@ -25,18 +26,18 @@ class AsdeBte(object):
         start_dt = '20180101'
         end_dt = '20181231'
         # 初始化策略
-        strategy = AsdeStrategy1()
+        self.strategy = AsdeStrategy1()
         # 获取股票池
         stocks = self.get_stocks(start_dt, end_dt)
         # 训练初始模型
         for stock in stocks:
-            strategy.setup_stock_ml_model(stock)
+            self.strategy.setup_stock_ml_model(stock)
         # 开始进行回测
-        backtest_date = date(2019, 1, 1)
+        backtest_date = AppUtil.parse_date('20190101') 
         # 运行回测引擎
-        self.run_engine(backtest_date)
+        self.run_engine(account_id, stocks, backtest_date)
 
-    def run_engine(self, start_date):
+    def run_engine(self, account_id, stocks, start_date):
         '''
         从开始日期开始，一直到当前日期为止
         @param start_date：开始回测日期
@@ -50,21 +51,27 @@ class AsdeBte(object):
                 break
             # 求出当天的收收盘价，送到策略类中进行预测
             # 求出next_date收盘价作为交易价格
-            next_date = backtest_date + timedelta(days=1)
-            print('询价日：{0}; 交易日：{1}'.format(
-                AppUtil.format_date(backtest_date),
-                AppUtil.format_date(next_date)
-            ))
-            backtest_date = next_date
+            backtest_date = self.process_stocks_daily(account_id, stocks, backtest_date)
 
-    def process_stocks_daily(self, stocks, backtest_date):
+    def process_stocks_daily(self, account_id, stocks, backtest_date):
         '''
         求出backtest_date的行情数据，传递给策略类（历史数据由策略类自己维护），策略类根据业务
         逻辑，返回买入卖出每支股票的数量，获取下一个交易日next_date的收盘价，执行相应的交易，
         @param backtest_date：必须是具有行情数据的日期，由调用者保证
-        @return 下一个具有行情的交易日
+        @return 下一个具有行情的交易日，执行交易的日期
         @version v0.0.1 闫涛 2019-03-15
         '''
+        for stock in stocks:
+            trade_date, quotation = CStockDaily.get_daily_quotation(
+                        stocks['ts_code'], backtest_date)
+            # 传给策略类做决策
+            direction, shares = self.strategy.run(account_id, stock, trade_date, quotation)
+            if app_registry.ASDE_BTE_BUY == direction:
+                # 买入指定数量股票
+                pass
+            if app_registry.ASDE_BTE_SELL == direction:
+                # 卖出指定数量股票
+                pass
         next_date = None
         return next_date
 
