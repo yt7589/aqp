@@ -103,4 +103,18 @@ class CUserStock(object):
             hold_vol = rows[0][0]
         MUserStock.update_user_stock(user_id, stock_id, hold_vol-sell_vol, price)
         MUserStockIo.sell_user_stock(user_stock_id, sell_vol, price, trade_date)
+
+    @staticmethod
+    def get_user_stocks(user_id):
+        '''
+        获取当前用户持有的股票编号和数量
+        @param user_id：int 用户编号
+        @return [{stock_id, vol}]
+        @version v0.0.1 闫涛 2019-03-16
+        '''
+        rc, rows = MUserStock.get_user_stocks(user_id)
+        if rc > 1:
+            return rows
+        else:
+            return []
         

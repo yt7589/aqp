@@ -85,3 +85,15 @@ class MUserStock(object):
                     'stock_id=%s'
         params = (vol, price, vol*price, user_id, stock_id)
         return db.update(sql, params)
+
+    @staticmethod
+    def get_user_stocks(user_id):
+        '''
+        获取当前用户持有的股票编号和数量
+        @param user_id：int 用户编号
+        @return [{stock_id, vol}]
+        @version v0.0.1 闫涛 2019-03-16
+        '''
+        sql = 'select stock_id, hold_vol from t_user_stock where user_id=%s'
+        params = (user_id)
+        return db.query(sql, params)

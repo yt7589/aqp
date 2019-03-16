@@ -59,3 +59,9 @@ class TMUserStock(unittest.TestCase):
             self.assertTrue(True)
         else:
             self.assertFalse(False)
+
+    def test_get_user_stocks(self):
+        user_id = 1
+        rc, rows = MUserStock.get_user_stocks(user_id)
+        print(rows)
+        self.assertTrue(True)
