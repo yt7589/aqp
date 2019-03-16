@@ -3,6 +3,7 @@ import numpy as np
 import tushare as ts
 import pymysql
 from app_registry import appRegistry as ar
+from controller.c_user import CUser
 from model.m_account import MAccount
 from model.m_account_io import MAccountIo
 
@@ -83,6 +84,5 @@ class CAccount(object):
         '''
         将当前账户当前日期的资产情况写入资产历史表中，首先要以当前日期account_date的收盘价计算
         股票资产数值，然后更新t_account表，并写入t_account_hist表中
-
         '''
-        pass
+        user_id = CUser.get_user_id_of_account_id(account_id)
