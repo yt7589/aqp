@@ -77,3 +77,12 @@ class CAccount(object):
             return True
         else:
             return False
+
+    @staticmethod
+    def add_account_hist(account_id, account_date):
+        '''
+        将当前账户当前日期的资产情况写入资产历史表中，首先要以当前日期account_date的收盘价计算
+        股票资产数值，然后更新t_account表，并写入t_account_hist表中
+
+        '''
+        pass

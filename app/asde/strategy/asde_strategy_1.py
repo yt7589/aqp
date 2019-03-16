@@ -59,6 +59,7 @@ class AsdeStrategy1(object):
         else:
             # 卖出股票
             print('卖出股票')
+            direction = app_registry.ASDE_BTE_SELL
             stock_vol = CUserStock.get_user_stock_vol(user_id, stock['stock_id'])
             vol = self.calculate_sell_vol(stock_vol)
         return direction, vol

@@ -65,12 +65,14 @@ class AsdeBte(object):
         backtest_date = AppUtil.parse_date(curr_date)
         for stock in stocks:
             trade_date, quotation = CStockDaily.get_daily_quotation(
-                        stock['ts_code'], backtest_date)
+                        stock['ts_code'], backtest_date, CStockDaily.MODE_CLOSE_QUOTATION)
+            print('前一日行情：{0}'.format(trade_date))
             # 传给策略类做决策
             direction, vol = self.strategy.run(user_id, account_id, stock, trade_date, quotation)
             next_date = trade_date + timedelta(days=1)
             do_date, qvo = CStockDaily.get_daily_quotation(
-                        stock['ts_code'], next_date)
+                        stock['ts_code'], next_date, CStockDaily.MODE_TRADE_QUOTATION)
+            
             if app_registry.ASDE_BTE_BUY == direction:
                 # 买入指定数量股票
                 self.buy_stock(user_id, account_id, stock['ts_code'], do_date, vol)
