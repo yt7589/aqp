@@ -1,5 +1,5 @@
 import numpy as np
-import tensorflow as tf
+#import tensorflow as tf
 import matplotlib.pyplot as plt
 from ann.linear_regression import LinearRegression
 
@@ -7,6 +7,7 @@ class LinearRegressionEngine(object):
     def __init__(self):
         self.name = 'LinearRegressionEngine'
 
+'''
     def startup(self):
         # 生成测试数据
         self.generate_ds()
@@ -44,14 +45,6 @@ class LinearRegressionEngine(object):
         model = LinearRegression()
         model_output = model(xtf)
         loss = tf.losses.mean_squared_error(ytf, model_output)
-        '''
-        # use code 
-        grads = tf.gradients(loss, [model.w, model.b])
-        alpha = 0.001
-        update_w = tf.assign(model.w, model.w - alpha * grads[0])
-        update_b = tf.assign(model.b, model.b - alpha * grads[1])
-        update = tf.group(update_w, update_b)
-        '''
         update = tf.train.GradientDescentOptimizer(learning_rate=0.001).minimize(loss)
         init = tf.global_variables_initializer()
         with tf.train.MonitoredSession() as sess:
@@ -62,3 +55,4 @@ class LinearRegressionEngine(object):
         plt.scatter(self.xs, self.ys)
         plt.plot(self.xs, preds)
         plt.show()
+'''

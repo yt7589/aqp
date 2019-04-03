@@ -1,10 +1,11 @@
 import numpy as np
-import tensorflow as tf
+#import tensorflow as tf
 
 class Learn(object):
     def __init__(self):
         self.name = 'Learn'
 
+'''
     def startup(self):
         #self.test_cond()
         #self.while_loop()
@@ -87,3 +88,6 @@ class FibonacciCell(object):
     
     def initial_state(self, batch_size, dtype):
         return self.zero_state(batch_size, dtype)
+        
+        
+'''

@@ -1,5 +1,7 @@
+import sys
+sys.path.append('./core')
 import numpy as np
-import tensorflow as tf
+#import tensorflow as tf
 from app_registry import appRegistry as ar
 from controller.c_stock import CStock
 from controller.c_stock_daily import CStockDaily
@@ -13,6 +15,8 @@ from util.learn import Learn
 from app.stock_backtest import StockBacktest
 from controller.c_account import CAccount
 
+import app.qst as qst
+
 
 
 def call_stock_backtest():
@@ -20,7 +24,8 @@ def call_stock_backtest():
     stock_backtest.startup()
 
 def startup():
-    call_stock_backtest()
+    qst.startup()
+    #call_stock_backtest()
     #test_get_amounts()
 
 
