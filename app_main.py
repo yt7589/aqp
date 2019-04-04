@@ -25,6 +25,9 @@ def call_stock_backtest():
 
 def startup():
     qh.startup()
+    
+    
+    
     #call_stock_backtest()
     #test_get_amounts()
 
