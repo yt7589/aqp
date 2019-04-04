@@ -15,7 +15,7 @@ from util.learn import Learn
 from app.stock_backtest import StockBacktest
 from controller.c_account import CAccount
 
-import app.qst as qst
+import app.qh.qh_main as qh
 
 
 
@@ -24,7 +24,7 @@ def call_stock_backtest():
     stock_backtest.startup()
 
 def startup():
-    qst.startup()
+    qh.startup()
     #call_stock_backtest()
     #test_get_amounts()
 
