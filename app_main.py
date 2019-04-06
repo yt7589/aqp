@@ -16,6 +16,7 @@ from app.stock_backtest import StockBacktest
 from controller.c_account import CAccount
 
 import app.qh.qh_main as qh
+import app.pqb.pqb_main as pqb
 
 
 
@@ -24,7 +25,8 @@ def call_stock_backtest():
     stock_backtest.startup()
 
 def startup():
-    qh.startup()
+    #qh.startup()
+    pqb.startup()
     
     
     

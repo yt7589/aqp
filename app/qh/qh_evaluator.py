@@ -17,7 +17,7 @@ class QhEvaluator(object):
             x = []
             next(fd)
             for row in rows:
-                if len(row) > 0 and 'AGG'==row[1] and 'BOT'==row[2]:
+                if len(row) > 0 and 'SPY'==row[1] and 'BOT'==row[2]:
                     prices.append(float(row[5]))
                     
             for idx in range(1, len(prices)):
