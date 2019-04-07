@@ -126,7 +126,7 @@
 \begin{abstract}
 在本章中我们将讨论时间序列的基本特性，包括自相关性和平稳性。
 \end{abstract}
-\section{自相关性}
+\section{时间序列基本特性}
 时间序列的自相关性是指时间序列过去与未来存在某种关系，是我们时间序列预测的基础。主要用自协方差函数（Autocovariance Function, AF）、自相关系数函数（Autocorrelation Coefficent Function, ACF）和偏自相关系数函数（Partial Autocorrelation Coefficient Function, PACF）来描述。
 \subsection{随机变量统计量}
 随机变量X其取值为$x$的均值定义为：
@@ -460,7 +460,7 @@ x_{t}=w_{1} + w_{2} + ... + w_{t-1} + w_{t}
 \end{center}
 \begin{abstract}
 在本章中我们将首先讲述自回归模型AR(p)，接着讲述移动平均MA(q)，最后讲解ARMA(p,q)，然后将其泛化为ARIMA(p,d,q)，
-分别将这些模型用于实际金融时间序列数据拟合。chp024
+分别将这些模型用于实际金融时间序列数据拟合。aqt001.py
 \end{abstract}
 \section{ARIMA模型}
 \subsection{稳定性和模型选择标准}
@@ -503,7 +503,7 @@ x_{t}=\alpha _{1}x_{t-1} + \alpha _{2}x_{t-2} + ... + \alpha _{p}x_{t-p} + w_{t}
 然后依此类推，可以求出其后n个时间点的预测值。
 \subsubsection{二阶特性}
 我们首先定义特性方程：
-begin{equation}
+\begin{equation}
 \theta _{p}(B)=0
 \label{e000028}
 \end{equation}
@@ -528,16 +528,125 @@ $\theta _2(B)=\frac{1}{2}(1-B)(B+2)=0$，则其解为$B=1,-2$，其中一个解�
 \end{aligned}
 \label{e000029}
 \end{equation}
-\subsubsection{相关图}
 \subsubsection{模拟数据}
-\subsubsection{金融数据拟合}
-\subsubsection{预测}
+下面我们来模拟一个AR(2)的时间序列，我们的数据生成和拟合代码如下所示：
+\lstset{language=PYTHON, caption={AR数据模拟和拟合示例}, label={c000004}}
+\begin{lstlisting}
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+from matplotlib.font_manager import FontProperties
+from statsmodels.tsa import stattools
+from statsmodels.graphics import tsaplots
+from statsmodels.tsa.arima_model import ARIMA
 
+class Aqt001(object):
+    def __init__(self):
+        self.name = 'Aqt001'
+        
+    def startup(self):
+        print('ARMA模型...')
+        self.simulate_ar2()
+        
+    def simulate_ar2(self):
+        print('模拟AR(2)')
+        alpha1 = 0.666
+        alpha2 = -0.333
+        wt = np.random.standard_normal(size=1000)
+        x = wt
+        for t in range(2, len(wt)):
+            x[t] = alpha1 * x[t-1] + alpha2 * x[t-2] + wt[t]
+        plt.plot(x, c='b')
+        plt.show()
+        ar2 = stattools.ARMA(x, (2, 0)).fit(disp=False)
+        print('p={0} **** {1}; q={2}***{3}; {4} - {5} - {6}'.format(
+                    ar2.k_ar, ar2.arparams, ar2.k_ma, ar2.maparams, 
+                    ar2.aic, ar2.bic, ar2.hqic)
+        )
+        arima2_0_0 = ARIMA(x, order=(2, 0, 0)).fit(disp=False)
+        print('ARIMA: p={0} **** {1}; q={2}***{3}; {4} - {5} - {6}'. \
+                    format(arima2_0_0.k_ar, arima2_0_0.arparams, 
+                    arima2_0_0.k_ma, arima2_0_0.maparams, 
+                    arima2_0_0.aic, arima2_0_0.bic, 
+                    arima2_0_0.hqic)
+        )
+        resid = arima2_0_0.resid
+        # 绘制ACF
+        acfs = stattools.acf(resid)
+        print(acfs)
+        tsaplots.plot_acf(resid, use_vlines=True, lags=30)
+        plt.title('ACF figure')
+        plt.show()
+        pacfs = stattools.pacf(resid)
+        print(pacfs)
+        tsaplots.plot_pacf(resid, use_vlines=True, lags=30)
+        plt.title('PACF figure')
+        plt.show()
+\end{lstlisting}
+我们首先生成一个1000个数据点的均值为0方差为1的白噪声数据，然后根据$x_{t}=\alpha _{1}x_{t-1} + \alpha _{2}x_{t-2} + w_{t}=0.666 \times x_{t-1} - 0.333 \times x_{t-2} + w_{t}$公式，生成拟合数据。我们绘制该模拟数据图像，接着我们分别用ARMA和ARIMA进行拟合，求出系数，然后计算出模拟选择的参数：AIC、BIC、HQIC的值，最后我们求出模型拟合的残差，并绘制出残差自相关系数函数ACF和偏自相关系数函数PACF的图像。
+模拟数据图像为：
+\begin{figure}[H]
+	\caption{AR2模拟生成数据图}
+	\label{f000013}
+	\centering
+	\includegraphics[height=5cm]{images/f000013}
+\end{figure}
+无论是ARMA还是ARIMA拟合，我们都可以得到较为正确的数据，同时残差的ACF和PACF也表明其是白噪声序列，运行结果如下所示：
+\begin{figure}[H]
+	\caption{程序运行结果}
+	\label{f000014}
+	\centering
+	\includegraphics[height=5cm]{images/f000014}
+\end{figure}
+残差的自相关系数函数ACF图：
+\begin{figure}[H]
+	\caption{残差的自相关系数函数ACF图}
+	\label{f000015}
+	\centering
+	\includegraphics[height=5cm]{images/f000015}
+\end{figure}
+残差的偏自相关系数函数PACF图：
+\begin{figure}[H]
+	\caption{残差的偏自相关系数函数PACF图}
+	\label{f000016}
+	\centering
+	\includegraphics[height=5cm]{images/f000016}
+\end{figure}
+由ACF和PACF图可以看出，我们残差是比较典型的随机白噪声序列，由此可见我们拟合还是很好的。
+\subsubsection{展望}
+在理解了基本理论之后，我们将引入最终的ARIMA模型，并用ARIMA模型来拟合真实上证综指收盘价时间序列，并用我们的拟合模型来预测最后5日的收盘价，在这个实际例子中，看我们模型的表现如何。
+\subsection{ARIMA模型}
+\subsubsection{背景}
+我们不仅可以对当前时间点数值对之前时间点数值进行建模，我们也可以对前面时间点随机噪声对当前时间点的影响进行建模，同时由于原始信号可能非常不平稳，但是我们求出其差值序列后，可能就变为平稳序列了，这就是ARIMA模型要解决的问题。为了讨论ARIMA模型，我们首先介绍差分的概念：
+\begin{equation}
+\begin{aligned}
+\{ x_1,x_2,...,x_N \} \\
+\{d_1^{1},d_2^{1},...,d_{N-1}^{1}\}=\{x_2-x_1,x_3-x_2,...,x_{N}-x_{N-1}\} \\
+\{d_1^{2},d_2^{2},...,d_{N-1}^{2}\}=\{d_2^{1}-d_1^{1},d_3^{1}-d_2^{1},...,d_{N-1}^{1}-d_{N-1}^{1}\}
+\end{aligned}
+\label{e000030}
+\end{equation}
+上式中分别为原始时序信号，然后是一阶差分和二阶差分。
+\subsubsection{模型选择标准}
+\paragraph{BIC定义}
+我们已经介绍过一个模型选择标准AIC（Akaike Information Criterion），其会惩罚参数多的模型，因为这些模型容易产生过拟合（Overfitting）。接下来我们要介绍另一个模型选择参数BIC（Bayes Information Criterion），与AIC相比，其会更倾向于惩罚参数多的模型，同样是值越小越好，BIC定义如下所示：
+\begin{equation}
+BIC=-2\log (L) + k \log N
+\label{e000031}
+\end{equation}
+其中L为似然函数的最大值，k为模型的参数，N为数据点个数。
+\paragraph{Ljung-Box检测}
+我们的缺省假设为：对于一个拟合的时序信号，
+
+python的ARIMA：   https://www.colabug.com/3933896.html
+Ln125 Advanced Algorithmic Trading
 
 
 \section{汇总}
-c000004
-e000030
+f000014
+c000005
+e000032
 
 参考文献：
 \cite{ex1}---\cite{ex2}---\cite{refa001}
