@@ -459,7 +459,8 @@ x_{t}=w_{1} + w_{2} + ... + w_{t-1} + w_{t}
 \Large \textbf{第2章 ARIMA模型}
 \end{center}
 \begin{abstract}
-在本章中我们将首先讲述自回归模型AR(p)，接着讲述移动平均MA(q)，最后讲解ARMA(p,q)，然后将其泛化为ARIMA(p,d,q)，分别将这些模型用于实际金融时间序列数据拟合。
+在本章中我们将首先讲述自回归模型AR(p)，接着讲述移动平均MA(q)，最后讲解ARMA(p,q)，然后将其泛化为ARIMA(p,d,q)，
+分别将这些模型用于实际金融时间序列数据拟合。chp024
 \end{abstract}
 \section{ARIMA模型}
 \subsection{稳定性和模型选择标准}
@@ -475,16 +476,58 @@ AIC=-2\log(L) + 2k
 \end{equation}
 由式\ref{e000024}可知，最大似然值越大或者参数越少，AIC的值越小，模型就越是好模型。
 \subsection{自回归模型}
+\subsubsection{背景}
+我们可以扩展随机游走模型，使当前时间点数据不仅依赖前一时间点的值，同时还依赖前p个时间点的值，是这p个值的线性组合，
+这就得到了自回归模型。
+\subsubsection{模型定义}
 自回归模型AR(p)是随机游走模型的扩展，p阶自回归模型定义为：
 \begin{equation}
 x_{t}=\alpha _{1}x_{t-1} + \alpha _{2}x_{t-2} + ... + \alpha _{p}x_{t-p} + w_{t} = \sum_{i=1}^{p} \alpha _{i}x_{t-i} + w_{t}
 \label{e000025}
 \end{equation}
 其中$\{ w_{t} \}$为白噪声，$\alpha _{i} \in R$且$\alpha_{p} \ne 0$。\newline
-
-\subsubsection{背景}
-\subsubsection{模型定义}
+当$p=1$且$\alpha _{1}=1$时，自回归模型就退化为随机游走模型。\newline
+为后续讨论方便，我们定义如下运算符：
+\begin{equation}
+\theta _{p}(B)x_{t}=(1-\alpha _{1}B-\alpha _{2}B^{2}-...-\alpha _{p}B^{p})x_{t}=w_{t}
+\label{e000026}
+\end{equation}
+有了上述模型之后，我们就可以直接拿来作预测，如下所示：
+\begin{equation}
+\begin{aligned}
+    \hat{x}_t=\alpha _{1}x_{t-1}+\alpha _{2}x_{t-2}+...+\alpha _{p}x_{t-p} \\
+    \hat{x}_{t+1}=\alpha _{1}\hat{x}_{t}+\alpha _{2}x_{t-1}+...+\alpha _{p}x_{t-p+1}
+\end{aligned}
+\label{e000027}
+\end{equation}
+然后依此类推，可以求出其后n个时间点的预测值。
 \subsubsection{二阶特性}
+我们首先定义特性方程：
+begin{equation}
+\theta _{p}(B)=0
+\label{e000028}
+\end{equation}
+解这个方程得到的解的绝对值必须大于才是平稳序列。我们可以举几个实例，首先是随机游走序列：
+\paragraph{随机游走}
+根据定义$x_{t}=x_{t-1}+w_{t}$我们可以得到$\alpha _1=1$，其特性方程为$\theta=1-B=0$，其解为$B=1$，因为其解的
+绝对值不大于1，所以其不是平稳模型。
+\paragraph{1阶自回归}
+我们假设自回归模型为$x_{t}=\frac{1}{4}x_{t-1}+w_{t}$，其中$\alpha _1=\frac{1}{4}$，
+其特性方程为$\theta = 1-\frac{1}{4}=0$，其解为$B=4$，该解绝对值大于1，所以其是平稳模型。
+\paragraph{2阶自回归模型}
+我们假设自回归模型为$x_{t}=\frac{1}{2}x_{t-1}+\frac{1}{2}x_{t-2}+w_{t}$，其特性方程为
+$\theta _2(B)=\frac{1}{2}(1-B)(B+2)=0$，则其解为$B=1,-2$，其中一个解为单位根，其绝对值不大于1，因此本模型不是
+平稳模型。虽然本模型不是平稳模型，但是其他2阶自回归模型是完全有可能是平稳模型的。
+\paragraph{二阶特性}
+均值、自协方差、自相关系数定义如下所示：
+\begin{equation}
+\begin{aligned}
+\mu _{x}=E(x_{t})=0 \\
+\gamma _{k}=\sum_{i=1}^{p}\alpha _{i} \gamma _{k-i}, \quad k>0 \\
+\rho _{k} = \sum_{i=1}^{p}\alpha _{i} \rho _{k-i}, \quad k>0
+\end{aligned}
+\label{e000029}
+\end{equation}
 \subsubsection{相关图}
 \subsubsection{模拟数据}
 \subsubsection{金融数据拟合}
@@ -494,7 +537,7 @@ x_{t}=\alpha _{1}x_{t-1} + \alpha _{2}x_{t-2} + ... + \alpha _{p}x_{t-p} + w_{t}
 
 \section{汇总}
 c000004
-e000026
+e000030
 
 参考文献：
 \cite{ex1}---\cite{ex2}---\cite{refa001}
