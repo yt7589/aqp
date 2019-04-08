@@ -637,16 +637,159 @@ BIC=-2\log (L) + k \log N
 \end{equation}
 其中L为似然函数的最大值，k为模型的参数，N为数据点个数。
 \paragraph{Ljung-Box检测}
-我们的缺省假设为：对于一个拟合的时序信号，
+我们的缺省假设$H_{0}$为：对于一个拟合的时序信号，对所有滞后时点lags，都是独立同分布（i.i.d）的，即不存在相关性。\newline
+备择假设$H_{a}$为：这些信号不是独立同分布（i.i.d）的，具有相关性。\newline
+我们定义统计量Q：
+\begin{equation}
+Q=n(n+2)\sum_{k=1}^{h} \frac{\hat{\rho}_{k}^{2}}{n-k}
+\label{e000032}
+\end{equation}
+式\ref{e000032}中$n$为时间序列长度，$h$为最大滞后期数，$\rho _{k}$第$k$自相关系数。Ljung-Box检测原理比较复杂，但是在python语言中，经过运算可以求出Q值，以及大于Q值的概率，实际上我们看1$\sim$12滞后期的Q值和大于Q值的概率，如果该概率小于显著水平如0.05时，就拒绝缺省假设（不存在相关性），选择备择假设，否则反之。
+\subsubsection{定义}
+同时考虑之前时间点的信号和噪声值，我们就可以得到如下ARMA模型：
+\begin{equation}
+x_{t}=\alpha _{1}x_{t-1} + \alpha _{2}x_{t-2} + ... + \alpha _{p}x_{t-p} + w_{t} + \beta _1w_{t-1} + \beta _2w_{t-2}+...+ + \beta _{q}w_{t-q}
+\label{e000033}
+\end{equation}
+如果我们对欲研究的信号求出一阶或二阶差分，然后再利用式\ref{e000033}的模型，就是ARIMA模型了。其中$\{ w_{t} \}$为白噪声，其均值为0，方差为$\sigma ^{2}$。\newline
+其特性方程可以表示为：
+\begin{equation}
+\theta _{p}(B)x_{t}=\phi _{q}(B)w_{t}
+\label{e000034}
+\end{equation}
+由上面的讨论可以看出，AR(p)和MA(q)都是ARIMA模型的特殊情况，在同样精度的条件下，ARIMA模型所需参数最小。
+\subsubsection{数据仿真}
+在理解了ARIMA模型定义之后，我们来模拟一下ARIMA过程。假设我们要模拟的ARIMA模型为：
+\begin{equation}
+\begin{aligned}
+x_{t}=\alpha _{1}x_{t-1} + \alpha _{2}x_{t-2} + w_{t} + \beta _1w_{t-1} + \beta _2w_{t-2} \\
+=1.2 \times x_{t-1} - 0.7 \times x_{t-2} + w_{t} - 0.06 \times w_{t-1} - 0.02 \times w_{t-2}
+\end{aligned}
+\label{e000035}
+\end{equation}
+生成模拟数据并利用ARIMA拟合的程序如下所示：
+\lstset{language=PYTHON, caption={AR数据模拟和拟合示例}, label={c000005}}
+\begin{lstlisting}
+    def simulate_arima_p_d_q(self):
+        print('模拟ARIMA(p,d,q)过程')
+        np.random.seed(8)
+        alpha1 = 1.2
+        alpha2 = -0.7
+        beta1 = -0.06
+        beta2 = -0.02
+        w = np.random.standard_normal(size=1000)
+        x = w
+        for t in range(2, len(w)):
+            x[t] = alpha1 * x[t-1] + alpha2*x[t-2] + w[t] + beta1 * w[t-1] + beta2*w[t-2]
+        plt.plot(x, c='b')
+        plt.title('ARIMA(p, d, q) Figure')
+        plt.show()
+        # 查看ACF
+        acfs = stattools.acf(x)
+        print('ARIMA(q,d,q) ACFS:\r\n{0}'.format(acfs))
+        tsaplots.plot_acf(x, use_vlines=True, lags=30)
+        plt.title('ARIMA(p,d,q) ACF')
+        plt.show()
+        # ARIMA拟合
+        min_ABQIC = sys.float_info.max
+        arima_model = None
+        break_loop = False
+        '''
+        for p in range(0, 5):
+            if break_loop:
+                break
+            for q in range(0, 5):
+                print('try {0}, d, {1}...'.format(p, q))
+                try:
+                    arima_p_d_q = ARIMA(x, order=(p, 0, q)).fit(disp=False)
+                    print('..... fit ok')
+                    if arima_p_d_q.aic < min_ABQIC:
+                        print('..... record good model')
+                        min_ABQIC = arima_p_d_q.aic
+                        arima_model = arima_p_d_q
+                        #if 1==p and 1==q:
+                        #    break_loop = True
+                except Exception as ex:
+                    print('.....!!!!!! Exception')
+        print('ARIMA: p={0} **** {1}; q={2}***{3}; {4} - {5} - {6}'. \
+                    format(arima_model.k_ar, arima_model.arparams, 
+                    arima_model.k_ma, arima_model.maparams, 
+                    arima_model.aic, arima_model.bic, 
+                    arima_model.hqic)
+        )
+        '''
+        arima_model = ARIMA(x, order=(2, 0, 2)).fit(disp=False)
+        print('God_View:ARIMA: p={0} **** {1}; q={2}***{3}; {4} - {5} - {6}'. \
+                    format(arima_model.k_ar, arima_model.arparams, 
+                    arima_model.k_ma, arima_model.maparams, 
+                    arima_model.aic, arima_model.bic, 
+                    arima_model.hqic)
+        )
+        resid = arima_model.resid
+        # 绘制ACF
+        acfs = stattools.acf(resid)
+        print(acfs)
+        tsaplots.plot_acf(resid, use_vlines=True, lags=30)
+        plt.title('ARIMA(p,d,q) ACF figure')
+        plt.show()
+        pacfs = stattools.pacf(resid)
+        print(pacfs)
+        tsaplots.plot_pacf(resid, use_vlines=True, lags=30)
+        plt.title('ARIMA(p,d,q) PACF figure')
+        plt.show()
+\end{lstlisting}
+生成的时序信号x为：
+\begin{figure}[H]
+	\caption{原始模拟信号图}
+	\label{f000017}
+	\centering
+	\includegraphics[height=5cm]{images/f000017}
+\end{figure}
+该信号的自相关系数函数ACF图为：
+\begin{figure}[H]
+	\caption{原始模拟信号ACF图}
+	\label{f000018}
+	\centering
+	\includegraphics[height=5cm]{images/f000018}
+\end{figure}
+由图中可以看出，该信号具有非常强的自相关性。\newline
+接着我们用ARIMA模型来模拟该信号，上面程序注释部分为求最佳ARIMA模型的p和q参数，以AIC作为模型选择标准，因为我们知道模型为ARIMA(2,0,2)，所以我们同时也用ARIMA(2,0,2)来进行拟合，程序运行结果如下所示：
+\begin{figure}[H]
+	\caption{程序运行结果}
+	\label{f000019}
+	\centering
+	\includegraphics[height=5cm]{images/f000019}
+\end{figure}
+接着我们求出残差序列，残差序列自相关系数函数ACF图如下所示：
+\begin{figure}[H]
+	\caption{残差自相关系数函数ACF图}
+	\label{f000020}
+	\centering
+	\includegraphics[height=5cm]{images/f000020}
+\end{figure}
+残差序列偏自相关系数函数图PACF如下所示：
+\begin{figure}[H]
+	\caption{残差偏自相关系数函数ACF图}
+	\label{f000021}
+	\centering
+	\includegraphics[height=5cm]{images/f000021}
+\end{figure}
+由图中可以看出，残差序列基本上是白噪声信号。
+\subsubsection{金融数据拟合及预测}
+接下来我们用ARIMA模型，来拟合上证综指收盘价，我们利用除最后3天的数据来得出ARIMA模型，然后利用拟合出的ARIMA模型来预测后3天的收盘价，来看我们模型的性能。根据经验，对于股票的收盘数据来说，采用取对数后再求1阶差分的形式，可以取得更好的效果，因此我们会先对数据进行预处理，然后再来用ARIMA模型来拟合数据。\newline
+
+
+
+
 
 python的ARIMA：   https://www.colabug.com/3933896.html
 Ln125 Advanced Algorithmic Trading
 
 
 \section{汇总}
-f000014
-c000005
-e000032
+f000022
+c000006
+e000036
 
 参考文献：
 \cite{ex1}---\cite{ex2}---\cite{refa001}
