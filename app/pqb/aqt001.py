@@ -8,6 +8,7 @@ from matplotlib.font_manager import FontProperties
 from statsmodels.tsa import stattools
 from statsmodels.graphics import tsaplots
 from statsmodels.tsa.arima_model import ARIMA
+import arch.unitroot as unitroot
 
 class Aqt001(object):
     def __init__(self):
@@ -23,6 +24,7 @@ class Aqt001(object):
         #self.simulate_ar2()
         #self.simulate_arima_p_d_q()
         self.arima_demo()
+        #self.adf_demo()
         
     def simulate_ar2(self):
         print('模拟AR(2)')
@@ -171,11 +173,50 @@ class Aqt001(object):
         tsaplots.plot_pacf(resid, use_vlines=True, lags=30)
         plt.title('ARIMA(p,d,q) PACF figure')
         plt.show()
+        # ADF检验
+        resid_adf = unitroot.ADF(resid)
+        print('stat={0:0.4f} vs 1%_cv={1:0.4f}'.format(resid_adf.stat, resid_adf.critical_values['1%']))
+        if resid_adf.stat < resid_adf.critical_values['1%']:
+            print('resid为稳定时间序列 ^_^')
+        else:
+            print('resid为非稳定时间序列！！！！！')
+        # Ljung-Box检验
+        resid_ljung_box = stattools.q_stat(stattools.acf(resid)[1:12], len(resid))
+        resid_lbv = resid_ljung_box[1][-1]
+        print('resid_ljung_box_value={0}'.format(resid_lbv))
+        # 0.05为显著性水平
+        if resid_lbv < 0.05:
+            print('resid为平稳时间序列 ^_^')
+        else:
+            print('resid为非平稳时间序列！！！！！！！')
         # 预测
         y = arima_model.forecast(3)[0] #(len(train_data), len(raw_data), dynamic=True)
         print('预测值：{0}'.format(np.exp(y)))
         print('row_data:{0}'.format(raw_data))
         print('train_data:{0}'.format(train_data))
+        
+    def adf_demo(self):
+        print('ADF检验例程...')
+        data = pd.read_csv(self.data_file, sep='\t', index_col='Trddt')
+        sh_index = data[data.Indexcd==1]
+        sh_index.index = pd.to_datetime(sh_index.index)
+        sh_return = sh_index.Retindex
+        sh_return_adf = unitroot.ADF(sh_return)
+        print(sh_return_adf.summary().as_text())
+        print('stat={0:0.4f}; pvalue={0:0.4f}'.format(sh_return_adf.stat, sh_return_adf.pvalue))
+        print('critical_values:{0}'.format(sh_return_adf.critical_values))
+        print('1%value={0}'.format(sh_return_adf.critical_values['1%']))
+        if sh_return_adf.stat < sh_return_adf.critical_values['1%']:
+            print('上证综指收益率为平稳时间序列 ^_^')
+        else:
+            print('上证综指收益率为平稳时间序列  !!!!!!!!!')
+        sh_close = sh_index.Clsindex
+        sh_close_adf = unitroot.ADF(sh_close)
+        if sh_close_adf.stat < sh_close_adf.critical_values['1%']:
+            print('上证综指收盘价为平稳时间序列 ^_^')
+        else:
+            print('上证综指收盘价为非平稳时间序列 ！！！！！！！')
+        
         
         
         
