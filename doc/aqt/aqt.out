@@ -27,4 +27,16 @@
 \BOOKMARK [3][-]{subsubsection.2.3.4}{数据仿真}{subsection.2.3}% 27
 \BOOKMARK [3][-]{subsubsection.2.3.5}{金融数据拟合及预测}{subsection.2.3}% 28
 \BOOKMARK [1][-]{section.3}{GARCH模型}{}% 29
-\BOOKMARK [1][-]{section.4}{汇总}{}% 30
+\BOOKMARK [2][-]{subsection.3.1}{定义}{section.3}% 30
+\BOOKMARK [3][-]{subsubsection.3.1.1}{ARCH模型}{subsection.3.1}% 31
+\BOOKMARK [3][-]{subsubsection.3.1.2}{GARCH模型}{subsection.3.1}% 32
+\BOOKMARK [2][-]{subsection.3.2}{数据模拟}{section.3}% 33
+\BOOKMARK [2][-]{subsection.3.3}{金融数据拟合}{section.3}% 34
+\BOOKMARK [1][-]{section.4}{汇总}{}% 35
+\BOOKMARK [1][-]{section.5}{协整模型}{}% 36
+\BOOKMARK [1][-]{section.6}{卡尔曼滤波}{}% 37
+\BOOKMARK [1][-]{section.7}{隐马可夫模型}{}% 38
+\BOOKMARK [1][-]{section.8}{统计套利策略}{}% 39
+\BOOKMARK [1][-]{section.9}{机器学习}{}% 40
+\BOOKMARK [1][-]{section.10}{高频日内交易}{}% 41
+\BOOKMARK [1][-]{section.11}{程序化CTA}{}% 42
