@@ -1,8 +1,8 @@
-#import pymysql
+import pymysql
 from DBUtils.PooledDB import PooledDB
 
 RD_DBP = PooledDB(
-        creator=None, #pymysql,  # 使用链接数据库的模块
+        creator=pymysql,  # 使用链接数据库的模块
         maxconnections=6,  # 连接池允许的最大连接数，0和None表示不限制连接数
         mincached=2,  # 初始化时，链接池中至少创建的空闲的链接，0表示不创建
         maxcached=5,  # 链接池中最多闲置的链接，0和None不限制
@@ -22,7 +22,7 @@ RD_DBP = PooledDB(
     )
 
 WT_DBP = PooledDB(
-        creator=None, #pymysql,  # 使用链接数据库的模块
+        creator=pymysql,  # 使用链接数据库的模块
         maxconnections=6,  # 连接池允许的最大连接数，0和None表示不限制连接数
         mincached=2,  # 初始化时，链接池中至少创建的空闲的链接，0表示不创建
         maxcached=5,  # 链接池中最多闲置的链接，0和None不限制
