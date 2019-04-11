@@ -4,7 +4,6 @@ import numpy as np
 #import tensorflow as tf
 from app_registry import appRegistry as ar
 #import model.m_mysql as db
-from app.stock_backtest import StockBacktest
 import app.qh.qh_main as qh
 import app.pqb.pqb_main as pqb
 
