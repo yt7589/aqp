@@ -19,7 +19,8 @@ class Aqt002(object):
         # 最低价 收益价 收益
         # Indexcd	Trddt	Daywk	Opnindex	Hiindex	
         # Loindex	Clsindex	Retindex
-        self.data_file = 'data/pqb/aqt002_001.txt'
+        # self.data_file = 'data/pqb/aqt002_001.txt'
+        self.data_file = '/content/drive/My Drive/aqp/aqt002_001.txt'
         
     def startup(self):
         print('GARCH模型...')
