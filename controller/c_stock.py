@@ -1,6 +1,5 @@
 import datetime
 import tushare as ts
-import pymysql
 from app_registry import appRegistry as ar
 from model.m_area import MArea
 from model.m_industry import MIndustry

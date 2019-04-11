@@ -2,7 +2,6 @@ import datetime
 from datetime import timedelta
 import numpy as np
 import tushare as ts
-import pymysql
 from app_registry import appRegistry as ar
 from model.m_stock_daily import MStockDaily
 from util.app_util import AppUtil

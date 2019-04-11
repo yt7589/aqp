@@ -1434,6 +1434,91 @@ e000057
 \end{abstract}
 \section{程序化CTA}
 
+\maketitle\begin{center}
+\Large \textbf{第100章 \quad Transformer量化平台}
+\end{center}
+\begin{abstract}
+在本章中我们将首先讲述去年年未在自然语言处理NLP中最流行的架构Transformer，然后介绍Transformer在股价预测方面的应用，接着利用TensorFlow Serving搭建策略服务，我们将该策略服务放到回测平台上进行测试，最后在实盘模拟平台上进行模拟交易。app/tqp
+\end{abstract}
+\section{Transformer量化平台}
+\subsection{Transformer框架}
+\subsection{Transformer量化应用}
+\subsubsection{搭建colab开发环境}
+\paragraph{配置Github}
+首先到$https://www.puttygen.com/$网站下载puttygen的windows版本，用于生成访问github项目的公钥和私钥。以管理员身份运行puttygen.exe，点击界面中的"Generate"：
+\begin{figure}[H]
+	\caption{生成公钥和私钥对}
+	\label{f000040}
+	\centering
+	\includegraphics[height=2cm]{images/f000040}
+\end{figure}
+在图中的密码为"123456"，点击保存私钥，将其保存到F:/docs/aqp\_github.ppk文件中。\newline
+登录https://github.com/yt7589/aqp，在settings=>deploy keys中添加新的Key，将图\ref{f000040}中Public Key框中内容拷贝到下面的文本框中，如下所示：
+\begin{figure}[H]
+	\caption{将公钥添加到github中}
+	\label{f000041}
+	\centering
+	\includegraphics[height=2cm]{images/f000041}
+\end{figure}
+接下来在Google colab中创建aqp.ipynb项目，添加代码单元格：
+\lstset{language=PYTHON, caption={初始化github私钥}, label={c000010}}
+\begin{lstlisting}
+key = \
+'''
+PuTTY-User-Key-File-2: ssh-rsa
+Encryption: aes256-cbc
+Comment: rsa-key-20190411
+Public-Lines: 6
+AAAAB3NzaC1yc2EAAAABJQAAAQEAgWDxZNQtkqfNPnP1rHHIXx+Wi2HUL35RzXfo
+T21fc+/gxjOQ7zG+V/KkTY0ZSuZBrdGhKRosamrBsaR+PrC3pqLNhOlFdUhsxvMg
+YaLM79KUiirFp3dLHOqud4tuWE+BybsYmJA0m7sBJ6aUNXEoX8h5Nxy9VfHzfRIP
+0ekeAA6vkd2PA5jy7AsbFCW1mwmBcu0ptAu3+sjLeIspsa0ED3vivUsnMeWQ87ll
+DH7h3SC7InUlZLqr/gVKBrPnDSecAhVTTaoUG6PtTF0UkYYXixs1+daSBtEV568n
+rRNV2cUkYseMnKwHdccXV2iVraHd11WsxJr2UDNt5nkKcpUkoQ==
+Private-Lines: 14
+qBX9VNU5GZoUAPvntTt8IRI7YqXfVgmKNVWDeyRFRGBlBsMVsU/o1AEm2pO9plHz
+6vAuIje1fg70kDXcBuRCBiEJZ8IDdkNR5nqcgSFEnn2e/5UpisrA4FmGD99sSmWl
+XJQAUEw5d7rxpQukiF6H19cJI+9e5vj9WIIKrCCXDawJyKaMQw0nn1zMJHsv6o21
+MFlZqD8UUP4eoYrzRk2ga99O99b1MdYIwo2dUR40RQUGshKqIKdLHyiSBuy3gQm1
+bmHNyrdMqCAN/88wadQRZvuyRudVXQAGbgYvDgZZV00EbiSOKPpmneK6DvgPaXea
+J/1F+wAoZY8LsXZWlP2o44DjeJNmtc9eVPoR4b/hrG5fyMt9OmnCmL6Te6yue59L
+pjH1gyvIMuoo3La71y8mlLKH8Hnb+bM5z6Ew7f/oMXzP9fNEdIsDN11L4WY9Gju1
+GY0TUzi4h4li4K4Khzx1lOPDyaJahArx5iobD5xbemb4kj4OMRdsuQDqD7g32zVo
+e8vVMgv8j3bzIpCAYmAmVhxslcpiFEUwjRtR6eyz7OL7g9IpkeG5fezGYMOLXxko
+A1SWbIwqfODQhPJA1Pj3vnys8XVeQU04hplqyn955bwxl4abhVR3Q05E7DMYfdrR
+f+a2VI4tAoWi7LCgskDnZ5754P3mUFkxSbILLt6tW+1Y4jbmPj6tP8GUI3Dm3zK6
+qQAGkp3U9QeYlwsbO8lkTuWcW+NEyTfekjxnLtt1KLZufsKRDD1Dk4vQiXjKRCOU
+UgjZ2Uui24d6N6ug/uiVNuxrDuZbpWpp2SYZEiuQCNhu3br+Q/+ZEZsmgslLewnr
+ocK3qv7FUKq/Jg1QrjOmLq/RF1hVr+XcXzubiDcEdmZpFzsn7/VKHk/Jvv4f6IOd
+Private-MAC: e16aabf8a23afa92f89fdeb3f5b2d36c20afb0ff
+
+'''
+! mkdir -p /root/.ssh
+with open(r'/root/.ssh/id_rsa', 'w', encoding='utf8') as fh:
+    fh.write(key)
+! chmod 600 /root/.ssh/id_rsa
+! ssh-keyscan gitlab.com >> /root/.ssh/known_hosts
+\end{lstlisting}
+在上面的代码中，先取出私钥文件中的内容，然后创建/root/.ssh目录，将私钥内容保存到/root/.ssh/id\_rsa文件中。运行上面的代码单元格，如果不报错就证明可以运行成功了。
+\paragraph{配置Google Drive文件系统}
+我们需要读取保存在Google Drive中的数据集文件，因此我们需要建立一些特别工具来完成下面的内容。我们首先初始化环境：
+\lstset{language=PYTHON, caption={初始化环境}, label={c000011}}
+\begin{lstlisting}
+from google.colab import drive
+drive.mount('/content/drive')
+\end{lstlisting}
+这时需要访问提示中的网站，同意授权，将页面中授权码拷贝，将授权码粘贴到编辑框中并回车，然后我们就可像使用正常的目录一样来读写文件了。
+\lstset{language=PYTHON, caption={初始化环境}, label={c000012}}
+\begin{lstlisting}
+with open('/content/drive/My Drive/fbm/README.md', 'r') as fd:
+  readme = fd.read()
+  print(readme)
+\end{lstlisting}
+其中fbm/是我们在Google Drive中创建的目录，使用这种方法，也不会出现中文乱码的问题。
+\subsection{tqp平台}
+\subsection{策略回测}
+\subsection{实盘模拟}
+
 
 
 参考文献：

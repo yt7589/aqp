@@ -1,7 +1,6 @@
 import datetime
 import numpy as np
 import tushare as ts
-import pymysql
 from app_registry import appRegistry as ar
 from controller.c_user import CUser
 from model.m_account import MAccount
