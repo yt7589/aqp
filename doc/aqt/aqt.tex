@@ -1346,10 +1346,7 @@ python的ARIMA：   https://www.colabug.com/3933896.html
 Ln125 Advanced Algorithmic Trading
 
 
-\section{汇总}
-f000022
-c000010
-e000057
+
 
 
 
@@ -1375,10 +1372,23 @@ e000057
 \Large \textbf{第4章 协整模型}
 \end{center}
 \begin{abstract}
-在本章中我们将首先讲述条件异方差模型GARCH（Generalized AutoRegressive Conditional Heteroskedastic），
-并将GARCH模型用于实际金融时间序列数据拟合。aqt002.py
+在本章中我们将首先讲述交易对的概念，并讲述如何利用交易对的均值回归特性，通过对交易对的多空操作，实现稳定的盈利。在本章中，我们主要讲解交易对的数学原理，怎样确定对冲比例。对于怎样利用交易对进行统计套利策略研发，将在后续章节中介绍。aqt003.py
 \end{abstract}
 \section{协整模型}
+本章讲述的内容是统计套利策略，这是一种市场中性策略，无论是市场是涨是跌，均有可能盈利。将统计套利用到极致的例子，应该属于上世纪90年代的LTCM基金。LTCM基金成立于1994年，成立时基金规模为12.5亿美金，但是到1997年，基金规模就达到了48亿美金，是当时世界上四大基金之一。LTCM基金的创始人是金牌交易员，合伙人是顶级统计学家，他们发现德国国债和意大利国债有一个稳定的比例关系，大概率波动的机率会非常小，因此当德国国债上涨时，德国国债与意大利国债之比将增大，大幅度偏离均值，他们就卖出德国国债，买入意大利国债，一段时间之后，德国国债会下跌，德国国债和意大利国债之比就会回归到均值，此时他们卖出之前买入的意大利国债，重新买入之前卖出的德国国债，这样他们持有德国国债和意大利国债没有发生变化，但是却赚到了这次波动差价所产生的利润。利用这种方式，LTCM基金获得了巨大的成功。然而LTCM基金的神话终结于1997年，主要有以下几个原因：首先LTCM认为德国国债和意大利国债之比符合正态分布，但是虽然自然界大部分复杂的现象都是正态分布，但是人类社会现象，却不一定是正态分布，黑天鹅事件也许是长态，在1997年，东南亚发生了金融危机，俄罗斯发生了国债违约，正是这两个黑天鹅事件，使德国国债与意大利国债之比不再符合正态分布，而LTCM基金由于对这些事件缺乏预见性，而遭受了巨大的损失；同时，在LTCM基金破产之后，人们看LTCM基金的财务数据发现，其资金杠杆高达数万倍，因此一次失误的决策，就足以使整个公司破产。由这个实例我们可以看出，基于交易对均值回归的统计回归策略，具有巨大的盈利潜力，同时我们也应看到，杠杆是魔鬼，任何策略中最重要的都是资金和仓位管理。\newline
+交易对不仅在传统金融市场，如股市、期货、外汇、债市上存在，在新兴的加密货币市场，也是一种非常重要的策略，前一两年兴起的比特币搬砖模式，就是交易对策略在加密货市场的应用。
+\subsection{数据模拟}
+\subsubsection{协整模型构建}
+
+\subsubsection{对冲比例确定}
+
+
+
+
+\section{汇总}
+f000022
+c000010
+e000057
 
 \maketitle\begin{center}
 \Large \textbf{第5章 卡尔曼滤波}
@@ -1500,6 +1510,12 @@ with open(r'/root/.ssh/id_rsa', 'w', encoding='utf8') as fh:
 ! ssh-keyscan gitlab.com >> /root/.ssh/known_hosts
 \end{lstlisting}
 在上面的代码中，先取出私钥文件中的内容，然后创建/root/.ssh目录，将私钥内容保存到/root/.ssh/id\_rsa文件中。运行上面的代码单元格，如果不报错就证明可以运行成功了。
+\paragraph{下载源码文件}
+可以通过如下命令获取github上的源码：
+\lstset{language=BASH}
+\begin{lstlisting}
+!git clone https://github.com/yt7589/aqp.git
+\end{lstlisting}
 \paragraph{配置Google Drive文件系统}
 我们需要读取保存在Google Drive中的数据集文件，因此我们需要建立一些特别工具来完成下面的内容。我们首先初始化环境：
 \lstset{language=PYTHON, caption={初始化环境}, label={c000011}}
@@ -1514,7 +1530,7 @@ with open('/content/drive/My Drive/fbm/README.md', 'r') as fd:
   readme = fd.read()
   print(readme)
 \end{lstlisting}
-其中fbm/是我们在Google Drive中创建的目录，使用这种方法，也不会出现中文乱码的问题。
+其中fbm/是我们在Google Drive中创建的目录，使用这种方法，也不会出现中文乱码的问题。具体用Transformer来预测股票价格的代码，colab的地址为：https://colab.research.google.com/drive/1PVwlbHfrndFhnNIjSLWaD1bsr-5olV1d#scrollTo=7s5HTXF9xall。（参考：https://github.com/llSourcell/Make\_Money\_with\_Tensorflow\_2.0/issues）
 \subsection{tqp平台}
 \subsection{策略回测}
 \subsection{实盘模拟}
