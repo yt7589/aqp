@@ -15,6 +15,7 @@ from statsmodels.graphics import tsaplots
 from statsmodels.tsa.arima_model import ARIMA
 import arch.unitroot as unitroot
 import arch as arch
+from ann.linear_regression import LinearRegression
 
 class PrintDot(keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs):
@@ -28,7 +29,18 @@ class Aqt003(object):
     def startup(self):
         print('交易对协整模型...')
         #self.simulate_demo()
-        self.tf2_learn()
+        #self.tf2_learn()
+        lr = LinearRegression()
+        #lr.train()
+        raw_data = pd.DataFrame({'Cylinders':[4], 'Displacement': [140.0], 
+            'Horsepower':[86.0], 'Weight': [2790.0], 
+            'Acceleration': [15.6], 'Model Year': [82], 'USA': [1.0],
+            'Europe':[0.0], 'Japan':[0.0]}
+        )
+        mu_val = np.load('./work/mu.txt.npy')
+        std_val = np.load('./work/std.txt.npy')
+        data = lr.norm(raw_data, mu_val, std_val)
+        lr.predict(data)
 
     def simulate_demo(self):
         '''
@@ -77,72 +89,3 @@ class Aqt003(object):
             print('resid为非稳定时间序列！！！！！')
         # 利用tensorflow linear regression to lean hedge ratio
         print('tensorflow version:{0}'.format(tf.__version__))
-
-    def tf2_learn(self):
-        print('学习tensorflow 2.0线性回归程序')
-        # 下载数据
-        #dataset_path = keras.utils.get_file('auto-mpg.data',
-         #                          'https://archive.ics.uci.edu/ml/machine-learning-databases/auto-mpg/auto-mpg.data')
-        dataset_path = '/Users/arxanfintech/.keras/datasets/auto-mpg.data'
-        print(dataset_path)
-        column_names = ['MPG','Cylinders','Displacement','Horsepower','Weight',
-                'Acceleration', 'Model Year', 'Origin'] 
-        raw_dataset = pd.read_csv(dataset_path, names=column_names,
-                         na_values='?', comment='\t',
-                         sep=' ', skipinitialspace=True)
-        dataset = raw_dataset.copy()
-        print(dataset.tail())
-        dataset = dataset.dropna()
-        origin = dataset.pop('Origin')
-        dataset['USA'] = (origin == 1)*1.0
-        dataset['Europe'] = (origin == 2)*1.0
-        dataset['Japan'] = (origin == 3)*1.0
-        print(dataset.tail())
-        # 绘制分布图
-        '''
-        sns.pairplot(dataset[["MPG", "Cylinders", "Displacement"]], diag_kind="kde")
-        plt.show()
-        sns.pairplot(dataset[["Horsepower", "Weight", "Acceleration"]], diag_kind="kde")
-        plt.show()
-        '''
-        # 求出统计信息
-        train_dataset_raw = dataset.sample(frac=0.8,random_state=0)
-        train_stats = train_dataset_raw.describe()
-        train_stats.pop("MPG")
-        train_stats = train_stats.transpose()
-        # 准备训练数据集和测试数据集
-        train_dataset = self.norm(train_dataset_raw, train_stats['mean'], train_stats['std'])
-        train_labels = train_dataset.pop('MPG')
-        test_dataset = self.norm(dataset.drop(train_dataset.index), train_stats['mean'], train_stats['std'])
-        test_labels = test_dataset.pop('MPG')
-        # 创建模型
-        model = self.build_model(train_dataset)
-        print('summary:{0}'.format(model.summary()))
-        # 
-        example_batch = train_dataset[:10]
-        example_result = model.predict(example_batch)
-        print(example_result)
-        EPOCHS = 1000
-        history = model.fit(
-            train_dataset, train_labels,
-            epochs=EPOCHS, validation_split = 0.2, verbose=0,
-            callbacks=[PrintDot()]
-        )
-        hist = pd.DataFrame(history.history)
-        hist['epoch'] = history.epoch
-        print(hist.tail())
-
-    def norm(self, x, mu_val, std_val):
-        return (x - mu_val) / std_val
-
-    def build_model(self, train_dataset):
-        model = keras.Sequential([
-            layers.Dense(64, activation='relu', input_shape=[len(train_dataset.keys())]),
-            layers.Dense(64, activation='relu'),
-            layers.Dense(1)
-        ])
-        optimizer = tf.keras.optimizers.RMSprop(0.001)
-        model.compile(loss='mse',
-                 optimizer=optimizer,
-                 metrics=['mae', 'mse'])
-        return model
