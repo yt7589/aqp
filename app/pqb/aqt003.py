@@ -30,6 +30,8 @@ class Aqt003(object):
         print('交易对协整模型...')
         #self.simulate_demo()
         #self.tf2_learn()
+        # 我们需要的线性回归模型非常简单，输入层为1维，直接接输出层也是1维，我们需要的是
+        # 其接权值
         lr = LinearRegression()
         #lr.train()
         raw_data = pd.DataFrame({'Cylinders':[4], 'Displacement': [140.0], 
