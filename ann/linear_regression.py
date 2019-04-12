@@ -88,6 +88,13 @@ class LinearRegression(object):
     def predict(self, data):
         print('predict the value')
         model = keras.models.load_model('./work/lr000')
+        weights = np.array(model.get_weights())
+        print('weights:{0}'.format(weights.shape))
+        # keras权值的组织形式：如本例中输入向量为9维，第一层64个神经元，第2层64个神经元，
+        # 第3层1个神经元，则其权值形式为：
+        # 9*64, 64(第1层bias),64*64,64(第2层bias),64*1,1(输出层bias)
+        for lw in weights:
+            print('###:{0}'.format(lw.shape))
         rst = model.predict(data)
         print('type:{0}; {1}'.format(type(rst), rst))
 
