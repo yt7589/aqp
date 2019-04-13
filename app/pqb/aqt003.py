@@ -16,6 +16,7 @@ from statsmodels.tsa.arima_model import ARIMA
 import arch.unitroot as unitroot
 import arch as arch
 from ann.linear_regression import LinearRegression
+from app.pqb.qic_linear_regression import QciLinearRegression
 
 class PrintDot(keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs):
@@ -29,20 +30,11 @@ class Aqt003(object):
     def startup(self):
         print('交易对协整模型...')
         #self.simulate_demo()
-        #self.tf2_learn()
-        # 我们需要的线性回归模型非常简单，输入层为1维，直接接输出层也是1维，我们需要的是
-        # 其接权值
-        lr = LinearRegression()
-        #lr.train()
-        raw_data = pd.DataFrame({'Cylinders':[4], 'Displacement': [140.0], 
-            'Horsepower':[86.0], 'Weight': [2790.0], 
-            'Acceleration': [15.6], 'Model Year': [82], 'USA': [1.0],
-            'Europe':[0.0], 'Japan':[0.0]}
-        )
-        mu_val = np.load('./work/mu.txt.npy')
-        std_val = np.load('./work/std.txt.npy')
-        data = lr.norm(raw_data, mu_val, std_val)
-        lr.predict(data)
+        qcilr = QciLinearRegression()
+        #qcilr.train()
+        data = np.array([[100.0]], dtype=float)
+        rst = qcilr.predict(data)
+        print(rst)
 
     def simulate_demo(self):
         '''
@@ -91,3 +83,19 @@ class Aqt003(object):
             print('resid为非稳定时间序列！！！！！')
         # 利用tensorflow linear regression to lean hedge ratio
         print('tensorflow version:{0}'.format(tf.__version__))
+
+    def test001(self):
+        #self.tf2_learn()
+        # 我们需要的线性回归模型非常简单，输入层为1维，直接接输出层也是1维，我们需要的是
+        # 其接权值
+        lr = LinearRegression()
+        #lr.train()
+        raw_data = pd.DataFrame({'Cylinders':[4], 'Displacement': [140.0], 
+            'Horsepower':[86.0], 'Weight': [2790.0], 
+            'Acceleration': [15.6], 'Model Year': [82], 'USA': [1.0],
+            'Europe':[0.0], 'Japan':[0.0]}
+        )
+        mu_val = np.load('./work/mu.txt.npy')
+        std_val = np.load('./work/std.txt.npy')
+        data = lr.norm(raw_data, mu_val, std_val)
+        lr.predict(data)
