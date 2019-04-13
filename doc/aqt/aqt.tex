@@ -1379,7 +1379,98 @@ Ln125 Advanced Algorithmic Trading
 交易对不仅在传统金融市场，如股市、期货、外汇、债市上存在，在新兴的加密货币市场，也是一种非常重要的策略，前一两年兴起的比特币搬砖模式，就是交易对策略在加密货市场的应用。
 \subsection{数据模拟}
 \subsubsection{协整模型构建}
-
+假设$\{ w_{t} \}$为白噪声，在此基础上定义随机游走信号：
+\begin{equation}
+z_{t} = z_{t-1} + w_{t}
+\label{e000058}
+\end{equation}
+在此基础上我们定义两个非平稳的时间序列信号：
+\begin{equation}
+x_{t} = pz_{t} + w_{t} = 0.3z_{t} + w_{t}
+\label{e000059}
+\end{equation}
+\begin{equation}
+y_{t} = qz_{t} + w_{t} = 0.6z_{t} + w_{t}
+\label{e000060}
+\end{equation}
+如果我们将$\{ x_{t} \}$和$\{ y_{t} \}$进行线性组合：
+\begin{equation}
+ax_{t} + by_{t} = (ap+bq)z_{t} + w_{t} = (0.3a+0.6b)z_{t} + w_{t}
+\label{e000061}
+\end{equation}
+如果$0.3a+0.6b=0$的话，那么$\{ x_{t} \}$和$\{ y_{t} \}$的这个线性组合就只剩下白噪声信号，因此其是
+平稳时间序列信号，因此当$a=2, b=-1$时，这个序列就是平稳时间序列信号。\newline
+根据这一思想，程序如下所示：
+\lstset{language=PYTHON, caption={线性组合形成平稳时间序列}, label={c000010}}
+\begin{lstlisting}
+    def simulate_demo(self):
+        '''
+        模拟数据生成
+        '''
+        # 生成白噪声信号
+        samples = 1000
+        w = np.random.standard_normal(size=samples)
+        # 生成随机游走序列
+        z = np.zeros((samples,))
+        for t in range(1, samples):
+            z[t] = z[t-1] + w[t]
+        # 生成非平稳信号，即交易对x和y
+        x = np.zeros((samples,))
+        y = np.zeros((samples,))
+        p = 0.3
+        q = 0.6
+        for t in range(samples):
+            x[t] = p*z[t] + w[t]
+            y[t] = q*z[t] + w[t]
+        fig = plt.figure(figsize=(6, 6))
+        w_plt = plt.subplot(2, 2, 1, title='White Noise: w')
+        w_plt.plot(w)
+        z_plt = plt.subplot(2, 2, 2, title='Random Walk: z')
+        z_plt.plot(z)
+        x_plt = plt.subplot(2, 2, 3, title='Non Stationary Signal: x')
+        x_plt.plot(x)
+        y_plt = plt.subplot(2, 2, 4, title='Non Stationary Signal: y')
+        y_plt.plot(y)
+        fig.tight_layout()
+        plt.show()
+        # 生成协整信号
+        a = 2
+        b = -1
+        c = a * x + b * y
+        plt.plot(c)
+        plt.title('Cointegration Model')
+        plt.show()
+        # 采用ADF检验 
+        resid_adf = unitroot.ADF(c)
+        print('stat={0:0.4f} vs 1%_cv={1:0.4f}'.format( \
+                    resid_adf.stat, resid_adf.critical_values['1%']))
+        if resid_adf.stat < resid_adf.critical_values['1%']:
+            print('resid为稳定时间序列 ^_^')
+        else:
+            print('resid为非稳定时间序列！！！！！')
+\end{lstlisting}
+我们首先绘制出白噪声、随机游走和x及y信号：
+\begin{figure}[H]
+	\caption{研究序列}
+	\label{f000042}
+	\centering
+	\includegraphics[height=5cm]{images/f000042}
+\end{figure}
+接着我们绘制出x和y的线性组合：
+\begin{figure}[H]
+	\caption{x和y的线性组合}
+	\label{f000043}
+	\centering
+	\includegraphics[height=5cm]{images/f000043}
+\end{figure}
+我们利用ADF检验其稳写性：
+\begin{figure}[H]
+	\caption{ADF检验}
+	\label{f000044}
+	\centering
+	\includegraphics[height=1cm]{images/f000044}
+\end{figure}
+由上面的ADF检验可以看出，x和y的线性组合与理论分析一致，是平稳时间序列。
 \subsubsection{对冲比例确定}
 
 
@@ -1530,7 +1621,16 @@ with open('/content/drive/My Drive/fbm/README.md', 'r') as fd:
   readme = fd.read()
   print(readme)
 \end{lstlisting}
-其中fbm/是我们在Google Drive中创建的目录，使用这种方法，也不会出现中文乱码的问题。具体用Transformer来预测股票价格的代码，colab的地址为：https://colab.research.google.com/drive/1PVwlbHfrndFhnNIjSLWaD1bsr-5olV1d#scrollTo=7s5HTXF9xall。（参考：https://github.com/llSourcell/Make\_Money\_with\_Tensorflow\_2.0/issues）
+其中fbm/是我们在Google Drive中创建的目录，使用这种方法，也不会出现中文乱码的问题。
+具体用Transformer来预测股票价格的代码，colab的地址为：
+\lstset{language=BASH}
+\begin{lstlisting}
+https://colab.research.google.com/drive/1PVwlbHfrndFhnNIjSLWaD1bsr-5olV1d#scrollTo=7s5HTXF9xall。
+参考：
+\lstset{language=BASH}
+\begin{lstlisting}
+https://github.com/llSourcell/Make_Money_with_Tensorflow_2.0/issues
+\end{lstlisting}
 \subsection{tqp平台}
 \subsection{策略回测}
 \subsection{实盘模拟}

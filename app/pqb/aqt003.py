@@ -29,12 +29,14 @@ class Aqt003(object):
 
     def startup(self):
         print('交易对协整模型...')
-        #self.simulate_demo()
+        self.simulate_demo()
+        '''
         qcilr = QciLinearRegression()
         #qcilr.train()
         data = np.array([[100.0]], dtype=float)
         rst = qcilr.predict(data)
         print(rst)
+        '''
 
     def simulate_demo(self):
         '''
