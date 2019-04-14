@@ -36,12 +36,11 @@ class Aqt003(object):
         #self.qcilr_demo()
         #self.johansen_test_demo()
 
-        with tf.device('/cpu:0'):
-            qcilr = QciLinearRegression()
-            qcilr.train()
-            #data = np.array([[100.0]], dtype=float)
-            #rst = qcilr.predict(data)
-            print(rst)
+        qcilr = QciLinearRegression()
+        qcilr.train()
+        #data = np.array([[100.0]], dtype=float)
+        #rst = qcilr.predict(data)
+        #print(rst)
 
     def simulate_demo(self):
         '''

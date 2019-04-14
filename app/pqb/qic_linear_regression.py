@@ -26,8 +26,8 @@ class QciLinearRegression(object):
                         self.test_y = self.generate_dataset()
 
     def generate_dataset(self):
-        train_x = np.array([-40, -10, 0, 8, 15, 22, 38, 20, 9, 13], dtype=float)
-        train_y = np.array([-40, 14, 32, 46, 59, 72, 100, 68, 48.2, 55.4], dtype=float)
+        train_x = np.array([-40, -10, 0, 8, 15, 22, 38, 20, 9, 13], dtype=np.float32)
+        train_y = np.array([-40, 14, 32, 46, 59, 72, 100, 68, 48.2, 55.4], dtype=np.float32)
         validate_x = np.array([], dtype=float)
         validate_y = np.array([], dtype=float)
         test_x = np.array([], dtype=float)
@@ -42,6 +42,18 @@ class QciLinearRegression(object):
                 if epoch % 100 == 0: print('')
                 print('epoch:{0}...{1}!'.format(epoch, logs))
         early_stop = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=self.patience)
+        print('I am ok')
+        print('x:{0}; y:{0}'.format(self.train_x.shape, self.train_y.shape))
+        
+        '''
+        config = tf.ConfigProto(allow_soft_placement=True)
+        gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.5)
+        config.gpu_options.allow_growth = True
+        '''
+        
+        
+
+        
         history = model.fit(self.train_x, self.train_y, 
                     epochs=self.epoch, validation_split = 0.1,  
                     verbose=False, callbacks=[early_stop, PrintDot()])
