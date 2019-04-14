@@ -1,26 +1,19 @@
-\begin{thebibliography}{3}
+\begin{thebibliography}{2}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
   \providecommand{\doi}[1]{doi: #1}\else
   \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
 
-\bibitem[A.NikolaosAI(1999)]{ex2}
-Andreas~Nikolaos A.NikolaosAI.
-\newblock \emph{A Book He Wrote}.
-\newblock His Publisher, Erewhon, NC, 1999.
+\bibitem[Halls-Moore(2017)]{r000002}
+Michael~L. Halls-Moore.
+\newblock \emph{Advanced Algorithmic Trading}.
+\newblock His Publisher, Publisher, 2017.
 
-\bibitem[Bakry et~al.(2015)Bakry, Elhoseiny, El{-}Gaaly, and Elgammal]{refa001}
-Amr Bakry, Mohamed Elhoseiny, Tarek El{-}Gaaly, and Ahmed~M. Elgammal.
-\newblock Digging deep into the layers of cnns: In search of how cnns achieve
-  view invariance.
-\newblock \emph{CoRR}, abs/1508.01983, 2015.
-\newblock URL \url{http://arxiv.org/abs/1508.01983}.
-
-\bibitem[I.MLearning(1999)]{ex1}
-Ivan~Marc I.MLearning.
-\newblock Some related article {I} wrote.
-\newblock \emph{Some Fine Journal}, 99\penalty0 (7):\penalty0 1--100, January
-  1999.
+\bibitem[tushare and 匠芯量化(2019)]{r000001}
+tushare and 匠芯量化.
+\newblock 机器量化分析（二）——模型评估与仓位管理.
+\newblock \emph{tushare.org}, 平台介绍, 2019.
+\newblock URL \url{https://tushare.pro/document/1?doc_id=68}.
 
 \end{thebibliography}

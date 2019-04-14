@@ -1,5 +1,7 @@
 import sys
 import math
+import pickle
+import app.pqb
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -15,6 +17,7 @@ from statsmodels.graphics import tsaplots
 from statsmodels.tsa.arima_model import ARIMA
 import arch.unitroot as unitroot
 import arch as arch
+from core.statistics.johansen import Johansen
 from ann.linear_regression import LinearRegression
 from app.pqb.qic_linear_regression import QciLinearRegression
 
@@ -29,7 +32,10 @@ class Aqt003(object):
 
     def startup(self):
         print('交易对协整模型...')
-        self.simulate_demo()
+        #self.simulate_demo()
+        #self.qcilr_demo()
+        self.johansen_test_demo()
+
         '''
         qcilr = QciLinearRegression()
         #qcilr.train()
@@ -85,6 +91,116 @@ class Aqt003(object):
             print('resid为非稳定时间序列！！！！！')
         # 利用tensorflow linear regression to lean hedge ratio
         print('tensorflow version:{0}'.format(tf.__version__))
+
+    def qcilr_demo(self):
+        # 生成白噪声信号
+        samples = 1000
+        w = np.random.standard_normal(size=samples)
+        # 生成随机游走序列
+        z = np.zeros((samples,))
+        for t in range(1, samples):
+            z[t] = z[t-1] + w[t]
+        # 生成非平稳信号，即交易对x和y
+        x = np.zeros((samples,))
+        y = np.zeros((samples,))
+        p = 0.3
+        q = 0.6
+        for t in range(samples):
+            x[t] = p*z[t] + w[t]
+            y[t] = q*z[t] + w[t]
+        fig = plt.figure(figsize=(6, 6))
+        w_plt = plt.subplot(2, 2, 1, title='White Noise: w')
+        w_plt.plot(w)
+        z_plt = plt.subplot(2, 2, 2, title='Random Walk: z')
+        z_plt.plot(z)
+        x_plt = plt.subplot(2, 2, 3, title='Non Stationary Signal: x')
+        x_plt.plot(x)
+        y_plt = plt.subplot(2, 2, 4, title='Non Stationary Signal: y')
+        y_plt.plot(y)
+        fig.tight_layout()
+        plt.show()
+        # 以x作为自变量
+        w1, x_y_p = self.do_linear_regression(x, y)
+        # 将y作为自变量
+        w2, y_x_p = self.do_linear_regression(y, x)
+        print('xToy={0}({1}) vs yTox={2}({3})'.format(x_y_p, w1[0][0], y_x_p, w2[0][0]))
+        if x_y_p < y_x_p:
+            print('######## x  为自变量')
+            c = w1[0][0] * x - y
+        else:
+            print('######### y  为自变量')
+            c = w2[0][0] * y - x
+        plt.title('Final Cointegration Signal')
+        plt.plot(c)
+        plt.show()
+
+    def do_linear_regression(self, x, y):
+        validate_x = validate_y = test_x = test_y = np.array([])
+        qcilr = QciLinearRegression(learning_rate=0.01, 
+                    epoch=50000, patience=100, 
+                    train_x=x, train_y=y, 
+                    validate_x=validate_x, validate_y=validate_y, 
+                    test_x=test_x, test_y=test_y)
+        weights = qcilr.train()
+        print('weights:{0}'.format(weights))
+        hedge_ratio = weights[0][0]
+        c = hedge_ratio * x - y
+        # 采用ADF检验 
+        resid_adf = unitroot.ADF(c)
+        print('stat={0:0.4f} vs 1%_cv={1:0.4f}'.format( \
+                    resid_adf.stat, resid_adf.critical_values['1%']))
+        if resid_adf.stat < resid_adf.critical_values['1%']:
+            print('resid为稳定时间序列 ^_^')
+        else:
+            print('resid为非稳定时间序列！！！！！')
+        return weights, resid_adf.stat
+
+    def johansen_test_demo(self):
+        print('johansen test demo')
+        start_date = '2016/02/01'
+        end_date = '2016/05/30'
+        prices_df = pd.read_pickle('./app/pqb/ewa_ewc_df.p')
+        prices_df = prices_df.sort_values(by='date').set_index('date')
+        x = prices_df.loc[start_date:end_date].values
+        x1 = x[:,0]
+        x2 = x[:,1]
+        print('x1 type:{0}'.format(x1))
+        x_centered = x - np.mean(x, axis=0)
+        johansen = Johansen(x_centered, model=2, significance_level=0)
+        eigenvectors, r = johansen.johansen()
+        print('r={0}'.format(r))
+        print('ev:{0}\r\n{1}\r\n=>{2}'.format(type(eigenvectors), eigenvectors, eigenvectors[:,0]))
+        vec = eigenvectors[:, 0]
+        vec_min = np.min(np.abs(vec))
+        vec = vec / vec_min
+        print('vec:{0}; {1}'.format(type(vec), vec))
+        start_date_test = start_date
+        end_date_test = '2016/08/11'
+        plt.title("Cointegrated series")
+        portfolio_insample = np.dot(x, vec)
+        plt.plot(portfolio_insample, '-')
+        #plt.show()
+        x_test = prices_df.loc[start_date_test:end_date_test].values
+        portfolio_test = np.dot(x_test, vec)
+        plt.plot(portfolio_test, '--')
+        #plt.show()
+        in_sample = np.dot(x, vec)
+        mean = np.mean(in_sample)
+        std = np.std(in_sample)
+        print('mean:{0}; std:{1}'.format(np.mean(in_sample), np.std(in_sample)))
+        plt.axhline(y=mean - std, color='r', ls='--', alpha=.5)
+        plt.axhline(y=mean, color='r', ls='--', alpha=.5)
+        plt.axhline(y=mean + std, color='r', ls='--', alpha=.5)
+        plt.show()
+        prices_df.loc[start_date_test:end_date_test].plot(title="Original price series", rot=15)
+        plt.show()
+
+
+        
+
+
+
+
 
     def test001(self):
         #self.tf2_learn()
