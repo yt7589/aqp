@@ -52,7 +52,7 @@ class QciLinearRegression(object):
         plt.ylabel('error')
         plt.plot(history.history['loss'])
         #plt.show()
-        plt.save('/content/drive/My Drive/aqp/aqt003_001.png')
+        plt.savefig('/content/drive/My Drive/aqp/aqt003_001.png', format='png')
         model.save('./work/aqt003_qiclr')
         weights = np.array(model.get_weights())
         print(weights)
