@@ -15,6 +15,7 @@ from matplotlib.font_manager import FontProperties
 from statsmodels.tsa import stattools
 from statsmodels.graphics import tsaplots
 from statsmodels.tsa.arima_model import ARIMA
+from statsmodels.tsa.vector_ar.vecm import coint_johansen
 import arch.unitroot as unitroot
 import arch as arch
 from core.statistics.johansen import Johansen
@@ -34,10 +35,10 @@ class Aqt003(object):
         print('交易对协整模型...')
         #self.simulate_demo()
         #self.qcilr_demo()
-        #self.johansen_test_demo()
+        self.johansen_test_demo()
 
-        qcilr = QciLinearRegression()
-        qcilr.train()
+        #qcilr = QciLinearRegression()
+        #qcilr.train()
         #data = np.array([[100.0]], dtype=float)
         #rst = qcilr.predict(data)
         #print(rst)
@@ -160,6 +161,16 @@ class Aqt003(object):
         prices_df = pd.read_pickle('./app/pqb/ewa_ewc_df.p')
         prices_df = prices_df.sort_values(by='date').set_index('date')
         x = prices_df.loc[start_date:end_date].values
+        jres = coint_johansen(x, det_order=0, k_ar_diff=1)
+        print('特征值：{0}'.format(jres.eig))
+        print('特征向量：{1}'.format(jres.evec))
+        print('Trace statistic:{0}'.format(jres.lr1))
+        print('Critical values (90%, 95%, 99%) for trace statistic:{0}'.format(jres.cvt))
+        print('Maximum eigenvalue statistic:{0}'.format(jres.lr2))
+        print('Critical values (90%, 95%, 99%) for maximum eigenvalue statistic:{0}'.format(jres.cvm))
+        print('Order of eigenvalues:{0}'.format(jres.ind))
+        
+        '''
         x1 = x[:,0]
         x2 = x[:,1]
         print('x1 type:{0}'.format(x1))
@@ -192,6 +203,7 @@ class Aqt003(object):
         plt.show()
         prices_df.loc[start_date_test:end_date_test].plot(title="Original price series", rot=15)
         plt.show()
+        '''
 
 
         
