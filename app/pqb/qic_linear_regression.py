@@ -44,16 +44,6 @@ class QciLinearRegression(object):
         early_stop = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=self.patience)
         print('I am ok')
         print('x:{0}; y:{0}'.format(self.train_x.shape, self.train_y.shape))
-        
-        '''
-        config = tf.ConfigProto(allow_soft_placement=True)
-        gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.5)
-        config.gpu_options.allow_growth = True
-        '''
-        
-        
-
-        
         history = model.fit(self.train_x, self.train_y, 
                     epochs=self.epoch, validation_split = 0.1,  
                     verbose=False, callbacks=[early_stop, PrintDot()])
@@ -61,7 +51,8 @@ class QciLinearRegression(object):
         plt.xlabel('epochs')
         plt.ylabel('error')
         plt.plot(history.history['loss'])
-        plt.show()
+        #plt.show()
+        plt.save('/content/drive/My Drive/aqp/aqt003_001.png')
         model.save('./work/aqt003_qiclr')
         weights = np.array(model.get_weights())
         print(weights)
