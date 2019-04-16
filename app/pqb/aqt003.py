@@ -167,7 +167,7 @@ class Aqt003(object):
         
         jres = coint_johansen(x, det_order=0, k_ar_diff=1)
         print('特征值：{0}'.format(jres.eig))
-        print('特征向量：{0}'.format(jres.evec))
+        print('特征向量：{0}    {1}'.format(jres.evec, type(jres.evec)))
         print('Trace statistic:{0}'.format(jres.lr1))
         print('Critical values (90%, 95%, 99%) for trace statistic:{0}'.format(jres.cvt))
         print('Maximum eigenvalue statistic:{0}'.format(jres.lr2))
