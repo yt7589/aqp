@@ -36,7 +36,7 @@
 \BOOKMARK [2][-]{subsection.4.1}{数据模拟}{section.4}% 36
 \BOOKMARK [3][-]{subsubsection.4.1.1}{协整模型构建}{subsection.4.1}% 37
 \BOOKMARK [3][-]{subsubsection.4.1.2}{对冲比例确定}{subsection.4.1}% 38
-\BOOKMARK [2][-]{subsection.4.2}{投资组合理论}{section.4}% 39
+\BOOKMARK [2][-]{subsection.4.2}{Johansen检验}{section.4}% 39
 \BOOKMARK [1][-]{section.5}{汇总}{}% 40
 \BOOKMARK [1][-]{section.6}{卡尔曼滤波}{}% 41
 \BOOKMARK [1][-]{section.7}{隐马可夫模型}{}% 42

@@ -1687,10 +1687,22 @@ F = 1.8 \times C + 32
 \end{figure}
 由于以y为自变量时ADF检验的p值较小，所以取以y为自变量的情况，计算出来的对冲比例为0.51，与实际值0.5非常接近，
 这证明我们的算法是正确的。
-\subsection{投资组合理论}
+\subsection{Johansen检验}
 我们已经讲述了协整模型理论，可以比较好的处理两个交易对的对冲比例和均值回归的问题。但是这里面有两个问题，首先在协整模
 型中，我们假设交易对中的两个标的是线性关系，其次我们只能处理有两个标的的交易对。在本节中，我们将根据\cite{r000001}
 投资组合理论，处理标的之间不是线性关系，以及多个交易标的的均值回归策略研发问题。\newline
+在实际应用中，我们经常用到的模型是Johansen Test模型，有时也叫VECM模型。在这一节中，我们将来讲解这个模型。Johansen模
+型是基于向量自回归VAR模型的。我们以前所讲的自回归模型，都是标量的自回归模型，向量自回归模型定义为：
+\begin{equation}
+\boldsymbol{x}_{t} = \boldsymbol{\mu} + A_{1}\boldsymbol{x}_{t-1} + ... + A_{p}\boldsymbol{x}_{t-p} + \boldsymbol{w}_{t}
+\label{e000063}
+\end{equation}
+式中$\symbol{\mu}$为序列的均值向量，$\boldsymbol{w}_t$为白噪声向量。接下来我们定义向量误差修正模块VECM（Vector Error Correction Model）：
+\begin{equation}
+\Delta \boldsymbol{x}_{t}= \boldsymbol{\mu} + A \boldsymbol{x}_{t-1} + \Gamma _{1} \Delta \boldsymbol{x}_{t-1} + ... + \Gamma _{p} \Delta \boldsymbol{x}_{t-p} + \boldsymbol{w}_t
+\label{e000064}
+\end{equation}
+其中A为系数矩阵，
 
 
 
@@ -1699,7 +1711,7 @@ F = 1.8 \times C + 32
 \section{汇总}
 f000022
 c000010
-e000057
+e000065
 
 \maketitle\begin{center}
 \Large \textbf{第5章 卡尔曼滤波}
