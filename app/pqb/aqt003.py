@@ -227,6 +227,9 @@ class Aqt003(object):
             r[t] = 0.2*z[t] + w[t]
         endog = np.hstack((p.reshape(samples, 1), q.reshape(samples, 1), r.reshape(samples, 1)))
         print(endog)
+        jres = coint_johansen(endog, det_order=0, k_ar_diff=1)
+        print('特征值：{0}'.format(jres.eig))
+        print('cvt:{0}'.format(jres.cvt))
         
 
 
