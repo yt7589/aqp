@@ -174,6 +174,12 @@ class Aqt003(object):
         print('Critical values (90%, 95%, 99%) for maximum eigenvalue statistic:{0}'.format(jres.cvm))
         print('Order of eigenvalues:{0}'.format(jres.ind))
         print('系数：{0}, {1}'.format(jres.evec[0,0], jres.evec[1,0]))
+        c1 = 1.0
+        c2 = jres.evec[1,0] / jres.evec[0,0]
+        xn = c1 * x[:,0] + c2 * x[:,1]
+        plt.title('cointegration signal')
+        plt.plot(xn)
+        plt.savefic('/content/drive/My Drive/aqp/aqt003_003.png', format='png')
    
     
     def sm_johansen_test(self):
