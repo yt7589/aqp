@@ -173,12 +173,37 @@ class Aqt003(object):
         print('Maximum eigenvalue statistic:{0}'.format(jres.lr2))
         print('Critical values (90%, 95%, 99%) for maximum eigenvalue statistic:{0}'.format(jres.cvm))
         print('Order of eigenvalues:{0}'.format(jres.ind))
-      
-        x1 = x[:,0]
-        x2 = x[:,1]
-        print('x1 type:{0}'.format(x1))
-        x_centered = x - np.mean(x, axis=0)
-        johansen = Johansen(x_centered, model=2, significance_level=0)
+        print('系数：{0}, {1}'.format(jres.evec[0][0], jres[1][0]))
+   
+    
+    def sm_johansen_test(self):
+        '''
+        模拟数据生成
+        '''
+        # 生成白噪声信号
+        samples = 1000
+        w = np.random.standard_normal(size=samples)
+        # 生成随机游走序列
+        z = np.zeros((samples,))
+        for t in range(1, samples):
+            z[t] = z[t-1] + w[t]
+        # 生成非平稳信号，即交易对x和y
+        p = np.zeros((samples,))
+        q = np.zeros((samples,))
+        r = np.zeros((samples,))
+        for t in range(samples):
+            p[t] = 0.3*z[t] + w[t]
+            q[t] = 0.6*z[t] + w[t]
+            r[t] = 0.2*z[t] + w[t]
+        endog = np.vstack((p.reshape(samples, 1), q.reshape(samples, 1), r.reshape(samples, 1)))
+        print(endog)
+        jres = coint_johansen(endog, det_order=0, k_ar_diff=1)
+        print('特征值：{0}'.format(jres.eig))
+        print('cvt:{0}'.format(jres.cvt))
+        
+             
+    def t001(self):  
+        johansen = Johansen(x, model=2, significance_level=0)
         eigenvectors, r = johansen.johansen()
         print('r={0}'.format(r))
         print('ev:{0}\r\n{1}\r\n=>{2}'.format(type(eigenvectors), eigenvectors, eigenvectors[:,0]))
@@ -206,31 +231,6 @@ class Aqt003(object):
         plt.savefig('/content/drive/My Drive/aqp/aqt003_001.png', format='png')
         prices_df.loc[start_date_test:end_date_test].plot(title="Original price series", rot=15)
         plt.savefig('/content/drive/My Drive/aqp/aqt003_002.png', format='png')
-    
-    def sm_johansen_test(self):
-        '''
-        模拟数据生成
-        '''
-        # 生成白噪声信号
-        samples = 1000
-        w = np.random.standard_normal(size=samples)
-        # 生成随机游走序列
-        z = np.zeros((samples,))
-        for t in range(1, samples):
-            z[t] = z[t-1] + w[t]
-        # 生成非平稳信号，即交易对x和y
-        p = np.zeros((samples,))
-        q = np.zeros((samples,))
-        r = np.zeros((samples,))
-        for t in range(samples):
-            p[t] = 0.3*z[t] + w[t]
-            q[t] = 0.6*z[t] + w[t]
-            r[t] = 0.2*z[t] + w[t]
-        endog = np.vstack((p.reshape(samples, 1), q.reshape(samples, 1), r.reshape(samples, 1)))
-        print(endog)
-        jres = coint_johansen(endog, det_order=0, k_ar_diff=1)
-        print('特征值：{0}'.format(jres.eig))
-        print('cvt:{0}'.format(jres.cvt))
         
 
 
