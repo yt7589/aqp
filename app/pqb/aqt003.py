@@ -180,6 +180,11 @@ class Aqt003(object):
         plt.title('cointegration signal')
         plt.plot(xn)
         plt.savefig('/content/drive/My Drive/aqp/aqt003_003.png', format='png')
+        # draw acf
+        acfs = stattools.acf(epsilon)
+        tsaplots.plot_acf(epsilon, use_vlines=True, lags=30)
+        plt.title('epsilon ACF')
+        plt.savefig('/content/drive/My Drive/aqp/aqt003_004.png', format='png')
    
     
     def sm_johansen_test(self):
