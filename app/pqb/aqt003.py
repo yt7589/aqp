@@ -176,7 +176,7 @@ class Aqt003(object):
         print('系数：{0}, {1}'.format(jres.evec[0,0], jres.evec[1,0]))
         c1 = 1.0
         c2 = jres.evec[1,0] / jres.evec[0,0]
-        xn = c1 * x[:,0] + c2 * x[:,1]
+        xn = jres.evec[0,0] * x[:,0] + jres.evec[1,0] * x[:,1]
         plt.title('cointegration signal')
         plt.plot(xn)
         plt.savefig('/content/drive/My Drive/aqp/aqt003_003.png', format='png')
