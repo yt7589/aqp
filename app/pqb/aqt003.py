@@ -173,7 +173,7 @@ class Aqt003(object):
         print('Maximum eigenvalue statistic:{0}'.format(jres.lr2))
         print('Critical values (90%, 95%, 99%) for maximum eigenvalue statistic:{0}'.format(jres.cvm))
         print('Order of eigenvalues:{0}'.format(jres.ind))
-        print('系数：{0}, {1}'.format(jres.evec[0][0], jres[1][0]))
+        print('系数：{0}, {1}'.format(jres.evec[0,0], jres[1,0]))
    
     
     def sm_johansen_test(self):
