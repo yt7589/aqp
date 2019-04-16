@@ -225,7 +225,7 @@ class Aqt003(object):
             p[t] = 0.3*z[t] + w[t]
             q[t] = 0.6*z[t] + w[t]
             r[t] = 0.2*z[t] + w[t]
-        endog = np.hstack((p.reshape(samples, 1), q.reshape(samples, 1), r.reshape(samples, 1))
+        endog = np.hstack((p.reshape(samples, 1), q.reshape(samples, 1), r.reshape(samples, 1)))
         print(endog)
         
 
