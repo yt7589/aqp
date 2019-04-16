@@ -162,6 +162,7 @@ class Aqt003(object):
         prices_df = pd.read_pickle('./app/pqb/ewa_ewc_df.p')
         prices_df = prices_df.sort_values(by='date').set_index('date')
         x = prices_df.loc[start_date:end_date].values
+        print('x.type:{0}; shape:{1}!'.format(type(x), x.shape))
         jres = coint_johansen(x, det_order=0, k_ar_diff=1)
         print('特征值：{0}'.format(jres.eig))
         print('特征向量：{0}'.format(jres.evec))
