@@ -179,7 +179,7 @@ class Aqt003(object):
         xn = c1 * x[:,0] + c2 * x[:,1]
         plt.title('cointegration signal')
         plt.plot(xn)
-        plt.savefic('/content/drive/My Drive/aqp/aqt003_003.png', format='png')
+        plt.savefig('/content/drive/My Drive/aqp/aqt003_003.png', format='png')
    
     
     def sm_johansen_test(self):
