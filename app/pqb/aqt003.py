@@ -35,8 +35,8 @@ class Aqt003(object):
         print('交易对协整模型...')
         #self.simulate_demo()
         #self.qcilr_demo()
-        #self.johansen_test_demo()
-        self.sm_johansen_test()
+        self.johansen_test_demo()
+        #self.sm_johansen_test()
 
         #qcilr = QciLinearRegression()
         #qcilr.train()
@@ -225,7 +225,7 @@ class Aqt003(object):
             p[t] = 0.3*z[t] + w[t]
             q[t] = 0.6*z[t] + w[t]
             r[t] = 0.2*z[t] + w[t]
-        endog = np.hstack((p.reshape(samples, 1), q.reshape(samples, 1), r.reshape(samples, 1)))
+        endog = np.vstack((p.reshape(samples, 1), q.reshape(samples, 1), r.reshape(samples, 1)))
         print(endog)
         jres = coint_johansen(endog, det_order=0, k_ar_diff=1)
         print('特征值：{0}'.format(jres.eig))
