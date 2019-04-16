@@ -203,9 +203,9 @@ class Aqt003(object):
         plt.axhline(y=mean - std, color='r', ls='--', alpha=.5)
         plt.axhline(y=mean, color='r', ls='--', alpha=.5)
         plt.axhline(y=mean + std, color='r', ls='--', alpha=.5)
-        plt.savefig('/content/drive/My Drive/fbm/aqp/aqt003_001.png', format='png')
+        plt.savefig('/content/drive/My Drive/aqp/aqt003_001.png', format='png')
         prices_df.loc[start_date_test:end_date_test].plot(title="Original price series", rot=15)
-        plt.savefig('/content/drive/My Drive/fbm/aqp/aqt003_002.png', format='png')
+        plt.savefig('/content/drive/My Drive/aqp/aqt003_002.png', format='png')
     
     def sm_johansen_test(self):
         '''
