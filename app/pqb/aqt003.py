@@ -163,6 +163,8 @@ class Aqt003(object):
         prices_df = prices_df.sort_values(by='date').set_index('date')
         x = prices_df.loc[start_date:end_date].values
         print('x.type:{0}; shape:{1}!'.format(type(x), x.shape))
+        
+        
         jres = coint_johansen(x, det_order=0, k_ar_diff=1)
         print('特征值：{0}'.format(jres.eig))
         print('特征向量：{0}'.format(jres.evec))
@@ -171,8 +173,7 @@ class Aqt003(object):
         print('Maximum eigenvalue statistic:{0}'.format(jres.lr2))
         print('Critical values (90%, 95%, 99%) for maximum eigenvalue statistic:{0}'.format(jres.cvm))
         print('Order of eigenvalues:{0}'.format(jres.ind))
-        
-        '''
+      
         x1 = x[:,0]
         x2 = x[:,1]
         print('x1 type:{0}'.format(x1))
@@ -202,10 +203,9 @@ class Aqt003(object):
         plt.axhline(y=mean - std, color='r', ls='--', alpha=.5)
         plt.axhline(y=mean, color='r', ls='--', alpha=.5)
         plt.axhline(y=mean + std, color='r', ls='--', alpha=.5)
-        plt.show()
+        plt.savefig('/content/drive/My Drive/fbm/aqp/aqt003_001.png', format='png')
         prices_df.loc[start_date_test:end_date_test].plot(title="Original price series", rot=15)
-        plt.show()
-        '''
+        plt.savefig('/content/drive/My Drive/fbm/aqp/aqt003_002.png', format='png')
     
     def sm_johansen_test(self):
         '''
