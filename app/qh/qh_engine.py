@@ -8,6 +8,8 @@ from qstrader.event import SignalEvent, EventType
 from qstrader.compat import queue
 from qstrader.trading_session import TradingSession
 
+import matplotlib.pyplot as plt
+
 from app.qh.qh_strategy import QhStrategy
 
 class QhEngine(object):
@@ -15,15 +17,12 @@ class QhEngine(object):
         self.name = 'QhEngine'
         
     def startup(self):
-        testing = True # False
-        config = settings.from_file(
-            settings.DEFAULT_CONFIG_FILENAME, testing
-        )
+        testing = False
+        config = settings.load_config()
         tickers = ["SPY", "AGG"]
-        filename = 'aa.txt'
-        self.run(config, testing, tickers, filename) 
+        self.run(config, testing, tickers) 
 
-    def run(self, config, testing, tickers, filename):
+    def run(self, config, testing, tickers):
         # Backtest information
         title = [
             'Monthly Liquidate/Rebalance on 60%/40% SPY/AGG Portfolio'
@@ -56,4 +55,5 @@ class QhEngine(object):
             title=title, benchmark=tickers[0],
         )
         results = backtest.start_trading(testing=testing)
+        plt.show()
         return results

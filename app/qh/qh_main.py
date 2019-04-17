@@ -4,7 +4,7 @@ from app.qh.qh_evaluator import QhEvaluator
 MODE_RUN = 1
 MODE_EVALUATE = 2
 
-mode = MODE_EVALUATE
+mode = MODE_RUN
     
 def startup():
     print('长期持有按月调仓策略演示程序 v0.0.1')

@@ -37,6 +37,15 @@ TEST = munchify({
     "OUTPUT_DIR": "out"
 })
 
+def load_config():
+    '''
+    读取配置信息，包括：数据文件位置、输出文件位置
+    @version v0.0.1 闫涛 2019.04.16
+    '''
+    return munchify({
+                        "CSV_DATA_DIR": "data",
+                        "OUTPUT_DIR": "out"
+                    })
 
 def from_file(fname=DEFAULT_CONFIG_FILENAME, testing=False):
     if testing:

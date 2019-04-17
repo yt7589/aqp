@@ -1702,8 +1702,12 @@ F = 1.8 \times C + 32
 \Delta \boldsymbol{x}_{t}= \boldsymbol{\mu} + A \boldsymbol{x}_{t-1} + \Gamma _{1} \Delta \boldsymbol{x}_{t-1} + ... + \Gamma _{p} \Delta \boldsymbol{x}_{t-p} + \boldsymbol{w}_t
 \label{e000064}
 \end{equation}
-其中A为系数矩阵，
-
+其中A为系数矩阵，$\Gamma _{i}$是各滞后期的系数矩阵。我们对矩阵A进行特征值分解，阶数为$r$，分为以下两种情况：
+\begin{itemize}
+\item $r=0$：表明没有线性协整模型；
+\item $r>0$：至少有$r+1$个序列存在协整关系；
+\end{itemize}
+在实际应用中，我们取出最大的特征值对应的特征向量，将其元素作为对应序列的协整系数。下面我们通过一个具体的例子来说明这一过程，我们首先如上节所述，生成三个非平稳的时间序列，选择合适的参数使其可以组成协整模型，然后我们用johansen-test来求出这些协整系数，代码如下所示：
 
 
 
