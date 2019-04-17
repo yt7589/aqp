@@ -25,7 +25,7 @@ class QhEngine(object):
     def run(self, config, testing, tickers):
         # Backtest information
         title = [
-            'Monthly Liquidate/Rebalance on 60%/40% SPY/AGG Portfolio'
+            '长期持有月结策略 on 60%/40% SPY/AGG 投资组合'
         ]
         initial_equity = 500000.0
         start_date = datetime.datetime(2006, 11, 1)

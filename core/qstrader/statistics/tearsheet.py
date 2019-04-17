@@ -12,6 +12,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import matplotlib.dates as mdates
+from matplotlib.font_manager import FontProperties
 import seaborn as sns
 import os
 
@@ -46,6 +47,8 @@ class TearsheetStatistics(AbstractStatistics):
         self.equity = {}
         self.equity_benchmark = {}
         self.log_scale = False
+        self.font = FontProperties(fname='./work/simsun.ttc') # 载入中文字体
+        plt.rcParams['axes.unicode_minus']=False # 正确显示负号     
 
     def update(self, timestamp, portfolio_handler):
         """
@@ -189,7 +192,7 @@ class TearsheetStatistics(AbstractStatistics):
                     label='Backtest', ax=ax, **kwargs)
 
         ax.axhline(1.0, linestyle='--', color='black', lw=1)
-        ax.set_ylabel('Cumulative returns')
+        ax.set_ylabel('累积收益', fontproperties=self.font)
         ax.legend(loc='best')
         ax.set_xlabel('')
         plt.setp(ax.get_xticklabels(), visible=True, rotation=0, ha='center')
@@ -262,7 +265,7 @@ class TearsheetStatistics(AbstractStatistics):
         ax.set_ylabel('')
         ax.set_xlabel('')
         plt.setp(ax.get_xticklabels(), visible=True, rotation=0, ha='center')
-        ax.set_title('Drawdown (%)', fontweight='bold')
+        ax.set_title('回撤统计 (%)', fontweight='bold', fontproperties=self.font)
         return ax
 
     def _plot_monthly_returns(self, stats, ax=None, **kwargs):
@@ -293,7 +296,7 @@ class TearsheetStatistics(AbstractStatistics):
             cbar=False,
             cmap=cm.RdYlGn,
             ax=ax, **kwargs)
-        ax.set_title('Monthly Returns (%)', fontweight='bold')
+        ax.set_title('月收益率 (%)', fontweight='bold', fontproperties=self.font)
         ax.set_ylabel('')
         ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
         ax.set_xlabel('')
@@ -318,7 +321,7 @@ class TearsheetStatistics(AbstractStatistics):
 
         yly_ret = perf.aggregate_returns(returns, 'yearly') * 100.0
         yly_ret.plot(ax=ax, kind="bar")
-        ax.set_title('Yearly Returns (%)', fontweight='bold')
+        ax.set_title('年化收益率 (%)', fontweight='bold', fontproperties=self.font)
         ax.set_ylabel('')
         ax.set_xlabel('')
         ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
@@ -357,7 +360,7 @@ class TearsheetStatistics(AbstractStatistics):
         rsq = perf.rsquared(range(cum_returns.shape[0]), cum_returns)
         dd, dd_max, dd_dur = perf.create_drawdowns(cum_returns)
 
-        ax.text(0.25, 8.9, 'Total Return', fontsize=8)
+        ax.text(0.25, 8.9, '总收益', fontsize=8, fontproperties=self.font)
         ax.text(7.50, 8.9, '{:.0%}'.format(tot_ret), fontweight='bold', horizontalalignment='right', fontsize=8)
 
         ax.text(0.25, 7.9, 'CAGR', fontsize=8)
@@ -369,19 +372,19 @@ class TearsheetStatistics(AbstractStatistics):
         ax.text(0.25, 5.9, 'Sortino Ratio', fontsize=8)
         ax.text(7.50, 5.9, '{:.2f}'.format(sortino), fontweight='bold', horizontalalignment='right', fontsize=8)
 
-        ax.text(0.25, 4.9, 'Annual Volatility', fontsize=8)
+        ax.text(0.25, 4.9, '年化波动', fontsize=8, fontproperties=self.font)
         ax.text(7.50, 4.9, '{:.2%}'.format(returns.std() * np.sqrt(252)), fontweight='bold', horizontalalignment='right', fontsize=8)
 
         ax.text(0.25, 3.9, 'R-Squared', fontsize=8)
         ax.text(7.50, 3.9, '{:.2f}'.format(rsq), fontweight='bold', horizontalalignment='right', fontsize=8)
 
-        ax.text(0.25, 2.9, 'Max Daily Drawdown', fontsize=8)
+        ax.text(0.25, 2.9, '最大日回撤', fontsize=8, fontproperties=self.font)
         ax.text(7.50, 2.9, '{:.2%}'.format(dd_max), color='red', fontweight='bold', horizontalalignment='right', fontsize=8)
 
-        ax.text(0.25, 1.9, 'Max Drawdown Duration', fontsize=8)
+        ax.text(0.25, 1.9, '最大回撤期间', fontsize=8, fontproperties=self.font)
         ax.text(7.50, 1.9, '{:.0f}'.format(dd_dur), fontweight='bold', horizontalalignment='right', fontsize=8)
 
-        ax.text(0.25, 0.9, 'Trades per Year', fontsize=8)
+        ax.text(0.25, 0.9, '年交易', fontsize=8, fontproperties=self.font)
         ax.text(7.50, 0.9, '{:.1f}'.format(trd_yr), fontweight='bold', horizontalalignment='right', fontsize=8)
         ax.set_title('Curve', fontweight='bold')
 
@@ -456,31 +459,31 @@ class TearsheetStatistics(AbstractStatistics):
         max_loss_dt = 'TBD'  # pos[pos["trade_pct"] == np.min(pos["trade_pct"])].entry_date.values[0]
         avg_dit = '0.0'  # = '{:.2f}'.format(np.mean(pos.time_in_pos))
 
-        ax.text(0.5, 8.9, 'Trade Winning %', fontsize=8)
+        ax.text(0.5, 8.9, '盈利交易 %', fontsize=8, fontproperties=self.font)
         ax.text(9.5, 8.9, win_pct_str, fontsize=8, fontweight='bold', horizontalalignment='right')
 
-        ax.text(0.5, 7.9, 'Average Trade %', fontsize=8)
+        ax.text(0.5, 7.9, '平均交易 %', fontsize=8, fontproperties=self.font)
         ax.text(9.5, 7.9, avg_trd_pct, fontsize=8, fontweight='bold', horizontalalignment='right')
 
-        ax.text(0.5, 6.9, 'Average Win %', fontsize=8)
+        ax.text(0.5, 6.9, '平均盈利 %', fontsize=8, fontproperties=self.font)
         ax.text(9.5, 6.9, avg_win_pct, fontsize=8, fontweight='bold', color='green', horizontalalignment='right')
 
-        ax.text(0.5, 5.9, 'Average Loss %', fontsize=8)
+        ax.text(0.5, 5.9, '平均亏损 %', fontsize=8, fontproperties=self.font)
         ax.text(9.5, 5.9, avg_loss_pct, fontsize=8, fontweight='bold', color='red', horizontalalignment='right')
 
-        ax.text(0.5, 4.9, 'Best Trade %', fontsize=8)
+        ax.text(0.5, 4.9, '最佳交易 %', fontsize=8, fontproperties=self.font)
         ax.text(9.5, 4.9, max_win_pct, fontsize=8, fontweight='bold', color='green', horizontalalignment='right')
 
-        ax.text(0.5, 3.9, 'Worst Trade %', fontsize=8)
+        ax.text(0.5, 3.9, '最差交易 %', fontsize=8, fontproperties=self.font)
         ax.text(9.5, 3.9, max_loss_pct, color='red', fontsize=8, fontweight='bold', horizontalalignment='right')
 
-        ax.text(0.5, 2.9, 'Worst Trade Date', fontsize=8)
+        ax.text(0.5, 2.9, '最差交易日期', fontsize=8, fontproperties=self.font)
         ax.text(9.5, 2.9, max_loss_dt, fontsize=8, fontweight='bold', horizontalalignment='right')
 
-        ax.text(0.5, 1.9, 'Avg Days in Trade', fontsize=8)
+        ax.text(0.5, 1.9, '平均交易天数', fontsize=8, fontproperties=self.font)
         ax.text(9.5, 1.9, avg_dit, fontsize=8, fontweight='bold', horizontalalignment='right')
 
-        ax.text(0.5, 0.9, 'Trades', fontsize=8)
+        ax.text(0.5, 0.9, '交易数', fontsize=8, fontproperties=self.font)
         ax.text(9.5, 0.9, num_trades, fontsize=8, fontweight='bold', horizontalalignment='right')
 
         ax.set_title('Trade', fontweight='bold')
@@ -524,40 +527,40 @@ class TearsheetStatistics(AbstractStatistics):
         yly_max_win_pct = np.max(yly_ret)
         yly_max_loss_pct = np.min(yly_ret)
 
-        ax.text(0.5, 8.9, 'Winning Months %', fontsize=8)
+        ax.text(0.5, 8.9, '盈利月数 %', fontsize=8, fontproperties=self.font)
         ax.text(9.5, 8.9, '{:.0%}'.format(mly_pct), fontsize=8, fontweight='bold',
                 horizontalalignment='right')
 
-        ax.text(0.5, 7.9, 'Average Winning Month %', fontsize=8)
+        ax.text(0.5, 7.9, '平均月份盈利 %', fontsize=8, fontproperties=self.font)
         ax.text(9.5, 7.9, '{:.2%}'.format(mly_avg_win_pct), fontsize=8, fontweight='bold',
                 color='red' if mly_avg_win_pct < 0 else 'green',
                 horizontalalignment='right')
 
-        ax.text(0.5, 6.9, 'Average Losing Month %', fontsize=8)
+        ax.text(0.5, 6.9, '平均月份亏损 %', fontsize=8, fontproperties=self.font)
         ax.text(9.5, 6.9, '{:.2%}'.format(mly_avg_loss_pct), fontsize=8, fontweight='bold',
                 color='red' if mly_avg_loss_pct < 0 else 'green',
                 horizontalalignment='right')
 
-        ax.text(0.5, 5.9, 'Best Month %', fontsize=8)
+        ax.text(0.5, 5.9, '最好月份 %', fontsize=8, fontproperties=self.font)
         ax.text(9.5, 5.9, '{:.2%}'.format(mly_max_win_pct), fontsize=8, fontweight='bold',
                 color='red' if mly_max_win_pct < 0 else 'green',
                 horizontalalignment='right')
 
-        ax.text(0.5, 4.9, 'Worst Month %', fontsize=8)
+        ax.text(0.5, 4.9, '最差月份 %', fontsize=8, fontproperties=self.font)
         ax.text(9.5, 4.9, '{:.2%}'.format(mly_max_loss_pct), fontsize=8, fontweight='bold',
                 color='red' if mly_max_loss_pct < 0 else 'green',
                 horizontalalignment='right')
 
-        ax.text(0.5, 3.9, 'Winning Years %', fontsize=8)
+        ax.text(0.5, 3.9, '盈利年份 %', fontsize=8, fontproperties=self.font)
         ax.text(9.5, 3.9, '{:.0%}'.format(yly_pct), fontsize=8, fontweight='bold',
                 horizontalalignment='right')
 
-        ax.text(0.5, 2.9, 'Best Year %', fontsize=8)
+        ax.text(0.5, 2.9, '最好年份 %', fontsize=8, fontproperties=self.font)
         ax.text(9.5, 2.9, '{:.2%}'.format(yly_max_win_pct), fontsize=8,
                 fontweight='bold', color='red' if yly_max_win_pct < 0 else 'green',
                 horizontalalignment='right')
 
-        ax.text(0.5, 1.9, 'Worst Year %', fontsize=8)
+        ax.text(0.5, 1.9, '最差年份 %', fontsize=8, fontproperties=self.font)
         ax.text(9.5, 1.9, '{:.2%}'.format(yly_max_loss_pct), fontsize=8,
                 fontweight='bold', color='red' if yly_max_loss_pct < 0 else 'green',
                 horizontalalignment='right')
@@ -609,7 +612,7 @@ class TearsheetStatistics(AbstractStatistics):
             offset_index = 0
         vertical_sections = 5 + offset_index
         fig = plt.figure(figsize=(10, vertical_sections * 3.5))
-        fig.suptitle(self.title, y=0.94, weight='bold')
+        fig.suptitle(self.title, y=0.94, weight='bold', fontproperties=self.font)
         gs = gridspec.GridSpec(vertical_sections, 3, wspace=0.25, hspace=0.5)
 
         stats = self.get_results()

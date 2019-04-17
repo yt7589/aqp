@@ -1,6 +1,8 @@
 import sys
 sys.path.append('./core')
 import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.font_manager import FontProperties
 #import tensorflow as tf
 from app_registry import appRegistry as ar
 #import model.m_mysql as db
@@ -14,6 +16,7 @@ def call_stock_backtest():
     stock_backtest.startup()
 
 def startup():
+    
     qh.startup()
     #pqb.startup()
     
