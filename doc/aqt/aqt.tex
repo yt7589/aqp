@@ -1707,7 +1707,135 @@ F = 1.8 \times C + 32
 \item $r=0$：表明没有线性协整模型；
 \item $r>0$：至少有$r+1$个序列存在协整关系；
 \end{itemize}
-在实际应用中，我们取出最大的特征值对应的特征向量，将其元素作为对应序列的协整系数。下面我们通过一个具体的例子来说明这一过程，我们首先如上节所述，生成三个非平稳的时间序列，选择合适的参数使其可以组成协整模型，然后我们用johansen-test来求出这些协整系数，代码如下所示：
+在实际应用中，我们取出最大的特征值对应的特征向量，将其元素作为对应序列的协整系数。
+
+
+
+
+
+\maketitle\begin{center}
+\Large \textbf{第5章 卡尔曼滤波}
+\end{center}
+\begin{abstract}
+到目前为止，我们所讨论的基于协整模型的交易对策略，有一个重要的假设，即交易对之间的协整系数是不变的。但是在实际应用中，这些协整系数可能会发生缓慢的改变，如果我们用固定值，可能不会取得最佳的应用效果。在本章中，我们将采用State Space Model来解决这一问题，具体业讲，就是利用卡尔曼滤波技术，将交易对的对冲比例视为系统不可见的状态，将交易对中标的的收益率作为可观察项，利用卡尔曼滤波器的滤波功能，通过不断增加的新观测数据，利用贝叶斯推理，使我们能够更加精准的估计系统不可见状态，在本例中就是交易对的对冲比例。实际上，交易对的对冲比例，不仅会发生缓慢的变化，有时因为监管、宏观经济、市场事件等原因，交易对的对冲比例还可能发生剧烈的变化，这就需要我们识别市场所处状态，识别出市场状态的改变，从而做出更加科学的决策，这部分内容将在下一章隐马可夫模型章节中介绍。aqt005.py
+\end{abstract}
+\section{卡尔曼滤波}
+\subsection{State Space Model概述}
+在State Space Model中，我们要研究的对象是环境，这里就是市场。环境会处于某种状态，而且环境所处的状态随着时间而改变。但是我们不能直接观测到环境，我们只能得到一些观察，我们希望通过观察来推测出系统年处的状态。以我们当前的任务为例，我们的环境就是市场上的交易对，而状态就是交易对的对冲比例，而由于各种原因，如市场微观结构等，我们只能得到交易对标的的收益率，其中具有很大的噪声，信噪比很低，我们的任务就是通过观察这些收益率数据，得到交易对的对冲比例。
+State Space Model可以用如下图形来表示：
+\begin{figure}[H]
+	\caption{通用State Space Model}
+	\label{f000054}
+	\centering
+	\includegraphics[height=10cm]{images/f000054}
+\end{figure}
+图中上面白色的圆圈代表环境的隐藏状态$x_{t}$，蓝色的圆圈代表环境的观测值$y_{t}$，系统会从一个状态转移到另一个状态，可以用一个概率$P(x_{t})x_{t-1}$来表示，环境所处状态决定观察值$P(y_{t} \vert x_{t})$，环境初始时的概率为$P(x_{0})$，根据这些变量的不同特性，我们可以把State Space Model分为四种类型：
+\begin{table}[H]
+\caption{State Space Model类型}
+\label{t000001}
+\begin{tabular}{|c|c|c|c|} \hline
+名称 & $P(x_{t} \vert x_{t-1})$ & $P(y_{t} \vert x_{t})$ & $P(x_{0})$ \\ \hline  
+离散模型（隐马可夫模型） & $A_{x_{t-1}, x_{t}}$ & Any & $\pi$ \\ \hline
+线性高斯（卡尔曼滤波器） & $\mathcal{N}\big(  Ax_{t-1}+B, \theta \big)$ & $\mathcal{N}\big(  Hx_{t}+C, R \big)$ & $\mathcal{N}\big(  \mu _{0}, \epsilon _{0} \big)$ \\ \hline
+非线性非高斯（粒子滤波器） & $f(x_{t})$ & $g(y_{t})$ & $f_{0}(x_{0})$\\ \hline
+\end{tabular}
+\end{table}
+利用State Space Model可以做三件事情：
+\begin{enumerate}
+\item 预测：预测下一个到几个时刻的状态值；
+\item 滤波：根据当前的观察值，预测系统状态；
+\item 平滑：利用过去的观察值，解释过去状态变化情况；
+\end{enumerate}
+在这一章，我们所研究是线性高斯模型，即卡尔曼滤波器，我们同时会利用贝叶斯推断，通过不断增加的观察值，来逐步精确预测环境状态，在这里就是交易对的对冲比例。\newline
+\subsection{数学原理}
+在这一部分，我们将简单讲述卡尔曼滤波的数学原理，公式和符号会比较多，但是重点是理解其背后的数据直觉，不必纠结与具体推导过程。\newline
+环境状态我们用一个向量来表示$\boldsymbol{x}_{t} \in R^{n}$，由于其会随时间变化，因此我们为其添加了下标$t$，因为卡尔曼滤波是线性高斯模型，当前时刻的状态，是由前一时刻的状态经线性组合再加上高斯噪声所组成，如下所示：
+\begin{equation}
+\boldsymbol{x}_{t} = A\boldsymbol{x}_{t-1} + \boldsymbol{b} + \boldsymbol{u}_{t}
+\label{e000065}
+\end{equation}
+其中$A \in R{n \times n}$的矩阵，$\boldsymbol{b} \in R^{n}$，$\boldsymbol{w}_{t} \in R^{n}$为高斯白噪声。\newline
+系统的观察用$\boldsymbol{y}_t \in R^{m}$表示，其由当前时刻环境状态的线性组合加高斯白噪声组成，如下所示：
+\begin{equation}
+\boldsymbol{y}_{t} = H\boldsymbol{x}_{t} + \boldsymbol{c} + \boldsymbol{v}_{r}
+\label{e000066}
+\end{equation}
+系统初始状态为高斯分布：
+\begin{equation}
+\boldsymbol{x}_{0} \sim \mathcal{N} \big( \boldsymbol{\mu}_{0}, \Sigma _{0} \big)
+\label{e000067}
+\end{equation}
+环境状态在t时刻噪声：
+\begin{equation}
+\boldsymbol{u}_{t} \sim \mathcal{N} \big( 0, \Sigma _{t}^{u} \big)
+\label{e000068}
+\end{equation}
+环境观察在t时刻噪声：
+\begin{equation}
+\boldsymbol{v}_{t} \sim \mathcal{N} \big( 0, \Sigma _{t}^{v} \big)
+\label{e000069}
+\end{equation}
+\subsection{PyKalman库介绍}
+在这一节中，我们将讲述利用卡尔曼滤波来确定交易对的动态对冲比例。我们要研究的交易对为TLT和IEI，其面向美国债券市场，具有相同的市场因素，因此应该具有稳定的协整比例。在本节中我们将使用pykalman库，所以我们先来讲解一下在pykalman库中，卡尔曼滤波的表示方式，主要参考自\cite{r000003}。\newline
+我们同样用$x_{t}$来代表环境的隐藏状态，用$y_{t}$来代表对环境的观察，则卡尔曼滤波可以表示为：
+\begin{equation}
+\boldsymbol{x}_{0} \sim \mathcal{N} \big( \boldsymbol{\mu}_{0}, \Sigma _{0} \big)
+\label{e000070}
+\end{equation}
+
+\begin{equation}
+\boldsymbol{x}_{t} = A_{t-1}\boldsymbol{x}_{t-1} + \boldsymbol{b}_{t-1} + \boldsymbol{\epsilon _{t}^{1}}
+\label{e000071}
+\end{equation}
+\begin{equation}
+\boldsymbol{y}_{t} = C_{t}\boldsymbol{x}_{t} + \boldsymbol{d}_{t} + \boldsymbol{\epsilon _{t}^{2}}
+\label{e000072}
+\end{equation}
+\begin{equation}
+\boldsymbol{\epsilon _{t}^{1}} \sim \mathcal{N} \big( 0, Q \big)
+\label{e000073}
+\end{equation}
+\begin{equation}
+\boldsymbol{\epsilon _{t}^{2}} \sim \mathcal{N} \big( 0, R \big)
+\label{e000074}
+\end{equation}
+式中所用到符号如下所示：
+\begin{table}[h]
+\caption{PyKalman变量意义}
+\label{t000002}
+\begin{tabular}{|c|c|c|} \hline
+表示 & 模型参数 & 意义 \\ \hline  
+$\boldsymbol{\mu} _ {0}$ & initial\_state\_mean & 初始值均值向量 \\ \hline
+$\Sigma _{0}$ & initial\_state\_covariance & 初始状态协方差矩阵 \\ \hline
+A & transition\_matrices & 转移矩阵 \\ \hline
+$\boldsymbol{b}$ & transition\_offsets &  转移偏置值 \\ \hline
+Q & transition\_covariance & 转移协方差矩阵（噪声） \\ \hline
+C & observation\_matrices & 观察矩阵 \\ \hline
+$\boldsymbol{d}$ & observation\_offsets & 观察偏置值 \\ \hline
+R & observation\_covariance & 观察协方差矩阵（噪声） \\ \hline
+\end{tabular}
+\end{table}
+卡尔曼滤波中参数的估计是一个比较大的问题，我们可以通过EM（）算法来根据现有的观察和环境状态数据，对参数进行估计。卡尔曼滤波的参数为：
+\begin{equation}
+\theta = \{A, \boldsymbol{b}, C, \boldsymbol{d}, Q, R, \boldsymbol{\mu}_{0}, \Sigma _{0}\}
+\label{e000075}
+\end{equation}
+我们的目录是：
+\begin{equation}
+\arg \max _{\theta} P \big( \boldsymbol{y}_{0:T-1};\theta \big)
+\label{e000076}
+\end{equation}
+具体算法比较复杂，作为应用开发者，我们只需要知道这可以通过PyKalman.em(observations)函数来实现就可以了。\newline
+\subsection{卡尔曼滤波应用}
+我们取到两个ETF的价格数据，并将其保存为文本文件，格式如下所示：
+\begin{figure}[H]
+	\caption{数据文件格式}
+	\label{f000055}
+	\centering
+	\includegraphics[height=10cm]{images/f000055}
+\end{figure}
+卡尔曼滤波程序如下所示：
+
 
 
 
@@ -1715,16 +1843,12 @@ F = 1.8 \times C + 32
 \section{汇总}
 f000022
 c000010
-e000065
+e000070
 
-\maketitle\begin{center}
-\Large \textbf{第5章 卡尔曼滤波}
-\end{center}
-\begin{abstract}
-在本章中我们将首先讲述条件异方差模型GARCH（Generalized AutoRegressive Conditional Heteroskedastic），
-并将GARCH模型用于实际金融时间序列数据拟合。aqt002.py
-\end{abstract}
-\section{卡尔曼滤波}
+
+
+
+
 
 \maketitle\begin{center}
 \Large \textbf{第6章 隐马可夫模型}
