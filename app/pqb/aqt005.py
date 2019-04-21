@@ -69,25 +69,29 @@ class Aqt005(object):
         ETF prices.
         """
         delta = 1e-5
-        trans_cov = delta / (1 - delta) * np.eye(2)
-        obs_mat = np.vstack(
+        mu0 = np.zeros(2)
+        sigma0 = np.ones((2, 2))
+        Q = delta / (1 - delta) * np.eye(2)
+        At = np.eye(2)
+        Ct = np.vstack(
             [prices[etfs[0]], np.ones(prices[etfs[0]].shape)]
         ).T[:, np.newaxis]
+        R = 1.0
         kf = KalmanFilter(
             n_dim_obs=1,
             n_dim_state=2,
-            initial_state_mean=np.zeros(2),
-            initial_state_covariance=np.ones((2, 2)),
-            transition_matrices=np.eye(2),
-            observation_matrices=obs_mat,
-            observation_covariance=1.0,
-            transition_covariance=trans_cov
+            initial_state_mean=mu0,
+            initial_state_covariance=sigma0,
+            transition_matrices=At,
+            observation_matrices=Ct,
+            observation_covariance=R,
+            transition_covariance=Q
         )
         
-        observations = prices[etfs[1]].values
+        yt = prices[etfs[1]].values
         #state_means, state_covs = kf.em(observations).filter(observations)
-        state_means, state_covs = kf.em(observations).filter(observations)
-        return state_means, state_covs
+        xt_means, xt_covs = kf.em(yt).filter(yt)
+        return xt_means, xt_covs
         
     def draw_slope_intercept_changes(self, prices, state_means):
         """

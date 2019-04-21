@@ -1835,8 +1835,153 @@ R & observation\_covariance & 观察协方差矩阵（噪声） \\ \hline
 	\includegraphics[height=10cm]{images/f000055}
 \end{figure}
 卡尔曼滤波程序如下所示：
+\lstset{language=PYTHON, caption={卡尔曼滤波示例}, label={c000014}}
+\begin{lstlisting}
+    def hedge_ratio(self):
+        etfs = ['TLT', 'IEI']
+        start_date = "2010-8-01"
+        end_date = "2016-08-01"
+        # 获取调整后的收盘价
+        dateparse = lambda x: pd.datetime.strptime(x, '%Y-%m-%d')
+        prices = pd.read_csv('./work/aqt005_001.txt', encoding='utf-8', parse_dates=['Date'], date_parser=dateparse, index_col='Date')
+        # 画散点图
+        self.draw_date_coloured_scatterplot(etfs, prices)
+        state_means, state_covs = self.calc_slope_intercept_kalman(etfs, prices)
+        self.draw_slope_intercept_changes(prices, state_means)
+        
+    def draw_date_coloured_scatterplot(self, etfs, prices):
+        """
+        生成散点图，以交易对中两个标的为坐标轴，可以直观观察两个标的间的关系，并且
+        采用黄色代表早期数据而红色代表近期数据
+        @param etfs 标的字符列表
+        @param prices 价格列表，每行为日期、TLT价格、IEI价格
+        """
+        plen = len(prices)
+        colour_map = plt.cm.get_cmap('YlOrRd')
+        colours = np.linspace(0.1, 1, plen)
+        # 生成散点图
+        scatterplot = plt.scatter(
+        prices[etfs[0]], prices[etfs[1]],
+        s=30, c=colours, cmap=colour_map,
+        edgecolor='k', alpha=0.8
+        )
+        # 添加颜色图表
+        colourbar = plt.colorbar(scatterplot)
+        colourbar.ax.set_yticklabels(
+        [str(p.date()) for p in prices[::plen//9].index]
+        )
+        plt.xlabel(prices.columns[0])
+        plt.ylabel(prices.columns[1])
+        plt.show()
+        
+    def calc_slope_intercept_kalman(self, etfs, prices):
+        """
+        使用卡尔曼滤波器预测对冲比例
+        """
+        delta = 1e-5
+        mu0 = np.zeros(2)
+        sigma0 = np.ones((2, 2))
+        Q = delta / (1 - delta) * np.eye(2)
+        At = np.eye(2)
+        Ct = np.vstack(
+            [prices[etfs[0]], np.ones(prices[etfs[0]].shape)]
+        ).T[:, np.newaxis]
+        R = 1.0
+        kf = KalmanFilter(
+            n_dim_obs=1,
+            n_dim_state=2,
+            initial_state_mean=mu0,
+            initial_state_covariance=sigma0,
+            transition_matrices=At,
+            observation_matrices=Ct,
+            observation_covariance=R,
+            transition_covariance=Q
+        )
+        
+        yt = prices[etfs[1]].values
+        #state_means, state_covs = kf.em(observations).filter(observations)
+        xt_means, xt_covs = kf.em(yt).filter(yt)
+        return xt_means, xt_covs
+        
+    def draw_slope_intercept_changes(self, prices, state_means):
+        """
+        绘制斜率和截距
+        """
+        pd.DataFrame(
+            dict(
+                slope=state_means[:, 0],
+                intercept=state_means[:, 1]
+            ), 
+            index=prices.index
+        ).plot(subplots=True)
+        plt.show()
+\end{lstlisting}
+我们首先从数据文件中读出调整后的收盘价格数据，然后以TFT为横轴，IEI为纵轴，绘制出这两个标的间的对应关系。如下所示：
+\begin{figure}[H]
+	\caption{散点图}
+	\label{f000056}
+	\centering
+	\includegraphics[height=10cm]{images/f000056}
+\end{figure}
+由图\ref{f000056}可以看出，二者之间有一个相对稳定的线性关系，这是我们应用交易对交易策略的基础。\newline
+我们接着利用卡尔曼滤波来预测对冲比例，为了讲述方便，我们把PyKalman库中的公式重新列在这里：
+\begin{equation}
+\boldsymbol{x}_{t-1}=A_{t}\boldsymbol{x}_{t-1} + \boldsymbol{b}_{t} + \boldsymbol{\epsilon}_{t}^{1}
+\label{e000077}
+\end{equation}
+\begin{equation}
+\boldsymbol{y}_{t}=C_{t}\boldsymbol{x}_{t} + \boldsymbol{d}_{t} + \boldsymbol{\epsilon}_{t}^{2}
+\label{e000078}
+\end{equation}
+\begin{equation}
+\boldsymbol{\epsilon}_{t}^{1} \in \mathcal{N} \big( 0, Q \big)
+\label{e000079}
+\end{equation}
+\begin{equation}
+\boldsymbol{\epsilon}_{t}^{2} \in \mathcal{N} \big( 0, R \big)
+\label{e000080}
+\end{equation}
+我们将TLT的价格，后面加上1之后形成向量，将当前所有时间点的向量组合到一起，形成的矩阵作为观察矩阵，即公式中的$C_{t}$。观察$y_{t}$在这里为1维，因此初始时其协方差矩阵为1。我们按照给定的初始初始化一个卡尔曼滤波器对象，首先调用em()方法对参数进行估计，然后利估计出的参数，运行滤波功能，得到本时刻系统状态即对冲比例。对于每个时间点，其公式为：
+\begin{equation}
+y_{t}=\begin{bmatrix}
+c_{t} & 1
+\end{bmatrix}\begin{bmatrix}
+x_{t,1} \\
+x_{t,2}
+\end{bmatrix} \quad => \quad IEI.price=\begin{bmatrix}
+TLT.price & 1
+\end{bmatrix}\begin{bmatrix}
+slope \\
+intercept
+\end{bmatrix}
+\label{e000081}
+\end{equation}
+注意：在上式中，我们将截距项$\boldsymbol{d}_{t}$作为向量中的一维来表示，因此式中就没有这一项了。\newline
+运行上面的程序，就可以得到各个时间点的斜率和截距，我们接着绘制斜率和截距随时变化的曲线，如下所示：
+\begin{figure}[H]
+	\caption{对冲比例变化曲线}
+	\label{f000057}
+	\centering
+	\includegraphics[height=10cm]{images/f000057}
+\end{figure}
+图\ref{f000057}中，上面蓝色的曲线为对冲比例变化曲线，可以看出，对冲比例并不是一成不变的，因此如果我们按照动态变化的对冲比例来设计交易策略，我们可以得到更高的收益。
 
-
+\maketitle\begin{center}
+\Large \textbf{第6章 统计套利策略}
+\end{center}
+\begin{abstract}
+在本章中，我们将利用卡尔曼滤波技术，设计统计套利策略，利用我们的量化交易研究平台进行回测，初步验证策略的正确性。
+并将GARCH模型用于实际金融时间序列数据拟合。
+\end{abstract}
+\section{统计套利策略}
+统计套利策略是一种市场中性策略，在实际中有大量应用。
+\subsection{数据获取}
+我们要研究交易策略，首先要获取历史交易数据，在本节中，我们将讲述如何通过baostock的接口，来获取历史交易数据。我们之所以选择baostock接口，因为baostock可以提供免费的6分钏的日内交易数据，这在免费数据中是很少见的。不过我们这一篇中，我们只研究日线交易数据。baostock接口网站：
+\lstset{language=BASH}
+\begin{lstlisting}
+http://baostock.com/baostock/index.php
+\end{lstlisting}
+获取股票历史交易记录非常简单，甚至都不用注册用户，例如我们想获取工商银行2006到至2018年数据，根据baostock的规定，工商银行的股票代码为601398.sh，程序如下所示：
 
 
 
@@ -1859,14 +2004,7 @@ e000070
 \end{abstract}
 \section{隐马可夫模型}
 
-\maketitle\begin{center}
-\Large \textbf{第7章 统计套利策略}
-\end{center}
-\begin{abstract}
-在本章中我们将首先讲述条件异方差模型GARCH（Generalized AutoRegressive Conditional Heteroskedastic），
-并将GARCH模型用于实际金融时间序列数据拟合。aqt002.py
-\end{abstract}
-\section{统计套利策略}
+
 
 \maketitle\begin{center}
 \Large \textbf{第8章 机器学习}

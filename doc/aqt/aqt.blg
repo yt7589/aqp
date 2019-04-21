@@ -6,45 +6,45 @@ Database file #1: nips.bib
 Warning--I didn't find a database entry for "ex1"
 Warning--I didn't find a database entry for "ex2"
 Warning--I didn't find a database entry for "refa001"
-You've used 2 entries,
+You've used 3 entries,
             2773 wiz_defined-function locations,
-            608 strings with 5076 characters,
-and the built_in function-call counts, 710 in all, are:
-= -- 59
-> -- 31
-< -- 2
-+ -- 11
-- -- 9
-* -- 44
-:= -- 121
-add.period$ -- 7
-call.type$ -- 2
-change.case$ -- 8
-chr.to.int$ -- 2
-cite$ -- 4
-duplicate$ -- 39
-empty$ -- 63
-format.name$ -- 13
-if$ -- 143
+            614 strings with 5195 characters,
+and the built_in function-call counts, 1026 in all, are:
+= -- 89
+> -- 41
+< -- 3
++ -- 15
+- -- 12
+* -- 62
+:= -- 174
+add.period$ -- 11
+call.type$ -- 3
+change.case$ -- 12
+chr.to.int$ -- 3
+cite$ -- 6
+duplicate$ -- 58
+empty$ -- 93
+format.name$ -- 17
+if$ -- 209
 int.to.chr$ -- 1
 int.to.str$ -- 1
-missing$ -- 3
-newline$ -- 19
-num.names$ -- 8
-pop$ -- 18
+missing$ -- 4
+newline$ -- 25
+num.names$ -- 12
+pop$ -- 24
 preamble$ -- 1
-purify$ -- 7
+purify$ -- 10
 quote$ -- 0
-skip$ -- 30
+skip$ -- 44
 stack$ -- 0
-substring$ -- 4
-swap$ -- 2
+substring$ -- 6
+swap$ -- 3
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 17
+type$ -- 28
 warning$ -- 0
-while$ -- 6
+while$ -- 9
 width$ -- 0
-write$ -- 35
+write$ -- 50
 (There were 3 warnings)
