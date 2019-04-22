@@ -8,6 +8,7 @@ from app_registry import appRegistry as ar
 #import model.m_mysql as db
 import app.qh.qh_main as qh
 import app.pqb.pqb_main as pqb
+from app.tpsa.tpsa_main import TpsaMain
 
 
 
@@ -16,9 +17,11 @@ def call_stock_backtest():
     stock_backtest.startup()
 
 def startup():
+    tpsaMain = TpsaMain()
+    tpsaMain.startup()
     
     #qh.startup()
-    pqb.startup()
+    #pqb.startup()
     
     
     
