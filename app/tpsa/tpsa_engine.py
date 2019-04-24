@@ -7,6 +7,7 @@ from qstrader.position_sizer.naive import NaivePositionSizer
 from qstrader.event import SignalEvent, EventType
 from qstrader.compat import queue
 from qstrader.trading_session import TradingSession
+from qstrader.price_handler.bscna_daily_csv_bar import BscnaDailyCsvBarPriceHandler
 
 import matplotlib.pyplot as plt
 
