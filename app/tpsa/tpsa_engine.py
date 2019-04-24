@@ -50,7 +50,12 @@ class TpsaEngine(object):
             config, strategy, tickers,
             initial_equity, start_date, end_date,
             events_queue, title=title,
-            position_sizer=position_sizer
+            position_sizer=position_sizer,
+            price_handler=BscnaDailyCsvBarPriceHandler(
+                config.CSV_DATA_DIR, events_queue,
+                tickers, start_date=start_date,
+                end_date=end_date
+            )
         )
         results = backtest.start_trading(testing=testing)
         plt.show()
