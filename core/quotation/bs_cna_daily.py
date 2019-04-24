@@ -8,7 +8,7 @@ class BsCnaDaily(object):
     def __init__(self):
         self.name = 'BsADaily'
         
-    def get_history_data(self, stock_code, start_date, end_date):
+    def get_history_data(self, stock_code, start_date, end_date, equity_file):
         '''
         获取A股日线行情历史数据
         @param stock_code 股票代码，如工商银行为：sh.601398
@@ -29,9 +29,20 @@ class BsCnaDaily(object):
             print('query_history_k_data_plus respond  error_msg:'+rs.error_msg)
             return False,rs.error_msg
         data_list = []
+        rs.next() # 略过第一行
+        header = ["Date", "Open", "High", "Low","Close", "Volume", "Adj Close"]
         while (rs.error_code == '0') & rs.next():
-            data_list.append(rs.get_row_data())
-        result = pd.DataFrame(data_list, columns=rs.fields)
-        result.to_csv('./data/{0}.csv'.format(stock_code), index=False)
+            src_row = rs.get_row_data()
+            row = []
+            row.append(src_row[0])
+            row.append(src_row[2])
+            row.append(src_row[3])
+            row.append(src_row[4])
+            row.append(src_row[5])
+            row.append(src_row[7])
+            row.append(src_row[5])
+            data_list.append(row)
+        result = pd.DataFrame(data_list, columns=header)
+        result.to_csv('./data/{0}.csv'.format(equity_file), index=False)
         bs.logout()
         return True
