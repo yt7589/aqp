@@ -199,7 +199,7 @@ class TearsheetStatistics(AbstractStatistics):
 
         if self.log_scale:
             ax.set_yscale('log')
-
+        plt.show()
         return ax
 
     def _plot_rolling_sharpe(self, stats, ax=None, **kwargs):
@@ -237,7 +237,7 @@ class TearsheetStatistics(AbstractStatistics):
         ax.legend(loc='best')
         ax.set_xlabel('')
         plt.setp(ax.get_xticklabels(), visible=True, rotation=0, ha='center')
-
+        plt.show()
         return ax
 
     def _plot_drawdown(self, stats, ax=None, **kwargs):
@@ -266,6 +266,7 @@ class TearsheetStatistics(AbstractStatistics):
         ax.set_xlabel('')
         plt.setp(ax.get_xticklabels(), visible=True, rotation=0, ha='center')
         ax.set_title('回撤统计 (%)', fontweight='bold', fontproperties=self.font)
+        plt.show()
         return ax
 
     def _plot_monthly_returns(self, stats, ax=None, **kwargs):
@@ -300,7 +301,7 @@ class TearsheetStatistics(AbstractStatistics):
         ax.set_ylabel('')
         ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
         ax.set_xlabel('')
-
+        plt.show()
         return ax
 
     def _plot_yearly_returns(self, stats, ax=None, **kwargs):
@@ -326,7 +327,7 @@ class TearsheetStatistics(AbstractStatistics):
         ax.set_xlabel('')
         ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
         ax.xaxis.grid(False)
-
+        plt.show()
         return ax
 
     def _plot_txt_curve(self, stats, ax=None, **kwargs):
@@ -397,7 +398,6 @@ class TearsheetStatistics(AbstractStatistics):
             sortino_b = perf.create_sortino_ratio(returns_b)
             rsq_b = perf.rsquared(range(equity_b.shape[0]), equity_b)
             dd_b, dd_max_b, dd_dur_b = perf.create_drawdowns(equity_b)
-
             ax.text(9.75, 8.9, '{:.0%}'.format(tot_ret_b), fontweight='bold', horizontalalignment='right', fontsize=8)
             ax.text(9.75, 7.9, '{:.2%}'.format(cagr_b), fontweight='bold', horizontalalignment='right', fontsize=8)
             ax.text(9.75, 6.9, '{:.2f}'.format(sharpe_b), fontweight='bold', horizontalalignment='right', fontsize=8)
@@ -406,9 +406,7 @@ class TearsheetStatistics(AbstractStatistics):
             ax.text(9.75, 3.9, '{:.2f}'.format(rsq_b), fontweight='bold', horizontalalignment='right', fontsize=8)
             ax.text(9.75, 2.9, '{:.2%}'.format(dd_max_b), color='red', fontweight='bold', horizontalalignment='right', fontsize=8)
             ax.text(9.75, 1.9, '{:.0f}'.format(dd_dur_b), fontweight='bold', horizontalalignment='right', fontsize=8)
-
             ax.set_title('Curve vs. Benchmark', fontweight='bold')
-
         ax.grid(False)
         ax.spines['top'].set_linewidth(2.0)
         ax.spines['bottom'].set_linewidth(2.0)
@@ -418,8 +416,8 @@ class TearsheetStatistics(AbstractStatistics):
         ax.get_xaxis().set_visible(False)
         ax.set_ylabel('')
         ax.set_xlabel('')
-
         ax.axis([0, 10, 0, 10])
+        plt.show()
         return ax
 
     def _plot_txt_trade(self, stats, ax=None, **kwargs):
@@ -485,7 +483,6 @@ class TearsheetStatistics(AbstractStatistics):
 
         ax.text(0.5, 0.9, '交易数', fontsize=8, fontproperties=self.font)
         ax.text(9.5, 0.9, num_trades, fontsize=8, fontweight='bold', horizontalalignment='right')
-
         ax.set_title('Trade', fontweight='bold')
         ax.grid(False)
         ax.spines['top'].set_linewidth(2.0)
@@ -496,8 +493,8 @@ class TearsheetStatistics(AbstractStatistics):
         ax.get_xaxis().set_visible(False)
         ax.set_ylabel('')
         ax.set_xlabel('')
-
         ax.axis([0, 10, 0, 10])
+        plt.show()
         return ax
 
     def _plot_txt_time(self, stats, ax=None, **kwargs):
@@ -578,8 +575,8 @@ class TearsheetStatistics(AbstractStatistics):
         ax.get_xaxis().set_visible(False)
         ax.set_ylabel('')
         ax.set_xlabel('')
-
         ax.axis([0, 10, 0, 10])
+        plt.show()
         return ax
 
     def plot_results(self, filename=None):
@@ -605,39 +602,24 @@ class TearsheetStatistics(AbstractStatistics):
         sns.set_context(rc)
         sns.set_style("whitegrid")
         sns.set_palette("deep", desat=.6)
-
-        if self.rolling_sharpe:
-            offset_index = 1
-        else:
-            offset_index = 0
-        vertical_sections = 5 + offset_index
-        fig = plt.figure(figsize=(10, vertical_sections * 3.5))
-        fig.suptitle(self.title, y=0.94, weight='bold', fontproperties=self.font)
-        gs = gridspec.GridSpec(vertical_sections, 3, wspace=0.25, hspace=0.5)
-
+        # 读取统计数据
         stats = self.get_results()
-        ax_equity = plt.subplot(gs[:2, :])
-        if self.rolling_sharpe:
-            ax_sharpe = plt.subplot(gs[2, :])
-        ax_drawdown = plt.subplot(gs[2 + offset_index, :])
-        ax_monthly_returns = plt.subplot(gs[3 + offset_index, :2])
-        ax_yearly_returns = plt.subplot(gs[3 + offset_index, 2])
-        ax_txt_curve = plt.subplot(gs[4 + offset_index, 0])
-        ax_txt_trade = plt.subplot(gs[4 + offset_index, 1])
-        ax_txt_time = plt.subplot(gs[4 + offset_index, 2])
-
-        self._plot_equity(stats, ax=ax_equity)
-        if self.rolling_sharpe:
-            self._plot_rolling_sharpe(stats, ax=ax_sharpe)
-        self._plot_drawdown(stats, ax=ax_drawdown)
-        self._plot_monthly_returns(stats, ax=ax_monthly_returns)
-        self._plot_yearly_returns(stats, ax=ax_yearly_returns)
-        self._plot_txt_curve(stats, ax=ax_txt_curve)
-        self._plot_txt_trade(stats, ax=ax_txt_trade)
-        self._plot_txt_time(stats, ax=ax_txt_time)
-
-        # Plot the figure
-        plt.show(block=False)
+        # 绘制收益曲线
+        self._plot_equity(stats, ax=plt.subplot())
+        # 移动夏普比
+        self._plot_rolling_sharpe(stats, ax=plt.subplot())
+        # 回撤
+        self._plot_drawdown(stats, ax=plt.subplot())
+        # 月收益率
+        self._plot_monthly_returns(stats, ax=plt.subplot())
+        # 年化收益率
+        self._plot_yearly_returns(stats, ax=plt.subplot())
+        # 曲线
+        self._plot_txt_curve(stats, ax=plt.subplot())
+        # 交易
+        self._plot_txt_trade(stats, ax=plt.subplot())
+        # 时间
+        self._plot_txt_time(stats, ax=plt.subplot())
 
         if filename is not None:
             fig.savefig(filename, dpi=150, bbox_inches='tight')
