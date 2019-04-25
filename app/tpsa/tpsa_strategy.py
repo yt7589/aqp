@@ -18,10 +18,11 @@ class TpsaStrategy(AbstractStrategy):
     events_queue - A handle to the system events queue
     """
     def __init__(
-        self, tickers, events_queue
+        self, tickers, events_queue, equity
     ):
         self.tickers = tickers
-        self.events_queue = events_queue      
+        self.events_queue = events_queue
+        self.equity = equity
         self.time = None
         self.latest_prices = np.array([-1.0, -1.0])
         self.invested = None
@@ -36,6 +37,8 @@ class TpsaStrategy(AbstractStrategy):
         self.days = 0
         self.qty = 2000
         self.cur_hedge_qty = self.qty
+        
+        self.yt_state = 0
 
     def _set_correct_time_and_price(self, event):
         """
@@ -66,6 +69,25 @@ class TpsaStrategy(AbstractStrategy):
                 self.latest_prices[1] = price
 
     def calculate_signals(self, event):
+        if event.type == EventType.BAR:
+            self._set_correct_time_and_price(event)
+
+            # Only trade if we have both observations
+            if all(self.latest_prices > -1.0):
+                if self.days < 10 and self.latest_prices[0] < 5.0 and 0 == self.yt_state:
+                    self.qty = int(500000.0 / 5.0)
+                    self.equity -= self.qty * self.latest_prices[0]
+                    print('日期：{0}； 操作：买入； 价格：{1}； 数量：{2}   <=> {3}!'.format(event.time, self.latest_prices[0], self.qty, self.equity))
+                    self.events_queue.put(SignalEvent(self.tickers[0], "BOT", self.qty))
+                    self.yt_state = 1
+                if self.days > 20 and self.latest_prices[0] > 7.5 and 1 == self.yt_state:
+                    print('日期：{0}； 操作：卖出； 价格：{1}； 数量：{2}!   <=> {3}'.format(event.time, self.latest_prices[0], self.qty, self.equity))
+                    self.events_queue.put(SignalEvent(self.tickers[0], "SLD", self.qty))
+                    self.equity += self.qty * self.latest_prices[0]
+                    self.yt_state = 0
+                    
+    
+    def calculate_signals_kalman(self, event):
         """
         Calculate the Kalman Filter strategy.
         """

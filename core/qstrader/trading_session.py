@@ -155,6 +155,7 @@ class TradingSession(object):
         """
         self._run_session()
         results = self.statistics.get_results()
+        #print('资金：{0}'.format(self.statistics.equity))
         print("---------------------------------")
         print("Backtest complete.")
         print("Sharpe Ratio: %0.2f" % results["sharpe"])

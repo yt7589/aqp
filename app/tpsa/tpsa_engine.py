@@ -31,13 +31,13 @@ class TpsaEngine(object):
             '基于卡尔曼滤波器的交易对策略'
         ]
         initial_equity = 500000.0
-        start_date = datetime.datetime(2008, 1, 1)
-        end_date = datetime.datetime(2019, 1, 1)
+        start_date = datetime.datetime(2017, 1, 1)
+        end_date = datetime.datetime(2019, 4, 23)
 
         # Use the Monthly Liquidate And Rebalance strategy
         events_queue = queue.Queue()
         strategy = TpsaStrategy(
-            tickers, events_queue
+            tickers, events_queue, initial_equity
         )
 
         # Use the Naive Position Sizer where
@@ -58,5 +58,5 @@ class TpsaEngine(object):
             )
         )
         results = backtest.start_trading(testing=testing)
-        plt.show()
+        print('最后金额：{0}'.format(strategy.equity))
         return results
