@@ -39,6 +39,7 @@ class TpsaStrategy(AbstractStrategy):
         self.cur_hedge_qty = self.qty
         
         self.yt_state = 0
+        self.buy_price = 0.0
 
     def _set_correct_time_and_price(self, event):
         """
@@ -68,7 +69,46 @@ class TpsaStrategy(AbstractStrategy):
             else:
                 self.latest_prices[1] = price
 
+    def train_kalman_filter(self, etfs, prices):
+        """
+        Utilise the Kalman Filter from the PyKalman package
+        to calculate the slope and intercept of the regressed
+        ETF prices.
+        """
+        delta = 1e-5
+        mu0 = np.zeros(2)
+        sigma0 = np.ones((2, 2))
+        Q = delta / (1 - delta) * np.eye(2)
+        At = np.eye(2)
+        Ct = np.vstack(
+            [prices[etfs[0]], np.ones(prices[etfs[0]].shape)]
+        ).T[:, np.newaxis]
+        R = 1.0
+        self.kf = KalmanFilter(
+            n_dim_obs=1,
+            n_dim_state=2,
+            initial_state_mean=mu0,
+            initial_state_covariance=sigma0,
+            transition_matrices=At,
+            observation_matrices=Ct,
+            observation_covariance=R,
+            transition_covariance=Q
+        )
+        
+        yt = prices[etfs[1]].values
+        #state_means, state_covs = kf.em(observations).filter(observations)
+        xt_means, xt_covs = kf.em(yt).filter(yt)
+        return xt_means, xt_covs
+
     def calculate_signals(self, event):
+        if event.type == EventType.BAR:
+            self._set_correct_time_and_price(event)
+            # Only trade if we have both observations
+            if all(self.latest_prices > -1.0):
+                # kalman.filter_update
+                pass
+    
+    def calculate_signals_god(self, event):
         if event.type == EventType.BAR:
             self._set_correct_time_and_price(event)
 
@@ -80,6 +120,7 @@ class TpsaStrategy(AbstractStrategy):
                     print('日期：{0}； 操作：买入； 价格：{1}； 数量：{2}   <=> {3}!'.format(event.time, self.latest_prices[0], self.qty, self.equity))
                     self.events_queue.put(SignalEvent(self.tickers[0], "BOT", self.qty))
                     self.yt_state = 1
+                    self.buy_price = self.latest_prices[0]
                 if self.days > 20 and self.latest_prices[0] > 7.5 and 1 == self.yt_state:
                     print('日期：{0}； 操作：卖出； 价格：{1}； 数量：{2}!   <=> {3}'.format(event.time, self.latest_prices[0], self.qty, self.equity))
                     self.events_queue.put(SignalEvent(self.tickers[0], "SLD", self.qty))

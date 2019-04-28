@@ -12,8 +12,9 @@ class Aqt005(object):
         
     def startup(self):
         print('卡尔曼滤波确定动态对冲比例')
-        self.hedge_ratio()
+        #self.hedge_ratio()
         #self.kalman_filter()
+        self.kalman_filter2()
         
     def hedge_ratio(self):
         etfs = ['TLT', 'IEI']
@@ -135,6 +136,14 @@ class Aqt005(object):
         filtered_state_estimates, filtered_state_covariances = kf.filter(observations)
         plt.plot(filtered_state_estimates)
         plt.show()
+        
+    def kalman_filter2(self):
+        print('测试filter_update用法')
+        df = pd.read_csv('./work/aqt005_001.txt')
+        df.dropna(inplace=True)
+        n = df.shape[0]
+        n_dim_state = 2
+        # 
         
         
         
