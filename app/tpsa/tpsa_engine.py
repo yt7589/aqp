@@ -10,6 +10,7 @@ from qstrader.trading_session import TradingSession
 from qstrader.price_handler.bscna_daily_csv_bar import BscnaDailyCsvBarPriceHandler
 
 import matplotlib.pyplot as plt
+from app.tpsa.tpsa_dataset import TpsaDataset
 
 
 
@@ -22,6 +23,40 @@ class TpsaEngine(object):
     def startup(self):
         testing = False
         config = settings.load_config()
+        
+        stocks = [
+            {
+                'stock_code': 'sh.601398',
+                'start_date': '2017-01-01',
+                'end_date': '2019-04-01',
+                'etf_name': 'ICBC_train'
+            }, 
+            {
+                'stock_code': 'sh.601939',
+                'start_date': '2017-01-01',
+                'end_date': '2019-04-01',
+                'etf_name': 'CBC_train'
+            }
+        ]
+        TpsaDataset.get_quotation_data(stocks)
+        stock_files = [
+            './data/{0}.csv'.format(stocks[0]['etf_name']),
+            './data/{0}.csv'.format(stocks[1]['etf_name'])
+        ]
+        TpsaDataset.draw_close_price_curve(stock_files)
+        
+        
+        
+        #strategy.train_kalman_filter(etfs, prices)
+        
+        
+        i_debug = 1
+        if 1 == i_debug:
+            return
+        
+        
+        
+        
         tickers = ['ICBC', 'CBC']
         self.run(config, testing, tickers) 
 
@@ -43,14 +78,6 @@ class TpsaEngine(object):
         )
         
         
-        etfs = ['TLT', 'IEI']
-        start_date = "2010-8-01"
-        end_date = "2016-08-01"
-        dateparse = lambda x: pd.datetime.strptime(x, '%Y-%m-%d')
-        prices = pd.read_csv('./work/aqt005_001.txt', 
-                    encoding='utf-8', parse_dates=['Date'], 
-                    date_parser=dateparse, index_col='Date')
-        strategy.train_kalman_filter(etfs, prices)
 
         # Use the Naive Position Sizer where
         # suggested quantities are followed

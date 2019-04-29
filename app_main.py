@@ -17,11 +17,11 @@ def call_stock_backtest():
     stock_backtest.startup()
 
 def startup():
-    #tpsaMain = TpsaMain()
-    #tpsaMain.startup()
+    tpsaMain = TpsaMain()
+    tpsaMain.startup()
     
     #qh.startup()
-    pqb.startup()
+    #pqb.startup()
     
     
     
