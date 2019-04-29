@@ -37,7 +37,7 @@ class TpsaStrategy(AbstractStrategy):
         self.R = None
 
         self.days = 0
-        self.qty = 2000
+        self.qty = 20000
         self.cur_hedge_qty = self.qty
         
         self.yt_state = 0
@@ -45,6 +45,7 @@ class TpsaStrategy(AbstractStrategy):
         
         self.ts0 = ts0
         self.ts1 = ts1
+        self.kalman_mode = 1
         
         xt_means, xt_covs = self.train_kalman_filter(ts0, ts1)
         slope = xt_means[-1][0]
@@ -52,19 +53,26 @@ class TpsaStrategy(AbstractStrategy):
         price0 = ts0[-1]
         price1 = ts1[-1]
         print('type:{0}; shape:{1}'.format(type(price0), ts0[-1].shape))
-        amount = self.equity * 0.8
+        amount = self.equity * 0.1
         amount1 = amount / (1 + slope)
         amount0 = amount * (slope / (1+slope))
         self.qty1 = int(math.floor(amount1 / price1))
+        self.qty1_0 = self.qty1
         self.qty0 = int(math.floor(amount0 / price0))
+        self.qty0_0 = self.qty0
         amt1 = self.qty1 * price1
         amt0 = self.qty0 * price0
         self.equity -= (amt0 + amt1)
+        self.equity_0 = self.equity
         self.events_queue.put(SignalEvent(self.tickers[0], "BOT", self.qty0))
         print('购买{0}：数量：{1}；价格：{2}'.format(self.tickers[0], self.qty0, self.ts0[-1]))
         self.events_queue.put(SignalEvent(self.tickers[1], "BOT", self.qty1))
         print('购买{0}：数量：{1}；价格：{2}'.format(self.tickers[1], self.qty1, self.ts1[-1]))
         print('现金：{0}'.format(self.equity))
+        
+        self.ts0 = np.array([])
+        self.ts1 = np.array([])
+        self.deltas = np.array([])
         
         
 
@@ -96,7 +104,7 @@ class TpsaStrategy(AbstractStrategy):
             else:
                 self.latest_prices[1] = price
 
-    def train_kalman_filter(self, ts0, ts1):
+    def train_kalman_filter(self, ts0, ts1, mode=1):
         """
         Utilise the Kalman Filter from the PyKalman package
         to calculate the slope and intercept of the regressed
@@ -121,36 +129,75 @@ class TpsaStrategy(AbstractStrategy):
             observation_covariance=R,
             transition_covariance=Q
         )
-        
         yt = ts1
         #state_means, state_covs = kf.em(observations).filter(observations)
-        xt_means, xt_covs = self.kf.em(yt).filter(yt)
-        print('xt_means:{0}!'.format(xt_means))
-        print('Rt:{0}!'.format(np.sqrt(self.kf.observation_covariance)))
-        
+        if mode != 1:
+            xt_means, xt_covs = self.kf.filter(yt)
+        else:
+            xt_means, xt_covs = self.kf.em(yt).filter(yt)
         return xt_means, xt_covs
 
+
     def calculate_signals(self, event):
+        mode = 2
         if event.type == EventType.BAR:
             self._set_correct_time_and_price(event)
             # Only trade if we have both observations
             if all(self.latest_prices > -1.0):
                 # kalman.filter_update
-                np.append(self.ts0, self.latest_prices[0])
-                np.append(self.ts1, self.latest_prices[1])
-                xt_means, x_convs = self.train_kalman_filter(self.ts0, self.ts1)
+                self.ts0 = np.append(self.ts0, self.latest_prices[0])
+                self.ts1 = np.append(self.ts1, self.latest_prices[1])
+                if self.days < 100:
+                    return
+                if self.days % 30 == 0:
+                    mode = 1
+                xt_means, x_convs = self.train_kalman_filter(self.ts0, self.ts1, mode=2)
                 slope = xt_means[-1][0]
                 intercept = xt_means[-1][1]
                 yt_hat = self.ts0[-1] * slope + intercept
                 delta = yt_hat - self.ts1[-1]
-                threshold = np.sqrt(self.kf.observation_covariance)
+                self.deltas = np.append(self.deltas, delta)
+                threshold = np.std(self.deltas)
                 if delta < -threshold:
                     # 卖掉0买入1
-                    pass
+                    qty0 = int(math.floor(self.qty * slope))
+                    self.events_queue.put(SignalEvent(self.tickers[0], "SLD", qty0))
+                    self.qty0 -= qty0
+                    self.equity += qty0 * self.latest_prices[0]
+                    self.events_queue.put(SignalEvent(self.tickers[1], "BOT", self.qty))
+                    self.qty1 += self.qty
+                    self.equity -= self.qty * self.latest_prices[1]
+                    print('    买入{0}：数量：{1}；价格：{2}；金额：{3}'.format(
+                            self.tickers[1], self.qty, self.latest_prices[1], 
+                            self.qty*self.latest_prices[1])
+                    )
+                    print('     卖出{0}：数量：{1}；价格：{2}；金额：{3}'.format(
+                            self.tickers[0], qty0, self.latest_prices[0],
+                            qty0*self.latest_prices[0]
+                    ))
+                    total = self.equity + self.qty0 * self.latest_prices[0] + self.qty1 * self.latest_prices[1]
+                    print('########### 总资产：{0}={1}+{2}+{2}'.format(total, self.equity, 
+                            self.qty0 * self.latest_prices[0], self.qty1 * self.latest_prices[1]))
                 elif delta > threshold:
                     # 买入0卖出1
-                    pass
-                pass
+                    self.events_queue.put(SignalEvent(self.tickers[1], "SLD", self.qty))
+                    self.qty1 -= self.qty
+                    self.equity += self.qty * self.latest_prices[1]
+                    qty0 = int(math.floor(self.qty * slope))
+                    self.events_queue.put(SignalEvent(self.tickers[0], "BOT", qty0))
+                    self.qty0 += qty0
+                    self.equity -= qty0 * self.latest_prices[0]
+                    print('    买入{0}：数量：{1}；价格：{2}；金额：{3}'.format(
+                            self.tickers[0], qty0, self.latest_prices[0], 
+                            self.qty*self.latest_prices[0])
+                    )
+                    print('     卖出{0}：数量：{1}；价格：{2}；金额：{3}'.format(
+                            self.tickers[1], self.qty, self.latest_prices[1],
+                            qty0*self.latest_prices[1]
+                    ))
+                    total = self.equity + self.qty0 * self.latest_prices[0] + self.qty1 * self.latest_prices[1]
+                    print('########### 总资产：{0}={1}+{2}+{2}'.format(total, self.equity, 
+                            self.qty0 * self.latest_prices[0], self.qty1 * self.latest_prices[1]))
     
     def calculate_signals_god(self, event):
         if event.type == EventType.BAR:
