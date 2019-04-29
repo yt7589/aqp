@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 from core.quotation.bs_cna_daily import BsCnaDaily
 from app.tpsa.tpsa_engine import TpsaEngine
 
+from app.tpsa.tpsa_dataset import TpsaDataset
+
 class TpsaMain(object):
     def __init__(self):
         self.name = 'TpsaMain'

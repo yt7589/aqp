@@ -3,12 +3,14 @@
 from __future__ import print_function
 
 from math import floor
+import math
 
 import numpy as np
 
 from qstrader.price_parser import PriceParser
 from qstrader.event import (SignalEvent, EventType)
 from qstrader.strategy.base import AbstractStrategy
+from pykalman import KalmanFilter
 
 
 class TpsaStrategy(AbstractStrategy):
@@ -18,7 +20,7 @@ class TpsaStrategy(AbstractStrategy):
     events_queue - A handle to the system events queue
     """
     def __init__(
-        self, tickers, events_queue, equity
+        self, tickers, events_queue, equity, ts0, ts1
     ):
         self.tickers = tickers
         self.events_queue = events_queue
@@ -40,6 +42,31 @@ class TpsaStrategy(AbstractStrategy):
         
         self.yt_state = 0
         self.buy_price = 0.0
+        
+        self.ts0 = ts0
+        self.ts1 = ts1
+        
+        xt_means, xt_covs = self.train_kalman_filter(ts0, ts1)
+        slope = xt_means[-1][0]
+        # 将80%资金按1:slope比例购买ts1和ts0
+        price0 = ts0[-1]
+        price1 = ts1[-1]
+        print('type:{0}; shape:{1}'.format(type(price0), ts0[-1].shape))
+        amount = self.equity * 0.8
+        amount1 = amount / (1 + slope)
+        amount0 = amount * (slope / (1+slope))
+        self.qty1 = int(math.floor(amount1 / price1))
+        self.qty0 = int(math.floor(amount0 / price0))
+        amt1 = self.qty1 * price1
+        amt0 = self.qty0 * price0
+        self.equity -= (amt0 + amt1)
+        self.events_queue.put(SignalEvent(self.tickers[0], "BOT", self.qty0))
+        print('购买{0}：数量：{1}；价格：{2}'.format(self.tickers[0], self.qty0, self.ts0[-1]))
+        self.events_queue.put(SignalEvent(self.tickers[1], "BOT", self.qty1))
+        print('购买{0}：数量：{1}；价格：{2}'.format(self.tickers[1], self.qty1, self.ts1[-1]))
+        print('现金：{0}'.format(self.equity))
+        
+        
 
     def _set_correct_time_and_price(self, event):
         """
@@ -69,7 +96,7 @@ class TpsaStrategy(AbstractStrategy):
             else:
                 self.latest_prices[1] = price
 
-    def train_kalman_filter(self, etfs, prices):
+    def train_kalman_filter(self, ts0, ts1):
         """
         Utilise the Kalman Filter from the PyKalman package
         to calculate the slope and intercept of the regressed
@@ -81,7 +108,7 @@ class TpsaStrategy(AbstractStrategy):
         Q = delta / (1 - delta) * np.eye(2)
         At = np.eye(2)
         Ct = np.vstack(
-            [prices[etfs[0]], np.ones(prices[etfs[0]].shape)]
+            [ts0, np.ones(ts0.shape)]
         ).T[:, np.newaxis]
         R = 1.0
         self.kf = KalmanFilter(
@@ -95,9 +122,12 @@ class TpsaStrategy(AbstractStrategy):
             transition_covariance=Q
         )
         
-        yt = prices[etfs[1]].values
+        yt = ts1
         #state_means, state_covs = kf.em(observations).filter(observations)
-        xt_means, xt_covs = kf.em(yt).filter(yt)
+        xt_means, xt_covs = self.kf.em(yt).filter(yt)
+        print('xt_means:{0}!'.format(xt_means))
+        print('Rt:{0}!'.format(np.sqrt(self.kf.observation_covariance)))
+        
         return xt_means, xt_covs
 
     def calculate_signals(self, event):
@@ -106,6 +136,20 @@ class TpsaStrategy(AbstractStrategy):
             # Only trade if we have both observations
             if all(self.latest_prices > -1.0):
                 # kalman.filter_update
+                np.append(self.ts0, self.latest_prices[0])
+                np.append(self.ts1, self.latest_prices[1])
+                xt_means, x_convs = self.train_kalman_filter(self.ts0, self.ts1)
+                slope = xt_means[-1][0]
+                intercept = xt_means[-1][1]
+                yt_hat = self.ts0[-1] * slope + intercept
+                delta = yt_hat - self.ts1[-1]
+                threshold = np.sqrt(self.kf.observation_covariance)
+                if delta < -threshold:
+                    # 卖掉0买入1
+                    pass
+                elif delta > threshold:
+                    # 买入0卖出1
+                    pass
                 pass
     
     def calculate_signals_god(self, event):

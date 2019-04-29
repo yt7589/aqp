@@ -1,6 +1,6 @@
 import calendar
 import datetime
-
+import numpy as np
 from qstrader import settings
 from qstrader.strategy.base import AbstractStrategy
 from qstrader.position_sizer.naive import NaivePositionSizer
@@ -23,6 +23,7 @@ class TpsaEngine(object):
     def startup(self):
         testing = False
         config = settings.load_config()
+        tickers = ['ICBC', 'CBC']
         
         stocks = [
             {
@@ -45,11 +46,25 @@ class TpsaEngine(object):
         ]
         TpsaDataset.draw_close_price_curve(stock_files)
         
+        ts0 = np.array(TpsaDataset.read_close_prices('./data/{0}.csv'.format(stocks[0]['etf_name'])))
+        ts1 = np.array(TpsaDataset.read_close_prices('./data/{0}.csv'.format(stocks[1]['etf_name'])))
+        
+        title = [
+            '基于卡尔曼滤波器的交易对策略'
+        ]
+        initial_equity = 500000.0
+        start_date = datetime.datetime(2017, 1, 1)
+        end_date = datetime.datetime(2019, 4, 23)
+
+        # Use the Monthly Liquidate And Rebalance strategy
+        events_queue = queue.Queue()
         
         
-        #strategy.train_kalman_filter(etfs, prices)
+        strategy = TpsaStrategy(
+            tickers, events_queue, initial_equity, ts0, ts1
+        )
         
-        
+        print('^_^ The End ^_^')
         i_debug = 1
         if 1 == i_debug:
             return
@@ -57,7 +72,6 @@ class TpsaEngine(object):
         
         
         
-        tickers = ['ICBC', 'CBC']
         self.run(config, testing, tickers) 
 
     def run(self, config, testing, tickers):

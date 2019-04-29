@@ -1,4 +1,5 @@
 import csv
+import pandas as pd
 import matplotlib.pyplot as plt
 from core.quotation.bs_cna_daily import BsCnaDaily
 
@@ -54,3 +55,19 @@ class TpsaDataset(object):
             for row in rows:
                 close_prices.append(float(row[4]))
         return close_prices
+        
+    @staticmethod
+    def read_close_price_pd(stock_file):
+        dateparse = lambda x: pd.datetime.strptime(x, '%Y-%m-%d')
+        prices = pd.read_csv(stock_file, encoding='utf-8', 
+                parse_dates=['Date'], date_parser=dateparse, 
+                index_col='Date')
+        print(prices.values[:, 3])
+        
+        
+        
+        
+        
+        
+        
+        
