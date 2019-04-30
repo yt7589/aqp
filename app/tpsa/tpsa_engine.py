@@ -31,7 +31,7 @@ class TpsaEngine(object):
         self.title = [
             '基于卡尔曼滤波器的交易对策略'
         ]
-        self.initial_equity = 1000000.0
+        self.initial_equity = 1000000.0 + 4.43 * 50000 + 5.49 * 50000
         self.start_date = datetime.datetime(2017, 1, 1)
         self.end_date = datetime.datetime(2019, 4, 23)
         # Use the Monthly Liquidate And Rebalance strategy
@@ -60,6 +60,11 @@ class TpsaEngine(object):
         results = backtest.start_trading(testing=testing)
         print('最后金额：{0}'.format(self.strategy.equity))
         
+        v1 = self.strategy.equity
+        v2 = self.strategy.qty0 * self.strategy.latest_prices[0]
+        v3 = self.strategy.qty1 * self.strategy.latest_prices[1]
+        t1 = v1 + v2 + v3
+        print('##### test {0}={1}+{2}+{3}'.format(t1, v1, v2, v3))
         total = self.strategy.equity + self.strategy.qty0 * \
                 self.strategy.latest_prices[0] + \
                 self.strategy.qty1 * self.strategy.latest_prices[1]

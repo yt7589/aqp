@@ -47,21 +47,13 @@ class TpsaStrategy(AbstractStrategy):
         self.ts1 = ts1
         self.kalman_mode = 1
         
-        xt_means, xt_covs = self.train_kalman_filter(ts0, ts1)
-        slope = xt_means[-1][0]
-        # 将80%资金按1:slope比例购买ts1和ts0
-        price0 = ts0[-1]
-        price1 = ts1[-1]
-        print('type:{0}; shape:{1}'.format(type(price0), ts0[-1].shape))
-        amount = self.equity * 0.1
-        amount1 = amount / (1 + slope)
-        amount0 = amount * (slope / (1+slope))
-        self.qty1 = int(math.floor(amount1 / price1))
-        self.qty1_0 = self.qty1
-        self.qty0 = int(math.floor(amount0 / price0))
-        self.qty0_0 = self.qty0
-        amt1 = self.qty1 * price1
-        amt0 = self.qty0 * price0
+        xt_means, xt_covs = self.train_kalman_filter(ts0, ts1)        
+        self.qty1 = 50000
+        self.qty1_0 = 50000
+        self.qty0 = 50000
+        self.qty0_0 = 50000
+        amt1 = self.qty1 * ts1[0]
+        amt0 = self.qty0 * ts0[0]
         self.equity -= (amt0 + amt1)
         self.equity_0 = self.equity
         self.events_queue.put(SignalEvent(self.tickers[0], "BOT", self.qty0))
@@ -161,6 +153,13 @@ class TpsaStrategy(AbstractStrategy):
                 if delta < -threshold:
                     # 卖掉0买入1
                     qty0 = int(math.floor(self.qty * slope))
+                    # 检查是否还有股票可卖
+                    if qty0 > self.qty0:
+                        return
+                    qty1 = self.qty1
+                    if self.equity + qty0 * self.latest_prices[0] - qty1 * self.latest_prices[1] < 0:
+                        return
+                    # 满足合法性检查后，才能执行对冲操作
                     self.events_queue.put(SignalEvent(self.tickers[0], "SLD", qty0))
                     self.qty0 -= qty0
                     self.equity += qty0 * self.latest_prices[0]
@@ -179,11 +178,15 @@ class TpsaStrategy(AbstractStrategy):
                     print('########### 总资产：{0}={1}+{2}+{2}'.format(total, self.equity, 
                             self.qty0 * self.latest_prices[0], self.qty1 * self.latest_prices[1]))
                 elif delta > threshold:
+                    qty0 = int(math.floor(self.qty * slope))
+                    if self.qty1 - self.qty < 0:
+                        return
+                    if self.equity + self.qty * self.latest_prices[1] - qty0 * self.latest_prices[0] < 0:
+                        return
                     # 买入0卖出1
                     self.events_queue.put(SignalEvent(self.tickers[1], "SLD", self.qty))
                     self.qty1 -= self.qty
                     self.equity += self.qty * self.latest_prices[1]
-                    qty0 = int(math.floor(self.qty * slope))
                     self.events_queue.put(SignalEvent(self.tickers[0], "BOT", qty0))
                     self.qty0 += qty0
                     self.equity -= qty0 * self.latest_prices[0]
