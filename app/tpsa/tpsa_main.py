@@ -13,5 +13,7 @@ class TpsaMain(object):
         print('A股交易对策略')
         #self.get_quotation_data() # 获取行情数据
         #self.draw_close_price_curve()
-        tpsaEngine = TpsaEngine()
-        tpsaEngine.startup()
+        #tpsaEngine = TpsaEngine()
+        #tpsaEngine.startup()
+        stock_files = ['./data/ICBC.csv', './data/CBC.csv']
+        TpsaDataset.draw_close_price_curve(stock_files)
