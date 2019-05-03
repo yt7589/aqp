@@ -38,6 +38,10 @@ class RegimeHmmRiskManager(AbstractRiskManager):
             [np.array(price_handler.adj_close_returns)]
         )
         hidden_state = self.hmm_model.predict(returns)[-1]
+        if 1 == hidden_state:
+            hidden_state = 0
+        else:
+            hidden_state = 1
         return hidden_state
 
     def refine_orders(self, portfolio, sized_order):
