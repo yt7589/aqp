@@ -32,6 +32,7 @@ class RegimeHmmModel(object):
         print("Model Score:", hmm_model.score(rets))
         hidden_states = hmm_model.predict(rets)
         self.plot_in_sample_hidden_states(hmm_model, df, hidden_states)
+        return hmm_model
         
     def get_prices_df(self, csv_filepath, end_date):
         """

@@ -4,7 +4,7 @@ from core.quotation.bs_cna_daily import BsCnaDaily
 from app.tpsa.tpsa_engine import TpsaEngine
 
 from app.tpsa.tpsa_dataset import TpsaDataset
-from app.tpsa.regime_hmm_model import RegimeHmmModel
+from app.tpsa.regime_hmm_engine import RegimeHmmEngine
 
 class TpsaMain(object):
     def __init__(self):
@@ -20,5 +20,7 @@ class TpsaMain(object):
         #stock_files = ['./data/ICBC.csv', './data/CBC.csv']
         #TpsaDataset.draw_close_price_curve(stock_files)
         
-        rhm = RegimeHmmModel()
-        rhm.train()
+        #rhm = RegimeHmmModel()
+        #rhm.train()
+        rhe = RegimeHmmEngine()
+        rhe.startup()
