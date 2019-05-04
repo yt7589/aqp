@@ -24,6 +24,5 @@ class TpsaMain(object):
         
         #rhm = RegimeHmmModel()
         #rhm.train()
-        #rhe = RegimeHmmEngine()
-        #rhe.startup()
-        
+        rhe = RegimeHmmEngine()
+        rhe.startup()

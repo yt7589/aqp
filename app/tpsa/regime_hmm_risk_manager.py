@@ -58,6 +58,7 @@ class RegimeHmmRiskManager(AbstractRiskManager):
             price_handler, sized_order
         )
         action = sized_order.action
+        print('###### strategy={0}'.format(sized_order.strategy_name))
         # Create the order event, irrespective of the regime.
         # It will only be returned if the correct conditions 
         # are met below.

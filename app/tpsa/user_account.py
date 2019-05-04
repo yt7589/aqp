@@ -27,3 +27,17 @@ class UserAccount(object):
         # ...... 操作账户信息 ......
         # self.lock.release()
         self.lock = threading.Lock()
+        
+    def to_string(self):
+        print('金额：{0}/{1}'.format(self.equity, self.equity0))
+        for etf in self.etfs:
+            print('{0}: {1} {2}元'.format(etf['name'], etf['volume'], etf['amount']))
+            
+    def usage_demo(self):
+        user_account = UserAccount(50, ['ICBC', 'CBC'])
+        user_account.lock.acquire()
+        user_account.equity -= 15
+        user_account.etfs[0]['volume'] += 10
+        user_account.etfs[0]['amount'] += 1000
+        user_account.lock.release()
+        user_account.to_string()

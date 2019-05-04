@@ -54,12 +54,12 @@ class RegimeHmmStrategy(AbstractStrategy):
                 # Trading signals based on moving average cross
                 if short_sma > long_sma and not self.invested:
                     print("LONG: %s" % event.time)
-                    signal = SignalEvent(ticker, "BOT", self.base_quantity)
+                    signal = SignalEvent(self.name, ticker, "BOT", self.base_quantity)
                     self.events_queue.put(signal)
                     self.invested = True
                 elif short_sma < long_sma and self.invested:
                     print("SHORT: %s" % event.time)
-                    signal = SignalEvent(ticker, "SLD", self.base_quantity)
+                    signal = SignalEvent(self.name, ticker, "SLD", self.base_quantity)
                     self.events_queue.put(signal)
                     self.invested = False
             self.bars += 1

@@ -20,6 +20,7 @@ from app.tpsa.tpsa_dataset import TpsaDataset
 from app.tpsa.regime_hmm_strategy import RegimeHmmStrategy
 from app.tpsa.regime_hmm_model import RegimeHmmModel
 from app.tpsa.regime_hmm_risk_manager import RegimeHmmRiskManager
+from app.tpsa.user_account import UserAccount
 
 class RegimeHmmEngine(object):
     def __init__(self):
@@ -43,6 +44,8 @@ class RegimeHmmEngine(object):
         start_date = datetime.datetime(2017, 1, 1)
         end_date = datetime.datetime(2019, 4, 26)
         base_quantity = 10000
+        # 用户账户
+        user_account = UserAccount(initial_equity, tickers)
         strategy = RegimeHmmStrategy(
             tickers, events_queue, base_quantity,
             short_window=10, long_window=30
