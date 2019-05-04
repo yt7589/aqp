@@ -32,6 +32,8 @@ class RegimeHmmModel(object):
         print("Model Score:", hmm_model.score(rets))
         hidden_states = hmm_model.predict(rets)
         self.plot_in_sample_hidden_states(hmm_model, df, hidden_states)
+        # 将模型保存为文件（因为hmm每次运行出来的state=0,1是不固定的）
+        pickle.dump(hmm_model, open(self.model_file, "wb"))
         return hmm_model
         
     def get_prices_df(self, csv_filepath, end_date):

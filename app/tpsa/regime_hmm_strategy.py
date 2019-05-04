@@ -31,6 +31,7 @@ class RegimeHmmStrategy(AbstractStrategy):
         self.invested = False
         self.sw_bars = deque(maxlen=self.short_window)
         self.lw_bars = deque(maxlen=self.long_window)
+        
 
     def calculate_signals(self, event):
         # Applies SMA to first ticker

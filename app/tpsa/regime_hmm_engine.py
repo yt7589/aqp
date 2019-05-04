@@ -1,6 +1,7 @@
 import calendar
 import datetime
 import numpy as np
+import pickle
 from qstrader import settings
 from qstrader.strategy.base import AbstractStrategy
 from qstrader.position_sizer.naive import NaivePositionSizer
@@ -35,7 +36,7 @@ class RegimeHmmEngine(object):
         '''
         '''
         title = ['隐马可夫模型CPA策略']
-        pickle_path = './work/hmm_model_spy.pkl'
+        pickle_path = './work/hmm.pkl'
         csv_dir = './data/'
         events_queue = queue.Queue()
         initial_equity = 500000.00 # 初始资金
@@ -53,9 +54,9 @@ class RegimeHmmEngine(object):
             calc_adj_returns=True
         )
         position_sizer = NaivePositionSizer()
-        #hmm_model = pickle.load(open(pickle_path, "rb"))
-        regime_hmm_model = RegimeHmmModel()
-        hmm_model = regime_hmm_model.train()
+        hmm_model = pickle.load(open(pickle_path, "rb"))
+        #regime_hmm_model = RegimeHmmModel()
+        #hmm_model = regime_hmm_model.train()
         risk_manager = RegimeHmmRiskManager(hmm_model)
         portfolio_handler = PortfolioHandler(
             PriceParser.parse(initial_equity), 
