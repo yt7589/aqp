@@ -69,7 +69,7 @@ class RegimeHmmRiskManager(AbstractRiskManager):
         )
         # If in the desirable regime, let buy and sell orders
         # work as normal for a long-only trend following strategy
-        if regime == 0:
+        if regime == 1:
             if action == "BOT":
                 self.invested = True
                 return [order_event]
@@ -82,7 +82,7 @@ class RegimeHmmRiskManager(AbstractRiskManager):
         # If in the undesirable regime, do not allow any buy orders
         # and only let sold/close orders through if the strategy
         # is already invested (from a previous desirable regime)
-        elif regime == 1:
+        elif regime == 0:
             if action == "BOT":
                 self.invested = False
                 return []

@@ -45,6 +45,7 @@ class PortfolioHandler(object):
         else:
             quantity = signal_event.suggested_quantity
         order = SuggestedOrder(
+            signal_event.strategy_name, 
             signal_event.ticker,
             signal_event.action,
             quantity=quantity
