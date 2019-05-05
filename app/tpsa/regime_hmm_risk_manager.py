@@ -7,6 +7,7 @@ import numpy as np
 from qstrader.event import OrderEvent
 from qstrader.price_parser import PriceParser
 from qstrader.risk_manager.base import AbstractRiskManager
+from app.tpsa.regime_hmm_model import RegimeHmmModel
 
 
 class RegimeHmmRiskManager(AbstractRiskManager):
@@ -27,22 +28,7 @@ class RegimeHmmRiskManager(AbstractRiskManager):
         self.hmm_model = hmm_model
         self.invested = False
 
-    def determine_regime(self, price_handler, sized_order):
-        """
-        Determines the predicted regime by making a prediction
-        on the adjusted closing returns from the price handler
-        object and then taking the final entry integer as
-        the "hidden regime state".
-        """
-        returns = np.column_stack(
-            [np.array(price_handler.adj_close_returns)]
-        )
-        hidden_state = self.hmm_model.predict(returns)[-1]
-        if 1 == hidden_state:
-            hidden_state = 0
-        else:
-            hidden_state = 1
-        return hidden_state
+    
 
     def refine_orders(self, portfolio, sized_order):
         """
@@ -54,8 +40,8 @@ class RegimeHmmRiskManager(AbstractRiskManager):
         # Determine the HMM predicted regime as an integer
         # equal to 0 (desirable) or 1 (undesirable)
         price_handler = portfolio.price_handler
-        regime = self.determine_regime(
-            price_handler, sized_order
+        regime = RegimeHmmModel.determine_regime(
+            self.hmm_model, price_handler, sized_order
         )
         action = sized_order.action
         print('###### strategy={0}'.format(sized_order.strategy_name))
@@ -69,7 +55,7 @@ class RegimeHmmRiskManager(AbstractRiskManager):
         )
         # If in the desirable regime, let buy and sell orders
         # work as normal for a long-only trend following strategy
-        if regime == 0:
+        if regime == 1:
             if action == "BOT":
                 self.invested = True
                 return [order_event]
@@ -82,7 +68,7 @@ class RegimeHmmRiskManager(AbstractRiskManager):
         # If in the undesirable regime, do not allow any buy orders
         # and only let sold/close orders through if the strategy
         # is already invested (from a previous desirable regime)
-        elif regime == 1:
+        elif regime == 0:
             if action == "BOT":
                 self.invested = False
                 return []

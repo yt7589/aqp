@@ -7,9 +7,10 @@ import numpy as np
 from qstrader.event import OrderEvent
 from qstrader.price_parser import PriceParser
 from qstrader.risk_manager.base import AbstractRiskManager
+from app.tpsa.regime_hmm_model import RegimeHmmModel
 
 
-class TpsaRiskManager(AbstractRiskManager):
+class KalmanFilterRiskManager(AbstractRiskManager):
     """
     Utilises a previously fitted Hidden Markov Model 
     as a regime detection mechanism. The risk manager
@@ -23,12 +24,9 @@ class TpsaRiskManager(AbstractRiskManager):
     orders are generated until the desirable regime
     is achieved.
     """
-    def __init__(self):
+    def __init__(self, hmm_model):
         self.name = 'TpsaRiskManager'
-        self.risk_managers = {}
-        
-    def register_risk_manager(strategy_name, risk_manager_obj):
-        self.risk_managers[strategy_name] = risk_manager_obj
+        self.hmm_model = hmm_model
 
     def refine_orders(self, portfolio, sized_order):
         """
@@ -37,8 +35,12 @@ class TpsaRiskManager(AbstractRiskManager):
         1 for undesirable. Long entry trades will only be carried
         out in regime 0, but closing trades are allowed in regime 1.
         """
-        if sized_order.strategy_name in self.risk_managers:
-            return self.risk_managers[sized_order.strategy_name].refine_orders(portfolio, sized_order)
+        price_handler = portfolio.price_handler
+        regime = RegimeHmmModel.determine_regime(
+            self.hmm_model, price_handler, sized_order
+        )
+        action = sized_order.action
+        print('###### strategy={0}'.format(sized_order.strategy_name))
         # Create the order event, irrespective of the regime.
         # It will only be returned if the correct conditions 
         # are met below.
@@ -47,4 +49,7 @@ class TpsaRiskManager(AbstractRiskManager):
             sized_order.action,
             sized_order.quantity
         )
-        return [order_event]
+        if regime == 1:
+            return []
+        else:
+            return [order_event]

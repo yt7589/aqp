@@ -23,9 +23,9 @@ class TpsaRiskManager(AbstractRiskManager):
     orders are generated until the desirable regime
     is achieved.
     """
-    def __init__(self):
+    def __init__(self, risk_managers=None):
         self.name = 'TpsaRiskManager'
-        self.risk_managers = {}
+        self.risk_managers = risk_managers
         
     def register_risk_manager(strategy_name, risk_manager_obj):
         self.risk_managers[strategy_name] = risk_manager_obj

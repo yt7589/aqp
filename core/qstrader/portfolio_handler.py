@@ -47,7 +47,8 @@ class PortfolioHandler(object):
         order = SuggestedOrder(
             signal_event.ticker,
             signal_event.action,
-            quantity=quantity
+            quantity=quantity,
+            strategy_name=signal_event.strategy_name
         )
         return order
 

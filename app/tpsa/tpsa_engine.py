@@ -1,6 +1,7 @@
 import calendar
 import datetime
 import numpy as np
+import pickle
 from qstrader import settings
 from qstrader.strategy.base import AbstractStrategy
 from qstrader.position_sizer.naive import NaivePositionSizer
@@ -19,6 +20,7 @@ from app.tpsa.kalman_filter_strategy import KalmanFilterStrategy
 
 from app.tpsa.tpsa_strategy import TpsaStrategy
 from app.tpsa.tpsa_risk_manager import TpsaRiskManager
+from app.tpsa.kalman_filter_risk_manager import KalmanFilterRiskManager
 
 class TpsaEngine(object):
     def __init__(self):
@@ -55,12 +57,25 @@ class TpsaEngine(object):
         # Use the Naive Position Sizer where
         # suggested quantities are followed
         position_sizer = NaivePositionSizer()
-        risk_manager = TpsaRiskManager()
+        pickle_path = './work/hmm.pkl'
+        hmm_model = pickle.load(open(pickle_path, "rb"))
+        risk_managers = {
+            'KalmanFilterStrategy': KalmanFilterRiskManager(hmm_model)
+        }
+        risk_manager = TpsaRiskManager(risk_managers=risk_managers)
+        '''
         price_handler=BscnaDailyCsvBarPriceHandler(
                 config.CSV_DATA_DIR, self.events_queue,
                 tickers, start_date=self.start_date,
                 end_date=self.end_date
             )
+        '''
+        price_handler = BscnaDailyCsvBarPriceHandler(
+            config.CSV_DATA_DIR, self.events_queue, tickers,
+            start_date=self.start_date, 
+            end_date=self.end_date,
+            calc_adj_returns=True
+        )
         
         
         

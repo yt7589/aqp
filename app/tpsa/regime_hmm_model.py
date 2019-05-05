@@ -35,6 +35,19 @@ class RegimeHmmModel(object):
         # 将模型保存为文件（因为hmm每次运行出来的state=0,1是不固定的）
         pickle.dump(hmm_model, open(self.model_file, "wb"))
         return hmm_model
+       
+    @staticmethod
+    def determine_regime(hmm_model, price_handler, sized_order):
+        """
+        Determines the predicted regime by making a prediction
+        on the adjusted closing returns from the price handler
+        object and then taking the final entry integer as
+        the "hidden regime state".
+        """
+        returns = np.column_stack(
+            [np.array(price_handler.adj_close_returns)]
+        )
+        return hmm_model.predict(returns)[-1]
         
     def get_prices_df(self, csv_filepath, end_date):
         """
