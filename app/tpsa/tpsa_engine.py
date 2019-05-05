@@ -7,6 +7,9 @@ from qstrader.position_sizer.naive import NaivePositionSizer
 from qstrader.event import SignalEvent, EventType
 from qstrader.compat import queue
 from qstrader.trading_session import TradingSession
+from qstrader.portfolio_handler import PortfolioHandler
+from qstrader.price_parser import PriceParser
+from qstrader.statistics.tearsheet import TearsheetStatistics
 from qstrader.price_handler.bscna_daily_csv_bar import BscnaDailyCsvBarPriceHandler
 
 import matplotlib.pyplot as plt
@@ -15,6 +18,7 @@ from app.tpsa.kalman_filter_engine import KalmanFilterEngine
 from app.tpsa.kalman_filter_strategy import KalmanFilterStrategy
 
 from app.tpsa.tpsa_strategy import TpsaStrategy
+from app.tpsa.tpsa_risk_manager import TpsaRiskManager
 
 class TpsaEngine(object):
     def __init__(self):
@@ -35,13 +39,13 @@ class TpsaEngine(object):
         self.start_date = datetime.datetime(2017, 1, 1)
         self.end_date = datetime.datetime(2019, 4, 23)
         
-        # 读取用于估计卡尔曼滤波参数的时间序列
-        ts0 = np.array(TpsaDataset.read_close_prices('./data/{0}_train.csv'.format(tickers[0])))
-        ts1 = np.array(TpsaDataset.read_close_prices('./data/{0}_train.csv'.format(tickers[1])))
         
         
         self.events_queue = queue.Queue()
         
+        # 读取用于估计卡尔曼滤波参数的时间序列
+        ts0 = np.array(TpsaDataset.read_close_prices('./data/{0}_train.csv'.format(tickers[0])))
+        ts1 = np.array(TpsaDataset.read_close_prices('./data/{0}_train.csv'.format(tickers[1])))
         self.strategies = [KalmanFilterStrategy(tickers, self.events_queue, self.initial_equity, ts0, ts1)]
         
         self.strategy = TpsaStrategy(
@@ -51,19 +55,49 @@ class TpsaEngine(object):
         # Use the Naive Position Sizer where
         # suggested quantities are followed
         position_sizer = NaivePositionSizer()
+        risk_manager = TpsaRiskManager()
+        price_handler=BscnaDailyCsvBarPriceHandler(
+                config.CSV_DATA_DIR, self.events_queue,
+                tickers, start_date=self.start_date,
+                end_date=self.end_date
+            )
+        
+        
+        
+        portfolio_handler = PortfolioHandler(
+            PriceParser.parse(self.initial_equity), 
+            self.events_queue, price_handler,
+            position_sizer, risk_manager
+        )
+        statistics = TearsheetStatistics(
+            config, portfolio_handler, 
+            self.title, benchmark="ICBC"
+        )
+        backtest = TradingSession(
+            config, self.strategy, tickers,
+            self.initial_equity, self.start_date, self.end_date,
+            self.events_queue, title=self.title,
+            price_handler=price_handler,
+            position_sizer=position_sizer,
+            risk_manager=risk_manager,
+            statistics=statistics,
+            portfolio_handler=portfolio_handler
+        )
+        results = backtest.start_trading(testing=testing)
+        
+        '''
         # Set up the backtest
         backtest = TradingSession(
             config, self.strategy, tickers,
             self.initial_equity, self.start_date, self.end_date,
             self.events_queue, title=self.title,
             position_sizer=position_sizer,
-            price_handler=BscnaDailyCsvBarPriceHandler(
-                config.CSV_DATA_DIR, self.events_queue,
-                tickers, start_date=self.start_date,
-                end_date=self.end_date
-            )
+            price_handler=price_handler
         )
         results = backtest.start_trading(testing=testing)
+        '''
+        
+        
         print('最后金额：{0}'.format(self.strategies[0].equity))
         
         v1 = self.strategies[0].equity
