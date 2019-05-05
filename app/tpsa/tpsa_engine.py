@@ -18,7 +18,7 @@ from app.tpsa.tpsa_strategy import TpsaStrategy
 
 class TpsaEngine(object):
     def __init__(self):
-        self.name = 'TpsaEngine'
+        self.name = 'QhEngine'
         
     def startup(self):
         testing = False

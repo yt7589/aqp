@@ -6,10 +6,6 @@ from app.tpsa.tpsa_engine import TpsaEngine
 from app.tpsa.tpsa_dataset import TpsaDataset
 from app.tpsa.regime_hmm_model import RegimeHmmModel
 from app.tpsa.regime_hmm_engine import RegimeHmmEngine
-<<<<<<< HEAD
-=======
-from app.tpsa.user_account import UserAccount
->>>>>>> 26adae1a1a30b832837260b6e49d978e9323631a
 
 class TpsaMain(object):
     def __init__(self):
