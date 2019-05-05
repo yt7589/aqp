@@ -19,8 +19,8 @@ class TpsaMain(object):
         #stock_files = ['./data/ICBC.csv', './data/CBC.csv']
         #TpsaDataset.draw_close_price_curve(stock_files)
         # 运行卡尔曼滤波模型
-        #tpsaEngine = TpsaEngine()
-        #tpsaEngine.startup()
+        tpsaEngine = TpsaEngine()
+        tpsaEngine.startup()
         
         # 训练隐马可夫模型（因为隐马可夫模型随机给定状态值，
         # 有时会是状态0适合交易，有时会是状态1适合交易，
@@ -28,5 +28,5 @@ class TpsaMain(object):
         #rhm = RegimeHmmModel()
         #rhm.train()
         # 实际运行隐马可夫模型
-        rhe = RegimeHmmEngine()
-        rhe.startup()
+        #rhe = RegimeHmmEngine()
+        #rhe.startup()

@@ -11,43 +11,26 @@ from qstrader.price_handler.bscna_daily_csv_bar import BscnaDailyCsvBarPriceHand
 
 import matplotlib.pyplot as plt
 from app.tpsa.tpsa_dataset import TpsaDataset
-from app.tpsa.kalman_filter_engine import KalmanFilterEngine
-from app.tpsa.kalman_filter_strategy import KalmanFilterStrategy
+
+
 
 from app.tpsa.tpsa_strategy import TpsaStrategy
 
-class TpsaEngine(object):
+class KalmanFilterEngine(object):
     def __init__(self):
-        self.name = 'QhEngine'
+        self.name = 'KalmanFilterEngine'
         
-    def startup(self):
-        testing = False
-        config = settings.load_config()
-        tickers = ['ICBC', 'CBC']
-        engines = [KalmanFilterEngine()]
+    def initialize(self):
+        # 读取用于估计卡尔曼滤波参数的时间序列
+        self.ts0 = np.array(TpsaDataset.read_close_prices('./data/{0}_train.csv'.format(tickers[0])))
+        self.ts1 = np.array(TpsaDataset.read_close_prices('./data/{0}_train.csv'.format(tickers[1])))
+        
+        self.strategy = TpsaStrategy(
+            tickers, self.events_queue, self.initial_equity, ts0, ts1
+        )
         self.run(config, testing, tickers) 
 
     def run(self, config, testing, tickers):
-        self.title = [
-            '基于卡尔曼滤波器的交易对策略'
-        ]
-        self.initial_equity = 1000000.0 + 4.43 * 50000 + 5.49 * 50000
-        self.start_date = datetime.datetime(2017, 1, 1)
-        self.end_date = datetime.datetime(2019, 4, 23)
-        
-        # 读取用于估计卡尔曼滤波参数的时间序列
-        ts0 = np.array(TpsaDataset.read_close_prices('./data/{0}_train.csv'.format(tickers[0])))
-        ts1 = np.array(TpsaDataset.read_close_prices('./data/{0}_train.csv'.format(tickers[1])))
-        
-        
-        self.events_queue = queue.Queue()
-        
-        self.strategies = [KalmanFilterStrategy(tickers, self.events_queue, self.initial_equity, ts0, ts1)]
-        
-        self.strategy = TpsaStrategy(
-            tickers, self.events_queue, self.initial_equity, self.strategies
-        )
-        
         # Use the Naive Position Sizer where
         # suggested quantities are followed
         position_sizer = NaivePositionSizer()
@@ -64,35 +47,35 @@ class TpsaEngine(object):
             )
         )
         results = backtest.start_trading(testing=testing)
-        print('最后金额：{0}'.format(self.strategies[0].equity))
+        print('最后金额：{0}'.format(self.strategy.equity))
         
-        v1 = self.strategies[0].equity
-        v2 = self.strategies[0].qty0 * self.strategies[0].latest_prices[0]
-        v3 = self.strategies[0].qty1 * self.strategies[0].latest_prices[1]
+        v1 = self.strategy.equity
+        v2 = self.strategy.qty0 * self.strategy.latest_prices[0]
+        v3 = self.strategy.qty1 * self.strategy.latest_prices[1]
         t1 = v1 + v2 + v3
         print('##### test {0}={1}+{2}+{3}'.format(t1, v1, v2, v3))
-        total = self.strategies[0].equity + self.strategies[0].qty0 * \
-                self.strategies[0].latest_prices[0] + \
-                self.strategies[0].qty1 * self.strategies[0].latest_prices[1]
+        total = self.strategy.equity + self.strategy.qty0 * \
+                self.strategy.latest_prices[0] + \
+                self.strategy.qty1 * self.strategy.latest_prices[1]
         print('########### 总资产：{0}={1}+{2}+{3}'.format(
-                total, self.strategies[0].equity, 
-                self.strategies[0].qty0 * self.strategies[0].latest_prices[0], 
-                self.strategies[0].qty1 * self.strategies[0].latest_prices[1]
+                total, self.strategy.equity, 
+                self.strategy.qty0 * self.strategy.latest_prices[0], 
+                self.strategy.qty1 * self.strategy.latest_prices[1]
         ))
-        delta0 = self.strategies[0].qty0 - self.strategies[0].qty0_0
+        delta0 = self.strategy.qty0 - self.strategy.qty0_0
         amt0 = 0.0
         if delta0 > 0:
-            amt0 = self.strategies[0].latest_prices[0] * delta0
+            amt0 = self.strategy.latest_prices[0] * delta0
         else:
-            amt0 = -self.strategies[0].latest_prices[0] * delta0
-        delta1 = self.strategies[0].qty1 - self.strategies[0].qty1_0
+            amt0 = -self.strategy.latest_prices[0] * delta0
+        delta1 = self.strategy.qty1 - self.strategy.qty1_0
         amt1 = 0.0
         if delta1 > 0:
-            amt1 = self.strategies[0].latest_prices[1] * delta1
+            amt1 = self.strategy.latest_prices[1] * delta1
         else:
-            amt1 = -self.strategies[0].latest_prices[1] * delta1
+            amt1 = -self.strategy.latest_prices[1] * delta1
             
-        print('initial:{0} vs final {1}'.format(self.strategies[0].equity_0, self.strategies[0].equity+amt0+amt1))
+        print('initial:{0} vs final {1}'.format(self.strategy.equity_0, self.strategy.equity+amt0+amt1))
         
         return results
         

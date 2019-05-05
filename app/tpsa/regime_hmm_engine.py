@@ -36,6 +36,7 @@ class RegimeHmmEngine(object):
     def run(self, config, testing, tickers, filename):
         '''
         '''
+        
         title = ['隐马可夫模型CPA策略']
         pickle_path = './work/hmm.pkl'
         csv_dir = './data/'
@@ -44,8 +45,15 @@ class RegimeHmmEngine(object):
         start_date = datetime.datetime(2017, 1, 1)
         end_date = datetime.datetime(2019, 4, 26)
         base_quantity = 10000
+        
         # 用户账户
         user_account = UserAccount(initial_equity, tickers)
+        
+        
+        
+        
+        
+        
         strategy = RegimeHmmStrategy(
             tickers, events_queue, base_quantity,
             short_window=10, long_window=30
