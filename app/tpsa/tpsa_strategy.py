@@ -22,6 +22,7 @@ class TpsaStrategy(AbstractStrategy):
     def __init__(
         self, tickers, events_queue, equity, ts0, ts1
     ):
+        self.name = 'TpsaStrategy'
         self.tickers = tickers
         self.events_queue = events_queue
         self.equity = equity
@@ -160,10 +161,10 @@ class TpsaStrategy(AbstractStrategy):
                     if self.equity + qty0 * self.latest_prices[0] - qty1 * self.latest_prices[1] < 0:
                         return
                     # 满足合法性检查后，才能执行对冲操作
-                    self.events_queue.put(SignalEvent(self.tickers[0], "SLD", qty0))
+                    self.events_queue.put(SignalEvent(self.tickers[0], "SLD", qty0, strategy_name=self.name))
                     self.qty0 -= qty0
                     self.equity += qty0 * self.latest_prices[0]
-                    self.events_queue.put(SignalEvent(self.tickers[1], "BOT", self.qty))
+                    self.events_queue.put(SignalEvent(self.tickers[1], "BOT", self.qty, strategy_name=self.name))
                     self.qty1 += self.qty
                     self.equity -= self.qty * self.latest_prices[1]
                     print('    买入{0}：数量：{1}；价格：{2}；金额：{3}'.format(
@@ -184,10 +185,10 @@ class TpsaStrategy(AbstractStrategy):
                     if self.equity + self.qty * self.latest_prices[1] - qty0 * self.latest_prices[0] < 0:
                         return
                     # 买入0卖出1
-                    self.events_queue.put(SignalEvent(self.tickers[1], "SLD", self.qty))
+                    self.events_queue.put(SignalEvent(self.tickers[1], "SLD", self.qty, strategy_name=self.name))
                     self.qty1 -= self.qty
                     self.equity += self.qty * self.latest_prices[1]
-                    self.events_queue.put(SignalEvent(self.tickers[0], "BOT", qty0))
+                    self.events_queue.put(SignalEvent(self.tickers[0], "BOT", qty0, strategy_name=self.name))
                     self.qty0 += qty0
                     self.equity -= qty0 * self.latest_prices[0]
                     print('    买入{0}：数量：{1}；价格：{2}；金额：{3}'.format(
