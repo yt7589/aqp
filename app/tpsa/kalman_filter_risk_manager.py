@@ -49,7 +49,7 @@ class KalmanFilterRiskManager(AbstractRiskManager):
             sized_order.action,
             sized_order.quantity
         )
-        if regime == 1:
+        if regime == 100:
             return []
         else:
             return [order_event]

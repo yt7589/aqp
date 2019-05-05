@@ -63,22 +63,12 @@ class TpsaEngine(object):
             'KalmanFilterStrategy': KalmanFilterRiskManager(hmm_model)
         }
         risk_manager = TpsaRiskManager(risk_managers=risk_managers)
-        '''
-        price_handler=BscnaDailyCsvBarPriceHandler(
-                config.CSV_DATA_DIR, self.events_queue,
-                tickers, start_date=self.start_date,
-                end_date=self.end_date
-            )
-        '''
         price_handler = BscnaDailyCsvBarPriceHandler(
             config.CSV_DATA_DIR, self.events_queue, tickers,
             start_date=self.start_date, 
             end_date=self.end_date,
             calc_adj_returns=True
         )
-        
-        
-        
         portfolio_handler = PortfolioHandler(
             PriceParser.parse(self.initial_equity), 
             self.events_queue, price_handler,
@@ -100,48 +90,22 @@ class TpsaEngine(object):
         )
         results = backtest.start_trading(testing=testing)
         
-        '''
-        # Set up the backtest
-        backtest = TradingSession(
-            config, self.strategy, tickers,
-            self.initial_equity, self.start_date, self.end_date,
-            self.events_queue, title=self.title,
-            position_sizer=position_sizer,
-            price_handler=price_handler
-        )
-        results = backtest.start_trading(testing=testing)
-        '''
-        
-        
-        print('最后金额：{0}'.format(self.strategies[0].equity))
-        
-        v1 = self.strategies[0].equity
-        v2 = self.strategies[0].qty0 * self.strategies[0].latest_prices[0]
-        v3 = self.strategies[0].qty1 * self.strategies[0].latest_prices[1]
-        t1 = v1 + v2 + v3
-        print('##### test {0}={1}+{2}+{3}'.format(t1, v1, v2, v3))
-        total = self.strategies[0].equity + self.strategies[0].qty0 * \
-                self.strategies[0].latest_prices[0] + \
-                self.strategies[0].qty1 * self.strategies[0].latest_prices[1]
-        print('########### 总资产：{0}={1}+{2}+{3}'.format(
-                total, self.strategies[0].equity, 
-                self.strategies[0].qty0 * self.strategies[0].latest_prices[0], 
-                self.strategies[0].qty1 * self.strategies[0].latest_prices[1]
+        print('init_cash:{0}; equity:{1}; cur_cash:{2}; PnL:{3}'.format(
+            portfolio_handler.portfolio.init_cash,
+            portfolio_handler.portfolio.equity,
+            portfolio_handler.portfolio.cur_cash,
+            portfolio_handler.portfolio.realised_pnl
         ))
-        delta0 = self.strategies[0].qty0 - self.strategies[0].qty0_0
-        amt0 = 0.0
-        if delta0 > 0:
-            amt0 = self.strategies[0].latest_prices[0] * delta0
-        else:
-            amt0 = -self.strategies[0].latest_prices[0] * delta0
-        delta1 = self.strategies[0].qty1 - self.strategies[0].qty1_0
-        amt1 = 0.0
-        if delta1 > 0:
-            amt1 = self.strategies[0].latest_prices[1] * delta1
-        else:
-            amt1 = -self.strategies[0].latest_prices[1] * delta1
-            
-        print('initial:{0} vs final {1}'.format(self.strategies[0].equity_0, self.strategies[0].equity+amt0+amt1))
+        print('持仓情况：')
+        for key in portfolio_handler.portfolio.positions:
+            item = portfolio_handler.portfolio.positions[key]
+            print('ticker:{0}; quantity:{1};'.format(item.ticker, item.quantity))
+        print('清仓情况：')
+        for cp in portfolio_handler.portfolio.closed_positions:
+            print(cp)
+        
+        
+        
         
         return results
         

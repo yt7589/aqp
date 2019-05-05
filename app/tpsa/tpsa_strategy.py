@@ -33,6 +33,7 @@ class TpsaStrategy(AbstractStrategy):
         self.days = 0
         self.qty = 20000
         self.cur_hedge_qty = self.qty
+        self.first_run = True
         
         
 
@@ -66,6 +67,10 @@ class TpsaStrategy(AbstractStrategy):
 
 
     def calculate_signals(self, event):
+        if self.first_run:
+            self.events_queue.put(SignalEvent(self.tickers[0], "BOT", 50000))
+            self.events_queue.put(SignalEvent(self.tickers[1], "BOT", 50000))
+            self.first_run = False
         mode = 2
         if event.type == EventType.BAR:
             self._set_correct_time_and_price(event)
