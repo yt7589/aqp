@@ -9,6 +9,7 @@ from app_registry import appRegistry as ar
 import app.qh.qh_main as qh
 import app.pqb.pqb_main as pqb
 from app.tpsa.tpsa_main import TpsaMain
+from app.hrmc.hrmc_main import HrmcMain
 
 
 
@@ -17,8 +18,11 @@ def call_stock_backtest():
     stock_backtest.startup()
 
 def startup():
-    tpsaMain = TpsaMain()
-    tpsaMain.startup()
+    hrmc_main = HrmcMain()
+    hrmc_main.startup()
+    
+    #tpsaMain = TpsaMain()
+    #tpsaMain.startup()
     
     #qh.startup()
     #pqb.startup()
