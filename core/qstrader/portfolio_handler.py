@@ -1,5 +1,6 @@
 from .order.suggested import SuggestedOrder
 from .portfolio import Portfolio
+from .price_parser import PriceParser
 
 
 class PortfolioHandler(object):
@@ -78,6 +79,7 @@ class PortfolioHandler(object):
         quantity = fill_event.quantity
         price = fill_event.price
         commission = fill_event.commission
+        print('####### {0} {1} {2} {3} {4}'.format(ticker, action, quantity, price / PriceParser.PRICE_MULTIPLIER, commission / PriceParser.PRICE_MULTIPLIER))
         # Create or modify the position from the fill info
         self.portfolio.transact_position(
             action, ticker, quantity,

@@ -67,7 +67,7 @@ class KalmanFilterStrategy(AbstractStrategy):
         self.ts1 = np.array([])
         self.deltas = np.array([])
         
-    def _set_correct_time_and_price(self, event):
+    def handle_event(self, event):
         """
         Sets the correct price and event time for prices
         that arrive out of order in the events queue.

@@ -13,7 +13,7 @@ from qstrader.strategy.base import AbstractStrategy
 class RegimeHmmStrategy(AbstractStrategy):
     def __init__(self, tickers, 
                 events_queue, base_quantity,
-                short_window=10, long_window=30):
+                short_window=1, long_window=5):
         '''
         初始化隐马可夫市场机制转换趋势跟踪策略
         @param events_queue 系统事件队列
@@ -31,7 +31,37 @@ class RegimeHmmStrategy(AbstractStrategy):
         self.invested = False
         self.sw_bars = deque(maxlen=self.short_window)
         self.lw_bars = deque(maxlen=self.long_window)
+        self.time = None
+        self.days = 0
+        self.latest_prices = np.array([-1.0, -1.0])
         
+    def handle_event(self, event):
+        """
+        Sets the correct price and event time for prices
+        that arrive out of order in the events queue.
+        """
+        # Set the first instance of time
+        if self.time is None:
+            self.time = event.time
+        
+        # Set the correct latest prices depending upon 
+        # order of arrival of market bar event
+        price = event.adj_close_price/float(
+            PriceParser.PRICE_MULTIPLIER
+        )
+        if event.time == self.time:
+            if event.ticker == self.tickers[0]:
+                self.latest_prices[0] = price
+            else:
+                self.latest_prices[1] = price
+        else:
+            self.time = event.time
+            self.days += 1
+            self.latest_prices = np.array([-1.0, -1.0])
+            if event.ticker == self.tickers[0]:
+                self.latest_prices[0] = price
+            else:
+                self.latest_prices[1] = price
 
     def calculate_signals(self, event):
         # Applies SMA to first ticker

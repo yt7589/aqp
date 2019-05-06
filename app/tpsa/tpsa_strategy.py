@@ -34,10 +34,11 @@ class TpsaStrategy(AbstractStrategy):
         self.qty = 20000
         self.cur_hedge_qty = self.qty
         self.first_run = True
+        self.is_kalman_filter = False
         
         
 
-    def _set_correct_time_and_price(self, event):
+    def handle_event(self, event):
         """
         Sets the correct price and event time for prices
         that arrive out of order in the events queue.
@@ -67,15 +68,15 @@ class TpsaStrategy(AbstractStrategy):
 
 
     def calculate_signals(self, event):
-        if self.first_run:
+        if self.first_run and self.is_kalman_filter:
             self.events_queue.put(SignalEvent(self.tickers[0], "BOT", 50000))
             self.events_queue.put(SignalEvent(self.tickers[1], "BOT", 50000))
             self.first_run = False
         mode = 2
         if event.type == EventType.BAR:
-            self._set_correct_time_and_price(event)
+            self.handle_event(event)
             for strategy in self.strategies:
-                strategy._set_correct_time_and_price( event)
+                strategy.handle_event( event)
             # Only trade if we have both observations
             if all(self.latest_prices > -1.0):
                 for strategy in self.strategies:

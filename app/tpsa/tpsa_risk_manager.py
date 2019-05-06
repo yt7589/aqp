@@ -37,7 +37,6 @@ class TpsaRiskManager(AbstractRiskManager):
         1 for undesirable. Long entry trades will only be carried
         out in regime 0, but closing trades are allowed in regime 1.
         """
-        print('风控模块运行了，检查风险中...{0} ########'.format(sized_order.strategy_name))
         if sized_order.strategy_name in self.risk_managers:
             return self.risk_managers[sized_order.strategy_name].refine_orders(portfolio, sized_order)
         # Create the order event, irrespective of the regime.

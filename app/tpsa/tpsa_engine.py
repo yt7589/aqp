@@ -18,6 +18,9 @@ from app.tpsa.tpsa_dataset import TpsaDataset
 from app.tpsa.kalman_filter_engine import KalmanFilterEngine
 from app.tpsa.kalman_filter_strategy import KalmanFilterStrategy
 
+from app.tpsa.regime_hmm_strategy import RegimeHmmStrategy
+from app.tpsa.regime_hmm_risk_manager import RegimeHmmRiskManager
+
 from app.tpsa.tpsa_strategy import TpsaStrategy
 from app.tpsa.tpsa_risk_manager import TpsaRiskManager
 from app.tpsa.kalman_filter_risk_manager import KalmanFilterRiskManager
@@ -48,7 +51,10 @@ class TpsaEngine(object):
         # 读取用于估计卡尔曼滤波参数的时间序列
         ts0 = np.array(TpsaDataset.read_close_prices('./data/{0}_train.csv'.format(tickers[0])))
         ts1 = np.array(TpsaDataset.read_close_prices('./data/{0}_train.csv'.format(tickers[1])))
-        self.strategies = [KalmanFilterStrategy(tickers, self.events_queue, self.initial_equity, ts0, ts1)]
+        #self.strategies = [KalmanFilterStrategy(tickers, self.events_queue, self.initial_equity, ts0, ts1)]
+        regime_hmm_strategy = RegimeHmmStrategy(tickers, self.events_queue, 20000)
+        regime_hmm_strategy.is_kalman_filter = True
+        self.strategies = [regime_hmm_strategy]
         
         self.strategy = TpsaStrategy(
             tickers, self.events_queue, self.initial_equity, self.strategies
@@ -60,7 +66,8 @@ class TpsaEngine(object):
         pickle_path = './work/hmm.pkl'
         hmm_model = pickle.load(open(pickle_path, "rb"))
         risk_managers = {
-            'KalmanFilterStrategy': KalmanFilterRiskManager(hmm_model)
+            #'KalmanFilterStrategy': KalmanFilterRiskManager(hmm_model)
+            'RegimeHmmStrategy': RegimeHmmRiskManager(hmm_model)
         }
         risk_manager = TpsaRiskManager(risk_managers=risk_managers)
         price_handler = BscnaDailyCsvBarPriceHandler(
@@ -91,10 +98,10 @@ class TpsaEngine(object):
         results = backtest.start_trading(testing=testing)
         
         print('init_cash:{0}; equity:{1}; cur_cash:{2}; PnL:{3}'.format(
-            portfolio_handler.portfolio.init_cash,
-            portfolio_handler.portfolio.equity,
-            portfolio_handler.portfolio.cur_cash,
-            portfolio_handler.portfolio.realised_pnl
+            portfolio_handler.portfolio.init_cash / PriceParser.PRICE_MULTIPLIER,
+            portfolio_handler.portfolio.equity / PriceParser.PRICE_MULTIPLIER,
+            portfolio_handler.portfolio.cur_cash / PriceParser.PRICE_MULTIPLIER,
+            portfolio_handler.portfolio.realised_pnl / PriceParser.PRICE_MULTIPLIER
         ))
         print('持仓情况：')
         for key in portfolio_handler.portfolio.positions:
