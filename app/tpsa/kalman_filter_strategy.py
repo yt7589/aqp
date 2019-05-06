@@ -57,15 +57,13 @@ class KalmanFilterStrategy(AbstractStrategy):
         amt0 = self.qty0 * ts0[0]
         self.equity -= (amt0 + amt1)
         self.equity_0 = self.equity
-        self.events_queue.put(SignalEvent(self.tickers[0], "BOT", self.qty0))
-        print('购买{0}：数量：{1}；价格：{2}'.format(self.tickers[0], self.qty0, self.ts0[-1]))
-        self.events_queue.put(SignalEvent(self.tickers[1], "BOT", self.qty1))
-        print('购买{0}：数量：{1}；价格：{2}'.format(self.tickers[1], self.qty1, self.ts1[-1]))
-        print('现金：{0}'.format(self.equity))
+        
         
         self.ts0 = np.array([])
         self.ts1 = np.array([])
         self.deltas = np.array([])
+        
+        self.portfolio = None
         
     def handle_event(self, event):
         """
@@ -148,20 +146,18 @@ class KalmanFilterStrategy(AbstractStrategy):
         if delta < -threshold:
             # 卖掉0买入1
             qty0 = int(math.floor(self.qty * slope))
-            # 检查是否还有股票可卖
-            if qty0 > self.qty0:
+            if self.tickers[0] not in self.portfolio.positions:
                 return
-            qty1 = self.qty1
-            if self.equity + qty0 * self.latest_prices[0] - qty1 * self.latest_prices[1] < 0:
+            # 检查是否还有股票可卖
+            if qty0 > self.portfolio.positions[self.tickers[0]].quantity:
+                return
+            qty1 = self.qty
+            if self.portfolio.cur_cash + qty0 * self.latest_prices[0] < 1.2 * qty1 * self.latest_prices[1]:
                 return
             # 满足合法性检查后，才能执行对冲操作
             self.events_queue.put(SignalEvent(self.tickers[0], "SLD", qty0, strategy_name=self.name))
-            self.qty0 -= qty0
-            self.equity += qty0 * self.latest_prices[0]
             self.events_queue.put(SignalEvent(self.tickers[1], "BOT", self.qty, strategy_name=self.name))
-            self.qty1 += self.qty
-            self.equity -= self.qty * self.latest_prices[1]
-            print('    买入{0}：数量：{1}；价格：{2}；金额：{3}'.format(
+            print('\r\n    买入{0}：数量：{1}；价格：{2}；金额：{3}'.format(
                     self.tickers[1], self.qty, self.latest_prices[1], 
                     self.qty*self.latest_prices[1])
             )
@@ -169,23 +165,18 @@ class KalmanFilterStrategy(AbstractStrategy):
                     self.tickers[0], qty0, self.latest_prices[0],
                     qty0*self.latest_prices[0]
             ))
-            total = self.equity + self.qty0 * self.latest_prices[0] + self.qty1 * self.latest_prices[1]
-            print('########### 总资产：{0}={1}+{2}+{2}'.format(total, self.equity, 
-                    self.qty0 * self.latest_prices[0], self.qty1 * self.latest_prices[1]))
         elif delta > threshold:
             qty0 = int(math.floor(self.qty * slope))
-            if self.qty1 - self.qty < 0:
+            if self.tickers[1] not in self.portfolio.positions:
                 return
-            if self.equity + self.qty * self.latest_prices[1] - qty0 * self.latest_prices[0] < 0:
+            if self.portfolio.positions[self.tickers[1]].quantity - self.qty < 0:
+                return
+            if self.portfolio.cur_cash + self.qty * self.latest_prices[1] < 1.2*qty0 * self.latest_prices[0]:
                 return
             # 买入0卖出1
             self.events_queue.put(SignalEvent(self.tickers[1], "SLD", self.qty, strategy_name=self.name))
-            self.qty1 -= self.qty
-            self.equity += self.qty * self.latest_prices[1]
             self.events_queue.put(SignalEvent(self.tickers[0], "BOT", qty0, strategy_name=self.name))
-            self.qty0 += qty0
-            self.equity -= qty0 * self.latest_prices[0]
-            print('    买入{0}：数量：{1}；价格：{2}；金额：{3}'.format(
+            print('\r\n    买入{0}：数量：{1}；价格：{2}；金额：{3}'.format(
                     self.tickers[0], qty0, self.latest_prices[0], 
                     self.qty*self.latest_prices[0])
             )
@@ -193,7 +184,4 @@ class KalmanFilterStrategy(AbstractStrategy):
                     self.tickers[1], self.qty, self.latest_prices[1],
                     qty0*self.latest_prices[1]
             ))
-            total = self.equity + self.qty0 * self.latest_prices[0] + self.qty1 * self.latest_prices[1]
-            print('########### 总资产：{0}={1}+{2}+{2}'.format(total, self.equity, 
-                    self.qty0 * self.latest_prices[0], self.qty1 * self.latest_prices[1]))
 

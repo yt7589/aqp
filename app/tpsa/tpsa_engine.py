@@ -51,9 +51,10 @@ class TpsaEngine(object):
         # 读取用于估计卡尔曼滤波参数的时间序列
         ts0 = np.array(TpsaDataset.read_close_prices('./data/{0}_train.csv'.format(tickers[0])))
         ts1 = np.array(TpsaDataset.read_close_prices('./data/{0}_train.csv'.format(tickers[1])))
-        #self.strategies = [KalmanFilterStrategy(tickers, self.events_queue, self.initial_equity, ts0, ts1)]
+        kalman_filter_strategy = KalmanFilterStrategy(tickers, self.events_queue, self.initial_equity, ts0, ts1)
         regime_hmm_strategy = RegimeHmmStrategy(tickers, self.events_queue, 20000)
-        regime_hmm_strategy.is_kalman_filter = True
+        #self.strategies = [kalman_filter_strategy, regime_hmm_strategy]
+        #self.strategies = [kalman_filter_strategy]
         self.strategies = [regime_hmm_strategy]
         
         self.strategy = TpsaStrategy(
@@ -65,8 +66,19 @@ class TpsaEngine(object):
         position_sizer = NaivePositionSizer()
         pickle_path = './work/hmm.pkl'
         hmm_model = pickle.load(open(pickle_path, "rb"))
+        '''
         risk_managers = {
-            #'KalmanFilterStrategy': KalmanFilterRiskManager(hmm_model)
+            'KalmanFilterStrategy': KalmanFilterRiskManager(hmm_model),
+            'RegimeHmmStrategy': RegimeHmmRiskManager(hmm_model)
+        }
+        '''
+        '''
+        risk_managers = {
+            'KalmanFilterStrategy': KalmanFilterRiskManager(hmm_model)
+        }
+        self.strategy.is_kalman_filter = True
+        '''
+        risk_managers = {
             'RegimeHmmStrategy': RegimeHmmRiskManager(hmm_model)
         }
         risk_manager = TpsaRiskManager(risk_managers=risk_managers)
@@ -81,6 +93,8 @@ class TpsaEngine(object):
             self.events_queue, price_handler,
             position_sizer, risk_manager
         )
+        for si in self.strategies:
+            si.portfolio = portfolio_handler.portfolio
         statistics = TearsheetStatistics(
             config, portfolio_handler, 
             self.title, benchmark="ICBC"
@@ -107,13 +121,6 @@ class TpsaEngine(object):
         for key in portfolio_handler.portfolio.positions:
             item = portfolio_handler.portfolio.positions[key]
             print('ticker:{0}; quantity:{1};'.format(item.ticker, item.quantity))
-        print('清仓情况：')
-        for cp in portfolio_handler.portfolio.closed_positions:
-            print(cp)
-        
-        
-        
-        
         return results
         
     

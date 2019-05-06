@@ -34,6 +34,7 @@ class RegimeHmmStrategy(AbstractStrategy):
         self.time = None
         self.days = 0
         self.latest_prices = np.array([-1.0, -1.0])
+        self.portfolio = None
         
     def handle_event(self, event):
         """
@@ -83,16 +84,21 @@ class RegimeHmmStrategy(AbstractStrategy):
                 long_sma = np.mean(self.lw_bars)
                 # Trading signals based on moving average cross
                 if short_sma > long_sma and not self.invested:
-                    print("LONG: %s" % event.time)
-                    signal = SignalEvent(ticker, "BOT", self.base_quantity, strategy_name=self.name)
-                    print('####### strategy_name={0}'.format(signal.strategy_name))
+                    bot_quantity = int((self.portfolio.cur_cash / PriceParser.PRICE_MULTIPLIER * 0.9) /self.latest_prices[0])
+                    signal = SignalEvent(ticker, "BOT", bot_quantity, strategy_name=self.name)
                     self.events_queue.put(signal)
                     self.invested = True
+                    print('LONG: {0}; 价格：{1}; 数量：{2}'.format(event.time, self.latest_prices[0], bot_quantity))
                 elif short_sma < long_sma and self.invested:
-                    print("SHORT: %s" % event.time)
-                    signal = SignalEvent(ticker, "SLD", self.base_quantity, strategy_name=self.name)
+                    sld_quantity = 0
+                    if self.tickers[0] in self.portfolio.positions:
+                        sld_quantity = self.portfolio.positions[self.tickers[0]].quantity
+                        if sld_quantity < 0:
+                            return 
+                    signal = SignalEvent(ticker, "SLD", sld_quantity, strategy_name=self.name)
                     self.events_queue.put(signal)
                     self.invested = False
+                    print('SHORT: {0}; 价格：{1}; 数量：{2}'.format(event.time, self.latest_prices[0], sld_quantity))
             self.bars += 1
         
     

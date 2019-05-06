@@ -29,6 +29,7 @@ class Portfolio(object):
         self.equity = self.realised_pnl
         self.equity += self.init_cash
 
+        self.equity = self.cur_cash
         for ticker in self.positions:
             pt = self.positions[ticker]
             if self.price_handler.istick():
@@ -39,9 +40,12 @@ class Portfolio(object):
                 ask = close_price
             pt.update_market_value(bid, ask)
             self.unrealised_pnl += pt.unrealised_pnl
+            '''
             self.equity += (
                 pt.market_value - pt.cost_basis + pt.realised_pnl
             )
+            '''
+            self.equity += pt.quantity * ((bid+ask)//2)
 
     def _add_position(
         self, action, ticker,

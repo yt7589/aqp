@@ -79,12 +79,20 @@ class PortfolioHandler(object):
         quantity = fill_event.quantity
         price = fill_event.price
         commission = fill_event.commission
-        print('####### {0} {1} {2} {3} {4}'.format(ticker, action, quantity, price / PriceParser.PRICE_MULTIPLIER, commission / PriceParser.PRICE_MULTIPLIER))
         # Create or modify the position from the fill info
+        if 'ICBC' in self.portfolio.positions:
+            print('       期初资产：{0}; 现金：{1}; 数量：{2}'.format(self.portfolio.equity / PriceParser.PRICE_MULTIPLIER, self.portfolio.cur_cash / PriceParser.PRICE_MULTIPLIER, self.portfolio.positions['ICBC'].quantity))
+        else:
+            print('       期初资产：{0}; 现金：{1}; 数量：{2}'.format(self.portfolio.equity / PriceParser.PRICE_MULTIPLIER, self.portfolio.cur_cash / PriceParser.PRICE_MULTIPLIER, 0))
         self.portfolio.transact_position(
             action, ticker, quantity,
             price, commission
         )
+        print('       {0} {1} 数量：{2}； 价格：{3}； 手续费：{4}'.format(ticker, action, quantity, price / PriceParser.PRICE_MULTIPLIER, commission / PriceParser.PRICE_MULTIPLIER))
+        if 'ICBC' in self.portfolio.positions:
+            print('       期末资产：{0}; 现金：{1}; 数量：{2}'.format(self.portfolio.equity / PriceParser.PRICE_MULTIPLIER, self.portfolio.cur_cash / PriceParser.PRICE_MULTIPLIER, self.portfolio.positions['ICBC'].quantity))
+        else:
+            print('       期末资产：{0}; 现金：{1}; 数量：{2}'.format(self.portfolio.equity / PriceParser.PRICE_MULTIPLIER, self.portfolio.cur_cash / PriceParser.PRICE_MULTIPLIER, 0))
 
     def on_signal(self, signal_event):
         """

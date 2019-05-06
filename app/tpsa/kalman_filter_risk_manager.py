@@ -40,7 +40,6 @@ class KalmanFilterRiskManager(AbstractRiskManager):
             self.hmm_model, price_handler, sized_order
         )
         action = sized_order.action
-        print('###### strategy={0}'.format(sized_order.strategy_name))
         # Create the order event, irrespective of the regime.
         # It will only be returned if the correct conditions 
         # are met below.
@@ -49,7 +48,7 @@ class KalmanFilterRiskManager(AbstractRiskManager):
             sized_order.action,
             sized_order.quantity
         )
-        if regime == 100:
+        if regime == 20:
             return []
         else:
             return [order_event]
