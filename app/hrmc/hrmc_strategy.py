@@ -46,6 +46,7 @@ class HrmcStrategy(AbstractStrategy):
         self.sw_bars = deque(maxlen=self.short_window)
         self.lw_bars = deque(maxlen=self.long_window)
         self.portfolio = None
+        self.last_buy_price = 0.0
 
     def calculate_signals(self, event):
         if event.type == EventType.BAR:
@@ -74,6 +75,7 @@ class HrmcStrategy(AbstractStrategy):
                         self.events_queue.put(signal)
                         self.invested = True
                         print('LONG: {0}; 价格：{1}; 数量：{2}'.format(event.time, price, bot_quantity))
+                        self.last_buy_price = price
                     elif short_sma < long_sma and self.invested:
                         sld_quantity = 0
                         if self.tickers[0] in self.portfolio.positions:

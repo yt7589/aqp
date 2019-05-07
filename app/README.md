@@ -4,3 +4,4 @@ ph: portfolio holding strategy，只是简单持有股票，比较适合于大�
 pqb: python quant book，《量化投资以python为工具》学习项目
 tpsa：trading pair strategy for A share A股交易对统计套利策略与隐马可夫模型风控模型加移动平均CPA策略
 hrmc：hidden markov model risk manager for moving average CPA strategy 采用隐马可夫模型作为风控模型，3日均价超过10日均价买涨杀跌的程序化交易CPA策略
+kftp：kalman filter trading pair 卡尔曼滤波交易对策略

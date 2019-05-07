@@ -10,6 +10,7 @@ import app.qh.qh_main as qh
 import app.pqb.pqb_main as pqb
 from app.tpsa.tpsa_main import TpsaMain
 from app.hrmc.hrmc_main import HrmcMain
+from app.kftp.kftp_main import KftpMain
 
 
 
@@ -18,8 +19,11 @@ def call_stock_backtest():
     stock_backtest.startup()
 
 def startup():
-    hrmc_main = HrmcMain()
-    hrmc_main.startup()
+    kftp_main = KftpMain()
+    kftp_main.startup()
+    
+    #hrmc_main = HrmcMain()
+    #hrmc_main.startup()
     
     #tpsaMain = TpsaMain()
     #tpsaMain.startup()
