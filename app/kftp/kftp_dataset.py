@@ -33,8 +33,8 @@ class KftpDataset(object):
         @stock_files 交易对股票行情文件名，共有两个
         '''
         print('绘制收盘价曲线...')
-        etf0_prices = TpsaDataset.read_close_prices(stock_files[0])
-        etf1_prices = TpsaDataset.read_close_prices(stock_files[1])
+        etf0_prices = KftpDataset.read_close_prices(stock_files[0])
+        etf1_prices = KftpDataset.read_close_prices(stock_files[1])
         plt.title('close price curve')
         plt.plot(etf0_prices)
         plt.plot(etf1_prices)

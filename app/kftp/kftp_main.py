@@ -13,11 +13,10 @@ class KftpMain(object):
         
     def startup(self):
         print('卡尔曼滤波交易对策略')
-        self.get_quotation_data() # 获取行情数据
-        #self.draw_close_price_curve()
+        #self.get_quotation_data() # 获取行情数据
         # 绘制收盘价曲线
-        #stock_files = ['./data/ICBC.csv', './data/CBC.csv']
-        #TpsaDataset.draw_close_price_curve(stock_files)
+        stock_files = ['./data/ICBC.csv', './data/CBC.csv']
+        KftpDataset.draw_close_price_curve(stock_files)
         # 运行卡尔曼滤波模型
         #tpsaEngine = TpsaEngine()
         #tpsaEngine.startup()
