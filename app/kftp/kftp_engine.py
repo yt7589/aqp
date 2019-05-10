@@ -14,18 +14,11 @@ from qstrader.statistics.tearsheet import TearsheetStatistics
 from qstrader.price_handler.bscna_daily_csv_bar import BscnaDailyCsvBarPriceHandler
 
 import matplotlib.pyplot as plt
-from app.tpsa.tpsa_dataset import TpsaDataset
-from app.tpsa.kalman_filter_engine import KalmanFilterEngine
-from app.tpsa.kalman_filter_strategy import KalmanFilterStrategy
+from app.kftp.kftp_dataset import KftpDataset
+from app.kftp.kftp_strategy import KftpStrategy
+from app.kftp.kftp_risk_manager import KftpRiskManager
 
-from app.tpsa.regime_hmm_strategy import RegimeHmmStrategy
-from app.tpsa.regime_hmm_risk_manager import RegimeHmmRiskManager
-
-from app.tpsa.tpsa_strategy import TpsaStrategy
-from app.tpsa.tpsa_risk_manager import TpsaRiskManager
-from app.tpsa.kalman_filter_risk_manager import KalmanFilterRiskManager
-
-class TpsaEngine(object):
+class KftpEngine(object):
     def __init__(self):
         self.name = 'QhEngine'
         
@@ -33,7 +26,6 @@ class TpsaEngine(object):
         testing = False
         config = settings.load_config()
         tickers = ['ICBC', 'CBC']
-        engines = [KalmanFilterEngine()]
         self.run(config, testing, tickers) 
 
     def run(self, config, testing, tickers):
@@ -49,39 +41,16 @@ class TpsaEngine(object):
         self.events_queue = queue.Queue()
         
         # 读取用于估计卡尔曼滤波参数的时间序列
-        ts0 = np.array(TpsaDataset.read_close_prices('./data/{0}_train.csv'.format(tickers[0])))
-        ts1 = np.array(TpsaDataset.read_close_prices('./data/{0}_train.csv'.format(tickers[1])))
-        kalman_filter_strategy = KalmanFilterStrategy(tickers, self.events_queue, self.initial_equity, ts0, ts1)
-        regime_hmm_strategy = RegimeHmmStrategy(tickers, self.events_queue, 20000)
-        #self.strategies = [kalman_filter_strategy, regime_hmm_strategy]
-        #self.strategies = [kalman_filter_strategy]
-        self.strategies = [regime_hmm_strategy]
-        
-        self.strategy = TpsaStrategy(
-            tickers, self.events_queue, self.initial_equity, self.strategies
-        )
+        ts0 = np.array(KftpDataset.read_close_prices('./data/{0}_train.csv'.format(tickers[0])))
+        ts1 = np.array(KftpDataset.read_close_prices('./data/{0}_train.csv'.format(tickers[1])))
+        self.strategy = KftpStrategy(tickers, self.events_queue, self.initial_equity, ts0, ts1)
         
         # Use the Naive Position Sizer where
         # suggested quantities are followed
         position_sizer = NaivePositionSizer()
         pickle_path = './work/hmm.pkl'
         hmm_model = pickle.load(open(pickle_path, "rb"))
-        '''
-        risk_managers = {
-            'KalmanFilterStrategy': KalmanFilterRiskManager(hmm_model),
-            'RegimeHmmStrategy': RegimeHmmRiskManager(hmm_model)
-        }
-        '''
-        '''
-        risk_managers = {
-            'KalmanFilterStrategy': KalmanFilterRiskManager(hmm_model)
-        }
-        self.strategy.is_kalman_filter = True
-        '''
-        risk_managers = {
-            'RegimeHmmStrategy': RegimeHmmRiskManager(hmm_model)
-        }
-        risk_manager = TpsaRiskManager(risk_managers=risk_managers)
+        risk_manager = KftpRiskManager(hmm_model)
         price_handler = BscnaDailyCsvBarPriceHandler(
             config.CSV_DATA_DIR, self.events_queue, tickers,
             start_date=self.start_date, 
@@ -93,8 +62,7 @@ class TpsaEngine(object):
             self.events_queue, price_handler,
             position_sizer, risk_manager
         )
-        for si in self.strategies:
-            si.portfolio = portfolio_handler.portfolio
+        self.strategy.portfolio = portfolio_handler.portfolio
         statistics = TearsheetStatistics(
             config, portfolio_handler, 
             self.title, benchmark="ICBC"

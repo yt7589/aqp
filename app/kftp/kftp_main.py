@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from core.quotation.bs_cna_daily import BsCnaDaily
 # 
 from app.kftp.kftp_dataset import KftpDataset
-#from app.tpsa.tpsa_engine import TpsaEngine
+from app.kftp.kftp_engine import KftpEngine
 #from app.tpsa.regime_hmm_model import RegimeHmmModel
 #from app.tpsa.regime_hmm_engine import RegimeHmmEngine
 
@@ -15,11 +15,11 @@ class KftpMain(object):
         print('卡尔曼滤波交易对策略')
         #self.get_quotation_data() # 获取行情数据
         # 绘制收盘价曲线
-        stock_files = ['./data/ICBC.csv', './data/CBC.csv']
-        KftpDataset.draw_close_price_curve(stock_files)
+        #stock_files = ['./data/ICBC.csv', './data/CBC.csv']
+        #KftpDataset.draw_close_price_curve(stock_files)
         # 运行卡尔曼滤波模型
-        #tpsaEngine = TpsaEngine()
-        #tpsaEngine.startup()
+        kftpEngine = KftpEngine()
+        kftpEngine.startup()
         
         # 训练隐马可夫模型（因为隐马可夫模型随机给定状态值，
         # 有时会是状态0适合交易，有时会是状态1适合交易，
