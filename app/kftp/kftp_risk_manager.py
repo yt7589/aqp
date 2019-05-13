@@ -48,7 +48,4 @@ class KftpRiskManager(AbstractRiskManager):
             sized_order.action,
             sized_order.quantity
         )
-        if regime == 20:
-            return []
-        else:
-            return [order_event]
+        return [order_event]

@@ -1,4 +1,4 @@
-\begin{thebibliography}{3}
+\begin{thebibliography}{4}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -15,6 +15,13 @@ PyKalman.
 \newblock Pykalman 0.9.2文档.
 \newblock \emph{http://pykalman.github.io}, blog, 2019.
 \newblock URL \url{http://pykalman.github.io/#pykalman.KalmanFilter.sample}.
+
+\bibitem[Trubetskoy(2019)]{r000004}
+Gregory Trubetskoy.
+\newblock Holt-winters forecasting for dummies (or developers).
+\newblock \emph{https://grisha.org}, blog, 2019.
+\newblock URL
+  \url{https://grisha.org/blog/2016/01/29/triple-exponential-smoothing-forecasting/}.
 
 \bibitem[tushare and 匠芯量化(2019)]{r000001}
 tushare and 匠芯量化.

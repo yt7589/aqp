@@ -2609,11 +2609,7 @@ p(x_{t} \vert z_{t}=k; \theta) = \mathcal{N} (x_{t} \vert \mu _{k}, \sigma _{k}^
 
 
 
-\section{汇总}
-t000004
-f000022
-c000010
-e000090
+
 
 
 
@@ -2784,6 +2780,290 @@ https://github.com/llSourcell/Make_Money_with_Tensorflow_2.0/issues
 我们将市场看作是环境，买卖股票是Action，市场行情数据是Observation，经过长短时记忆网络（LSTM）或Transformer网络处理后形成State，盈利或亏损作为Reward，这样就组成了一个深度强化学习系统。在本章中，我们将研究基于深度强化学习的量化交易策略。
 \end{abstract}
 \section{深度强化学习}
+\subsection{指数平滑技术}
+在这一节中，我们将根据\cite{r000004}中所述的方法，讲述考虑到时序信号的趋势、周期等因素后的预测方法。
+\subsubsection{指数平滑定义}
+对于时间序列而言，我们需要分析出其趋势（涨、跌）和周期性变化。我们在这一节中，将采用Holt Winter方法来研究这一问题。\newline
+给定一个时间序列，我们可以用这个序列的平均值来预测下一个值，如下所示：
+\begin{equation}
+\hat{y}_{T+1}=\frac{1}{T}\sum_{t=1}^{T}y_{t}
+\label{e000091}
+\end{equation}
+代码如下所示：
+\lstset{language=PYTHON, caption={利用序列平均值预测}, label={c000010}}
+\begin{lstlisting}
+    def predict_by_mean(self):
+        y = np.array([3,10,12,13,12,10,12])
+        return np.mean(y)
+\end{lstlisting}
+将整个序列的平均值作为下一个时间点的预测，显然有些问题，因为越往前的时间点对下一个时间点值的影响越小，所以在实际中我们通常使用移动平均的方法。我们首先设定移动窗口的大小W，其中前面各个时间点分配不同的权重$w_{i}$，例如我们假设移动窗口大小为4，其取值为：$[0.1, 0.2, 0.3, 0.4]$，越接近的时间点权值越大，利定数学语言表示为：
+\begin{equation}
+\hat{y}_{T+1}=\sum_{t=1}^{W}y_{t} \cdot w_{t}
+\label{e000092}
+\end{equation}
+程序实现如下所示：
+\lstset{language=PYTHON, caption={利用移动平均值预测}, label={c000011}}
+\begin{lstlisting}
+    def predict_by_mean(self):
+        y = np.array([3,10,12,13,12,10,12])
+        return np.mean(y)
+\end{lstlisting}
+在介绍了简单的移动平均概念之后，我们来介绍这一节的重点内容，指数平滑技术。$k$阶指数平滑的定义如下所示：
+\begin{equation}
+\hat{y}_{t}=\alpha \cdot y_{t} + \alpha (1-\alpha) y_{t-1} + \alpha (1-\alpha)^{2}y_{t-2} + ... + \alpha (1-\alpha)^{K} y_{t-K}=\sum_{i=1}^{K}\alpha(1-\alpha)^{k} y_{t-k}
+\label{e000093}
+\end{equation}
+程序实现如下所示：
+\lstset{language=PYTHON, caption={指数平滑实现}, label={c000012}}
+\begin{lstlisting}
+    def expopential_smoothing(self, series, alpha):
+        result = [series[0]]
+        for t in range(1, len(series)):
+            result.append(alpha * series[t] + (1 - alpha) * result[t-1])
+        return result
+        
+    def test_expopential_smoothing_3(self):
+        holt_winters = HoltWinters()
+        series = [3.0, 10.0, 12.0, 13.0, 12.0, 10.0, 12.0]
+        alpha = 0.1
+        r1 = holt_winters.expopential_smoothing(series, alpha)
+        alpha = 0.9
+        r2 = holt_winters.expopential_smoothing(series, alpha)
+        
+        fig, ax = plt.subplots()
+        
+        ax.plot(series, label='series')
+        ax.plot(r1, label='a=0.1')
+        ax.plot(r2, label='a=0.9')
+        
+        legend = ax.legend(loc='lower right', shadow=True, fontsize='medium')
+        plt.show()        
+\end{lstlisting}
+绘制出的指数平滑图如下所示：
+\begin{figure}[H]
+	\caption{指数平滑示意图}
+	\label{f000070}
+	\centering
+	\includegraphics[height=10cm]{images/f000070}
+\end{figure}
+图中蓝色曲线为真实序列，绿色曲线为$\alpha=0.9$时的平滑曲线，黄色曲线为$\alpha=0.1$时的平滑曲线。由上图可以看出$\alpha=0.9$时指数平滑的效果是最好的，如果选择合适的$\alpha$的过程我们称之为拟合，我们将在后面介绍。
+\subsubsection{趋势周期预测}
+在预测中，期望值又可以称为Level，用$\ell$表示。时序信号尤其是股票等信号，经常会有上涨或下跌趋势，我们可以用趋势来定义。在几何中，我们用如下公式定义斜率：
+\begin{equation}
+k=\frac{\Delta y}{\Delta x}
+\label{e000094}
+\end{equation}
+因为对于时序信号来说，$\Delta x$通常代表一个时间单位，其值为1，所以斜率就是$\Delta y$，所以我们定义在$t$时刻的趋势为：
+\begin{equation}
+b_{t}=y_{t}-y_{t-1}
+\label{e000095}
+\end{equation}
+大加入Level和趋势后，我们可以得出如下的双指数平滑公式：
+Level的公式为：
+\begin{equation}
+\ell _{t} = \alpha y_{t} + (1-\alpha)(y_{t-1} + b_{t-1})
+\label{e000096}
+\end{equation}
+趋势预测公式为：
+\begin{equation}
+b_{t} = \beta (\ell _{t} - \ell _{t-1}) + (1-\beta)b_{t-1}
+\label{e000097}
+\end{equation}
+实际预测值为：
+\begin{equation}
+\hat{y}_{t}=\ell _{t} + b_{t}
+\label{e000098}
+\end{equation}
+可以采用如下程序来实现上述算法：
+\lstset{language=PYTHON, caption={趋势预测法}, label={c000013}}
+\begin{lstlisting}
+    def double_exponential_smoothing(self, series, alpha, beta):
+        result = [series[0]]
+        for n in range(1, len(series)+1):
+            if n == 1:
+                level, trend = series[0], series[1] - series[0]
+            if n >= len(series): # we are forecasting
+              value = result[-1]
+            else:
+              value = series[n]
+            last_level, level = level, alpha*value + (1-alpha)*(level+trend)
+            trend = beta*(level-last_level) + (1-beta)*trend
+            result.append(level+trend)
+        return result
+        
+    def test_double_expopential_smoothing(self):
+        holt_winters = HoltWinters()
+        series = [3.0, 10.0, 12.0, 13.0, 12.0, 10.0, 12.0]
+        alpha = 0.9
+        beta = 0.9
+        result = holt_winters.double_exponential_smoothing(series, alpha, beta)
+        
+        fig, ax = plt.subplots()
+        
+        ax.plot(series, label='series')
+        ax.plot(result, label='predict')
+        
+        legend = ax.legend(loc='lower right', shadow=True, fontsize='medium')
+        plt.show()        
+\end{lstlisting}
+运行结果如下图所示：
+\begin{figure}[H]
+	\caption{趋势预测法}
+	\label{f000071}
+	\centering
+	\includegraphics[height=10cm]{images/f000071}
+\end{figure}
+时序信号除了具有涨跌趋势规律之外，还可能具有周期性，例如一些信号随季节改变，因为我们还可以进一步将周期性变化考虑在内。我们假设时序信号的周期为L，即每过L个时间点就会重复。\newline
+加入周期性后，我们的预测公式如下所示：
+Level的公式为：
+\begin{equation}
+\ell _{t} = \alpha y_{t} + (1-\alpha)(y_{t-1} + b_{t-1})
+\label{e000099}
+\end{equation}
+趋势预测公式为：
+\begin{equation}
+b_{t} = \beta (\ell _{t} - \ell _{t-1}) + (1-\beta)b_{t-1}
+\label{e000100}
+\end{equation}
+周期预测公式：
+\begin{equation}
+s_{t} = \gamma (y_{t} - \ell _{t}) + (1-\gamma)s_{t-L}
+\label{e000101}
+\end{equation}
+实际预测值为：
+\begin{equation}
+\hat{y}_{t+m}=\ell _{t} + mb_{t} + s_{t-L+1+(t-1)\%L}
+\label{e000102}
+\end{equation}
+我们的初始趋势计算公式为：
+\begin{equation}
+b_{0}=\frac{1}{L} +\bigg(  \frac{y_{L+1}-y_{1}}{L} + \frac{y_{L+2}-y_{2}}{L} + ... + \frac{y_{L+L}-y_{L}}{L} \bigg)
+\label{e000103}
+\end{equation}
+程序实现如下所示：
+\lstset{language=PYTHON, caption={初始趋势计算}, label={c000014}}
+\begin{lstlisting}
+    def initial_trend(self, series, slen):
+        sum = 0.0
+        for i in range(slen):
+            sum += float(series[i+slen] - series[i]) / slen
+        return sum / slen
+        
+    def test_initial_trend(self):
+        series = [30,21,29,31,40,48,53,47,37,39,31,29,17,9,20,24,27,35,41,38,
+          27,31,27,26,21,13,21,18,33,35,40,36,22,24,21,20,17,14,17,19,
+          26,29,40,31,20,24,18,26,17,9,17,21,28,32,46,33,23,28,22,27,
+          18,8,17,21,31,34,44,38,31,30,26,32]
+        holt_winters = HoltWinters()
+        L = 12
+        result = holt_winters.initial_trend(series, L)
+        print(result) # 正确结果：-0.7847222222222222
+        fig, ax = plt.subplots()
+        
+        ax.plot(series, label='series')
+        
+        legend = ax.legend(loc='lower right', shadow=True, fontsize='medium')
+        plt.show()
+        self.assertTrue(True)        
+\end{lstlisting}
+初始周期计算如下所示：
+\lstset{language=PYTHON, caption={初始周期计算}, label={c000015}}
+\begin{lstlisting}
+    def initial_seasonal_components(self, series, slen):
+        seasonals = {}
+        season_averages = []
+        n_seasons = int(len(series)/slen)
+        # compute season averages
+        for j in range(n_seasons):
+            season_averages.append(sum(series[slen*j:slen*j+slen])/float(slen))
+        # compute initial values
+        for i in range(slen):
+            sum_of_vals_over_avg = 0.0
+            for j in range(n_seasons):
+                sum_of_vals_over_avg += series[slen*j+i]-season_averages[j]
+            seasonals[i] = sum_of_vals_over_avg/n_seasons
+        return seasonals
+        
+    def test_initial_seasonal_components(self):
+        series = [30,21,29,31,40,48,53,47,37,39,31,29,17,9,20,24,27,35,41,38,
+          27,31,27,26,21,13,21,18,33,35,40,36,22,24,21,20,17,14,17,19,
+          26,29,40,31,20,24,18,26,17,9,17,21,28,32,46,33,23,28,22,27,
+          18,8,17,21,31,34,44,38,31,30,26,32]
+        holt_winters = HoltWinters()
+        L = 12
+        result = holt_winters.initial_seasonal_components(series, L)
+        print(result) # 正确结果：{0: -7.4305555555555545, 1: -15.097222222222221, 2: -7.263888888888888, 3: -5.097222222222222, 4: 3.402777777777778, 5: 8.069444444444445, 6: 16.569444444444446, 7: 9.736111111111112, 8: -0.7638888888888887, 9: 1.902777777777778, 10: -3.263888888888889, 11: -0.7638888888888887}
+        fig, ax = plt.subplots()
+        
+        ax.plot(series, label='series')
+        
+        legend = ax.legend(loc='lower right', shadow=True, fontsize='medium')
+        plt.show()
+        self.assertTrue(True)        
+\end{lstlisting}
+接下来我们看具体的算法实现：
+\lstset{language=PYTHON, caption={趋势周期预测计算}, label={c000015}}
+\begin{lstlisting}
+    def triple_exponential_smoothing(self, series, slen, alpha, beta, gamma, n_preds):
+        result = []
+        seasonals = self.initial_seasonal_components(series, slen)
+        for i in range(len(series)+n_preds):
+            if i == 0: # initial values
+                smooth = series[0]
+                trend = self.initial_trend(series, slen)
+                result.append(series[0])
+                continue
+            if i >= len(series): # we are forecasting
+                m = i - len(series) + 1
+                result.append((smooth + m*trend) + seasonals[i%slen])
+            else:
+                val = series[i]
+                last_smooth, smooth = smooth, alpha*(val-seasonals[i%slen]) + (1-alpha)*(smooth+trend)
+                trend = beta * (smooth-last_smooth) + (1-beta)*trend
+                seasonals[i%slen] = gamma*(val-smooth) + (1-gamma)*seasonals[i%slen]
+                result.append(smooth+trend+seasonals[i%slen])
+        return result
+        
+    def test_triple_exponential_smoothing(self):
+        series = [30,21,29,31,40,48,53,47,37,39,31,29,17,9,20,24,27,35,41,38,
+          27,31,27,26,21,13,21,18,33,35,40,36,22,24,21,20,17,14,17,19,
+          26,29,40,31,20,24,18,26,17,9,17,21,28,32,46,33,23,28,22,27,
+          18,8,17,21,31,34,44,38,31,30,26,32]
+        holt_winters = HoltWinters()
+        L = 12
+        alpha = 0.716
+        beta = 0.029
+        gamma = 0.993
+        n_preds = 24
+        result = holt_winters.triple_exponential_smoothing(series, L, alpha, beta, gamma, n_preds)
+        
+        fig, ax = plt.subplots()
+        ax.plot(result, label='predict')
+        ax.plot(series, label='series')
+        legend = ax.legend(loc='lower right', shadow=True, fontsize='medium')
+        plt.show()
+        self.assertTrue(True)
+\end{lstlisting}
+运行结果如下图所示：
+\begin{figure}[H]
+	\caption{优惠功能数据库表ER图}
+	\label{f000072}
+	\centering
+	\includegraphics[height=10cm]{images/f000072}
+\end{figure}
+图中黄色为原始信号，蓝色曲线为预测出来的曲线。我们从程序中可以看出，算法中的参数$\alpha$、$\beta$、$\gamma$、$L$均为直接指定的，对于实际信号，估计出这些参数的值需要使用复杂的拟合算法，才能求出正确的值。另外，需要注意的是这个模型要求时序信号具有周期性，而实际上股票信号不具有明显的周期性，直接使用上述模型可能就会有问题。
+\subsection{移动平均和强化学习}
+
+
+
+
+
+\section{汇总}
+t000004
+f000022
+c000011
+e000098
+
 
 
 
