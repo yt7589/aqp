@@ -12,9 +12,8 @@ class Aqt005(object):
         
     def startup(self):
         print('卡尔曼滤波确定动态对冲比例')
-        #self.hedge_ratio()
+        self.hedge_ratio()
         #self.kalman_filter()
-        self.kalman_filter2()
         
     def hedge_ratio(self):
         etfs = ['TLT', 'IEI']
@@ -74,8 +73,17 @@ class Aqt005(object):
         sigma0 = np.ones((2, 2))
         Q = delta / (1 - delta) * np.eye(2)
         At = np.eye(2)
+
+        train_om = prices[etfs[0]][:900]
+        train_ob = prices[etfs[1]][:900]
+
+        test_om = prices[etfs[0]][900:]
+        test_ob = prices[etfs[1]][900:]
+
+
+
         Ct = np.vstack(
-            [prices[etfs[0]], np.ones(prices[etfs[0]].shape)]
+            [train_om, np.ones(train_om.shape)]
         ).T[:, np.newaxis]
         R = 1.0
         kf = KalmanFilter(
@@ -89,9 +97,13 @@ class Aqt005(object):
             transition_covariance=Q
         )
         
-        yt = prices[etfs[1]].values
+        yt = train_ob.values
         #state_means, state_covs = kf.em(observations).filter(observations)
         xt_means, xt_covs = kf.em(yt).filter(yt)
+
+        for idx in range(len(test_om)):
+            xt_means1, xt_cons1 = kf.filter_update()
+
         return xt_means, xt_covs
         
     def draw_slope_intercept_changes(self, prices, state_means):
@@ -136,14 +148,6 @@ class Aqt005(object):
         filtered_state_estimates, filtered_state_covariances = kf.filter(observations)
         plt.plot(filtered_state_estimates)
         plt.show()
-        
-    def kalman_filter2(self):
-        print('测试filter_update用法')
-        df = pd.read_csv('./work/aqt005_001.txt')
-        df.dropna(inplace=True)
-        n = df.shape[0]
-        n_dim_state = 2
-        # 
         
         
         
