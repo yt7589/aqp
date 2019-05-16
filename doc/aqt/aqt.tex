@@ -3053,6 +3053,40 @@ b_{0}=\frac{1}{L} +\bigg(  \frac{y_{L+1}-y_{1}}{L} + \frac{y_{L+2}-y_{2}}{L} + .
 \end{figure}
 图中黄色为原始信号，蓝色曲线为预测出来的曲线。我们从程序中可以看出，算法中的参数$\alpha$、$\beta$、$\gamma$、$L$均为直接指定的，对于实际信号，估计出这些参数的值需要使用复杂的拟合算法，才能求出正确的值。另外，需要注意的是这个模型要求时序信号具有周期性，而实际上股票信号不具有明显的周期性，直接使用上述模型可能就会有问题。
 \subsection{移动平均和强化学习}
+\subsection{比特币强化学习}
+\subsubsection{开发环境搭建}
+安装所需软件：
+\lstset{language=BASH}
+\begin{lstlisting}
+brew install openmpi
+pip install gym
+pip install stable_baselines
+pip install mpl_finance
+\end{lstlisting}
+\subsubsection{深度强化学习环境}
+我们首先需要创建一个用于比特币交易的强化学习环境，在这里我们会扩展OpenAI的gym.Env类，我们只需要定义如下方法即可：
+\lstset{language=PYTHON, caption={强化学习环境模板类}, label={c000016}}
+\begin{lstlisting}
+import gym
+from gym import spaces
+
+class BitcoinTradingEnv(gym.Env):
+    metadata = {'render.modes': ['live', 'file', 'none']}
+
+    def __init__(self, arg1, arg2, ...):
+        super(BitcoinTradingEnv, self).__init__()
+        self.action_space = spaces.Discrete(N_DISCRETE_ACTIONS)
+        self.observation_space = spaces.Box(low=0, high=1, shape=(10, 20), dtype=np.float116)
+
+    def step(self, action):
+        #
+
+    def reset(self):
+        #
+
+    def render(self, mode='live', close=False):
+        #
+\end{lstlisting} 
 
 
 

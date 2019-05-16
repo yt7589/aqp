@@ -71,4 +71,7 @@
 \BOOKMARK [3][-]{subsubsection.14.1.1}{指数平滑定义}{subsection.14.1}% 71
 \BOOKMARK [3][-]{subsubsection.14.1.2}{趋势周期预测}{subsection.14.1}% 72
 \BOOKMARK [2][-]{subsection.14.2}{移动平均和强化学习}{section.14}% 73
-\BOOKMARK [1][-]{section.15}{汇总}{}% 74
+\BOOKMARK [2][-]{subsection.14.3}{比特币强化学习}{section.14}% 74
+\BOOKMARK [3][-]{subsubsection.14.3.1}{开发环境搭建}{subsection.14.3}% 75
+\BOOKMARK [3][-]{subsubsection.14.3.2}{深度强化学习环境}{subsection.14.3}% 76
+\BOOKMARK [1][-]{section.15}{汇总}{}% 77
