@@ -3052,7 +3052,31 @@ b_{0}=\frac{1}{L} +\bigg(  \frac{y_{L+1}-y_{1}}{L} + \frac{y_{L+2}-y_{2}}{L} + .
 	\includegraphics[height=10cm]{images/f000072}
 \end{figure}
 图中黄色为原始信号，蓝色曲线为预测出来的曲线。我们从程序中可以看出，算法中的参数$\alpha$、$\beta$、$\gamma$、$L$均为直接指定的，对于实际信号，估计出这些参数的值需要使用复杂的拟合算法，才能求出正确的值。另外，需要注意的是这个模型要求时序信号具有周期性，而实际上股票信号不具有明显的周期性，直接使用上述模型可能就会有问题。
-\subsection{移动平均和强化学习}
+\subsection{深度强化学习A2C}
+我们首先定义一个概率会布模型类，如下所示：
+\lstset{language=PYTHON, caption={趋势周期预测计算}, label={c000018}}
+\begin{lstlisting}
+import tensorflow as tf
+
+class ProbabilityDistribution(tf.keras.Model):
+    def call(self, logits):
+        # sample a random categorical action from given logits
+        return tf.squeeze(tf.random.categorical(logits, 1), axis=-1)
+
+    def test_call(self):
+        print('测试ProbabilityDistribution...')
+        pd = ProbabilityDistribution()
+        logits = tf.log([[1., 900., 1., 500., 1., 1., 1.]])
+        for i in range(10):
+            a1 = pd.predict(logits, steps=1)
+            print('action={0}'.format(a1[0]))
+        self.assertTrue(True)
+\end{lstlisting}
+我们用logits定义一个7个类别的分布，第1和第3个元素出现的概率最大，我们调用ProbabilityDistribution来采样10次，
+我们看到基本上都是第1和第3类，说明是按照概率分布来采样的。
+
+
+
 \subsection{比特币强化学习}
 \subsubsection{开发环境搭建}
 安装所需软件：
@@ -3087,6 +3111,49 @@ class BitcoinTradingEnv(gym.Env):
     def render(self, mode='live', close=False):
         #
 \end{lstlisting} 
+接下来，我们逐一来实现这些方法，我们首先创建app/drl/bitcoin_trading_env.py文件：
+\lstset{language=PYTHON, caption={比特币交易环境类构造函数}, label={c000017}}
+\begin{lstlisting}
+    import gym
+    import pandas as pd
+    import numpy as np
+    from gym import spaces
+    from sklearn import preprocessing
+    
+    class BitcoinTradingEnv(gym.Env):
+        metadata = {'render.modes': ['live', 'file', 'none']}
+    
+        def __init__(self, df, lookback_window_size=50,
+            commission=0.00075, initial_balance=10000,
+            serial=False
+        ):
+            self.name = 'BitcoinTradingEnv'
+            print('Bitcoin Trading Env is starting up...')
+            self.df = df.dropna().reset_index()
+            self.lookback_window_size = lookback_window_size
+            self.initial_balance = initial_balance
+            self.commission = commission
+            self.serial = serial  # Actions of the format Buy 1/10, Sell 3/10, Hold, etc.
+            # Observes the OHCLV values, net worth, and trade history
+            self.action_space = spaces.MultiDiscrete([3, 10])
+            self.observation_space = spaces.Box(low=0, high=1, shape=(10, 
+                        lookback_window_size + 1), dtype=np.float16)
+
+        def test_init(self):
+            df = pd.read_csv('./data/bitstamp.csv')
+            df = df.sort_values('Timestamp')
+            slice_point = int(len(df) - 50000)
+            train_df = df[:slice_point]
+            test_df = df[slice_point:]
+            train_env = DummyVecEnv([lambda: BitcoinTradingEnv(train_df, serial=True)])
+            self.assertTrue(True)
+\end{lstlisting}
+其中action的格式为{0~9, 0~9, 0~9}，第一位代表将该数乘以0.1得到要用多少金额买入比特币，第二位乘以0.1代表要卖出
+多少比例的比特币，第三位代表持有，数字没有特别含义。我们这里用到的数据集是bitstamp交易所由2012年到2019年的交易
+数据，时间间隔为1分钟。\newline
+下面我们来看reset方法，可以重复比特币交易环境，通常我们在训练网络模型时，我们使用训练环境。在测试时，我们需要使用
+测试环境，就需要首先调用此方法：
+ 
 
 
 
