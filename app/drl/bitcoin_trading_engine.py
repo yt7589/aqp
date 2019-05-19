@@ -3,6 +3,9 @@ import gym
 import pandas as pd
 
 from stable_baselines.common.policies import MlpPolicy
+from stable_baselines.common.policies import MlpLstmPolicy
+from stable_baselines.common.policies import MlpLnLstmPolicy
+from stable_baselines.common.policies import CnnLnLstmPolicy
 from stable_baselines.common.vec_env import DummyVecEnv
 from stable_baselines import A2C
 
@@ -12,8 +15,8 @@ class BitcoinTradingEngine(object):
     def __init__(self):
         self.name = 'BitcoinTradingEngine'
         self.model_file = './work/bitcoin_drl.a2c'
-        self.train_steps = 200
-        self.test_size = 100
+        self.train_steps = 2000
+        self.test_size = 500
         self.first_run = False
 
     def startup(self):
@@ -32,8 +35,16 @@ class BitcoinTradingEngine(object):
 
     def build_model(self, train_env):
         ''' build model for the very first time '''
+        return A2C(MlpLstmPolicy, train_env, verbose=1,
+                tensorboard_log="./tensorboard/") # ok
+        '''
+        return A2C(MlpLstmPolicy, train_env, verbose=1,
+                tensorboard_log="./tensorboard/") # ok
         return A2C(MlpPolicy, train_env, verbose=1,
+                tensorboard_log="./tensorboard/") # ok
+        return A2C(CnnLnLstmPolicy, train_env, verbose=1,
                 tensorboard_log="./tensorboard/")
+        '''
 
     def train(self):
         train_env = self.build_train_env()
@@ -52,9 +63,14 @@ class BitcoinTradingEngine(object):
         test_env = DummyVecEnv(
                 [lambda: BitcoinTradingEnv(self.test_df, serial=True)])
         obs = test_env.reset()
+        print('before test')
         for i in range(self.test_size):
             action, _states = model.predict(obs)
             obs, rewards, done, info = test_env.step(action)
+            if done:
+                break
+            print('i={0}: {1}'.format(i, info))
             test_env.render(mode="human", title="BTC")
+        print('after test')
 
         test_env.close()

@@ -133,16 +133,18 @@ class BitcoinTradingEnv(gym.Env):
 
         self.steps_left -= 1
         self.current_step += 1
+        done = self.net_worth <= 0
 
         if self.steps_left == 0:
+            print('************************ 回测结束，净资产：{0} *********************'.format(self.net_worth))
             self.balance += self.btc_held * current_price
             self.btc_held = 0
-
             self._reset_session()
+            done = True
 
         obs = self._next_observation()
         reward = self.net_worth - prev_net_worth
-        done = self.net_worth <= 0
+
 
         return obs, reward, done, {}
 
@@ -160,6 +162,13 @@ class BitcoinTradingEnv(gym.Env):
                 self.viewer = BitcoinTradingRender(
                     self.df, kwargs.get('title', None))
 
+            print('steps_left:{0}; price:{1}; Bought:{2}; Sold:{3}; new_worth:{4}'.format(
+                self.steps_left, 
+                self._get_current_price(),
+                self.account_history[2][self.current_step + self.frame_start],
+                self.account_history[4][self.current_step + self.frame_start],
+                self.net_worth
+            ))
             self.viewer.render(self.frame_start + self.current_step,
                                self.net_worth,
                                self.trades,
