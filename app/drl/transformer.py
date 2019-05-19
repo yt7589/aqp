@@ -15,7 +15,7 @@ except: pass
 
 embed_size = 60
 
-class Transformer():
+class Transformer(object):
     def __init__(self, len_limit, embedding_matrix, d_model=embed_size, \
               d_inner_hid=512, n_head=10, d_k=64, d_v=64, layers=2, dropout=0.1, \
               share_word_emb=False, **kwargs):

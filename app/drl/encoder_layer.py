@@ -13,7 +13,7 @@ try:
     # for transformer
 except: pass
 
-class EncoderLayer():
+class EncoderLayer(object):
     def __init__(self, d_model, d_inner_hid, n_head, d_k, d_v, dropout=0.1):
         self.self_att_layer = MultiHeadAttention(n_head, d_model, d_k, d_v, dropout=dropout)
         self.pos_ffn_layer  = PositionwiseFeedForward(d_model, d_inner_hid, dropout=dropout)

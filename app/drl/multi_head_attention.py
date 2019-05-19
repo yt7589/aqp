@@ -16,7 +16,7 @@ except: pass
 from app.drl.scaled_dot_product_attention import ScaledDotProductAttention
 from app.drl.layer_normalization import LayerNormalization
 
-class MultiHeadAttention():
+class MultiHeadAttention(object):
     # mode 0 - big martixes, faster; mode 1 - more clear implementation
     def __init__(self, n_head, d_model, d_k, d_v, dropout, mode=0, use_norm=True):
         self.mode = mode

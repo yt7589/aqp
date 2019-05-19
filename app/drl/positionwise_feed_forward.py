@@ -13,7 +13,7 @@ try:
     # for transformer
 except: pass
 
-class PositionwiseFeedForward():
+class PositionwiseFeedForward(object):
     def __init__(self, d_hid, d_inner_hid, dropout=0.1):
         self.w_1 = Conv1D(d_inner_hid, 1, activation='relu')
         self.w_2 = Conv1D(d_hid, 1)

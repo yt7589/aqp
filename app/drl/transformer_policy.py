@@ -40,6 +40,8 @@ class TransformerPolicy(object):
 
     def __init__(self):
         self.data_file = './data/GE2.csv'
+        self.model_file = './work/transformer_stock.drl'
+        self.first_run = True
 
     def startup(self):
         self.df = pd.read_csv('./data/GE2.csv',delimiter=',',
@@ -75,6 +77,17 @@ class TransformerPolicy(object):
         X_train, y_train = shuffle(X_train, y_train)
         NAME = f"{TransformerPolicy.SEQ_LEN}-SEQ-{TransformerPolicy.FUTURE_PERIOD_PREDICT}-PRED-{int(time.time())}"
         multi_head = self.build_model()
+        if not self.first_run:
+            multi_head.load_weights(self.model_file)
+
+
+        #multi_head.save_weights(self.model_file)
+        print('tf.executing_eagerly()={0}; version={1}'.format(tf.executing_eagerly(), tf.__version__))
+        multi_head.save(self.model_file)
+        i_debug = 1
+        if 1 == i_debug:
+            return
+
         multi_head.summary()
         multi_head.fit(X_train, y_train,
                     batch_size=TransformerPolicy.BATCH_SIZE,
@@ -82,6 +95,8 @@ class TransformerPolicy(object):
                     validation_data=(X_valid, y_valid), 
                     #callbacks = [checkpoint , lr_reduce]
              )
+        # save weights
+        multi_head.save_weights(self.model_file)
         predicted_stock_price_multi_head = multi_head.predict(X_test)
         predicted_stock_price_multi_head = np.vstack((np.full((60,1), np.nan), predicted_stock_price_multi_head))
 
@@ -122,7 +137,7 @@ class TransformerPolicy(object):
             optimizer = "adam")
         
         # Save entire model to a HDF5 file
-        #model.save('my_model.h5')
+        #model.save('./work/transformer_stock.h5')
         
         return model
 
