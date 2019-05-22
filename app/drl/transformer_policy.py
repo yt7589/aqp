@@ -77,16 +77,20 @@ class TransformerPolicy(object):
         X_train, y_train = shuffle(X_train, y_train)
         NAME = f"{TransformerPolicy.SEQ_LEN}-SEQ-{TransformerPolicy.FUTURE_PERIOD_PREDICT}-PRED-{int(time.time())}"
         multi_head = self.build_model()
-        if not self.first_run:
-            multi_head.load_weights(self.model_file)
+        #if not self.first_run:
+         #   multi_head.load_weights(self.model_file)
 
 
         #multi_head.save_weights(self.model_file)
+
+        
         print('tf.executing_eagerly()={0}; version={1}'.format(tf.executing_eagerly(), tf.__version__))
+        
         multi_head.save(self.model_file)
         i_debug = 1
         if 1 == i_debug:
             return
+        
 
         multi_head.summary()
         multi_head.fit(X_train, y_train,
@@ -96,7 +100,7 @@ class TransformerPolicy(object):
                     #callbacks = [checkpoint , lr_reduce]
              )
         # save weights
-        multi_head.save_weights(self.model_file)
+        #multi_head.save_weights(self.model_file)
         predicted_stock_price_multi_head = multi_head.predict(X_test)
         predicted_stock_price_multi_head = np.vstack((np.full((60,1), np.nan), predicted_stock_price_multi_head))
 

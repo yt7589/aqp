@@ -12,6 +12,7 @@ from app.tpsa.tpsa_main import TpsaMain
 from app.hrmc.hrmc_main import HrmcMain
 from app.kftp.kftp_main import KftpMain
 from app.drl.drl_main import DrlMain
+from app.nlp.nlp_main import NlpMain
 
 
 
@@ -20,8 +21,11 @@ def call_stock_backtest():
     stock_backtest.startup()
 
 def startup():
-    drl_main = DrlMain()
-    drl_main.startup()
+    nlp_main = NlpMain()
+    nlp_main.startup()
+    
+    #drl_main = DrlMain()
+    #drl_main.startup()
     
     #kftp_main = KftpMain()
     #kftp_main.startup()

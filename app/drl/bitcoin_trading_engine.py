@@ -2,6 +2,8 @@ import os
 import gym
 import pandas as pd
 
+import tensorflow.python.framework.ops as tf1
+
 from stable_baselines.common.policies import MlpPolicy
 from stable_baselines.common.policies import MlpLstmPolicy
 from stable_baselines.common.policies import MlpLnLstmPolicy
@@ -13,6 +15,7 @@ from app.drl.bitcoin_trading_env import BitcoinTradingEnv
 
 class BitcoinTradingEngine(object):
     def __init__(self):
+        tf1.disable_eager_execution()
         self.name = 'BitcoinTradingEngine'
         self.model_file = './work/bitcoin_drl.a2c'
         self.train_steps = 2000

@@ -20,11 +20,15 @@ class ScaledDotProductAttention(object):
         self.dropout = Dropout(attn_dropout)
         
     def __call__(self, q, k, v, mask):
+        print('@@@@@@@@@@  q.type={0}'.format(type(q)))
         attn = Lambda(lambda x:K.batch_dot(x[0],x[1],axes=[2,2])/self.temper)([q, k])
+        #attn = K.batch_dot(q, k, axes=[2, 2]) / self.temper
         if mask is not None:
             mmask = Lambda(lambda x:(-1e+10)*(1-x))(mask)
+            #mmask = (-1e+10)*(1-mask)
             attn = Add()([attn, mmask])
         attn = Activation('softmax')(attn)
         attn = self.dropout(attn)
         output = Lambda(lambda x:K.batch_dot(x[0], x[1]))([attn, v])
+        #output = K.batch_dot(attn, v)
         return output, attn

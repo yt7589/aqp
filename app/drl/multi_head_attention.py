@@ -16,7 +16,7 @@ except: pass
 from app.drl.scaled_dot_product_attention import ScaledDotProductAttention
 from app.drl.layer_normalization import LayerNormalization
 
-class MultiHeadAttention(object):
+class MultiHeadAttention(Layer):
     # mode 0 - big martixes, faster; mode 1 - more clear implementation
     def __init__(self, n_head, d_model, d_k, d_v, dropout, mode=0, use_norm=True):
         self.mode = mode
@@ -56,13 +56,20 @@ class MultiHeadAttention(object):
                 x = tf.reshape(x, [-1, s[1], d_k])  # [n_head * batch_size, len_q, d_k]
                 return x
             qs = Lambda(reshape1)(qs)
+            #qs = reshape1(qs)
             ks = Lambda(reshape1)(ks)
+            #ks = reshape1(ks)
             vs = Lambda(reshape1)(vs)
+            #vs = reshape1(vs)
 
             if mask is not None:
                 mask = Lambda(lambda x:K.repeat_elements(x, n_head, 0))(mask)
+                #mask = K.repeat_elements(mask, n_head, 0)
             head, attn = self.attention(qs, ks, vs, mask=mask)  
-                
+            print('###### head:{0}; qs:{1}'.format(head, attn))
+            head = qs
+            attn = ks
+            
             def reshape2(x):
                 s = tf.shape(x)   # [n_head * batch_size, len_v, d_v]
                 x = tf.reshape(x, [n_head, -1, s[1], s[2]]) 
@@ -70,6 +77,7 @@ class MultiHeadAttention(object):
                 x = tf.reshape(x, [-1, s[1], n_head*d_v])  # [batch_size, len_v, n_head * d_v]
                 return x
             head = Lambda(reshape2)(head)
+            #head = reshape2(head)
         elif self.mode == 1:
             heads = []; attns = []
             for i in range(n_head):
@@ -83,6 +91,7 @@ class MultiHeadAttention(object):
 
         outputs = self.w_o(head)
         outputs = Dropout(self.dropout)(outputs)
-        if not self.layer_norm: return outputs, attn
-        # outputs = Add()([outputs, q]) # sl: fix
+        if not self.layer_norm: 
+            return outputs, attn
+        #outputs = Add()([outputs, qs]) # sl: fix
         return self.layer_norm(outputs), attn
