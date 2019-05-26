@@ -26,35 +26,31 @@ class NlpTfrecordDataset(object):
                 break
 
     def write_to_file(self, ds_file):
-        print(self._bytes_feature(b'Very good!'))
+        print('英文属性：{0}'.format(self._bytes_feature(b'Very good!')))
         feature = self._bytes_feature(u'非常好的事情！'.encode('utf-8'))
-        print(feature)
-        print(feature.SerializeToString())
-        print(self._float_feature(np.exp(1)))
-        print(self._int64_feature(True))
-        print(self._int64_feature(1).SerializeToString())
+        print('中文属性：{0}'.format(feature))
+        print('中文属性序列化：{0}'.format(feature.SerializeToString()))
+        print('浮点数属性：{0}'.format(self._float_feature(np.exp(1))))
+        print('整数属性：{0}'.format(self._int64_feature(True)))
+        print('整数属性序列化：{0}'.format(self._int64_feature(1).SerializeToString()))
 
-        serialized_example = self.serialize_example(u'人1'.encode('utf-8'), b'p1')
-        print(serialized_example)
+        pt1 = '人工智能1'
+        en1 = 'Artificial Intelligence 1'
+        serialized_example = self.serialize_example(pt1.encode('utf-8'), en1.encode('utf-8'))
+        print('序列化pt1、en1：{0}'.format(serialized_example))
         example_proto = tf.train.Example.FromString(serialized_example)
-        print(example_proto)
+        print('反序列化pt1、en1：{0}'.format(example_proto))
 
         pts = np.array(['人1', '人2', '人3'])
         ens = np.array(['p1', 'p2', 'p3'])
         self.features_dataset = tf.data.Dataset.from_tensor_slices((pts, ens))
-        print(self.features_dataset)
+        print('真实数据集(np.array)：{0}'.format(self.features_dataset))
+        print('遍历tfrecords：')
         for pt1, en1 in self.features_dataset:
             print('{0} => {1}'.format(str(pt1.numpy(), encoding='utf-8'), en1))
         
         serialized_features_dataset = self.features_dataset.map(self.tf_serialize_example)
         print('serialized_features_dataset:{0}'.format(serialized_features_dataset))
-
-        '''
-        serialized_features_dataset = tf.data.Dataset.from_generator(
-            self.generator, output_types=tf.string, output_shapes=()
-        )
-        print('**** serialized_features_dataset:{0}'.format(serialized_features_dataset))
-        '''
         filename = './work/test.tfrecord'
         writer = tf.data.experimental.TFRecordWriter(filename)
         writer.write(serialized_features_dataset)

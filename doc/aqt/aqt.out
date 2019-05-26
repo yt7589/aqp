@@ -59,26 +59,4 @@
 \BOOKMARK [1][-]{section.10}{机器学习}{}% 59
 \BOOKMARK [1][-]{section.11}{高频日内交易}{}% 60
 \BOOKMARK [1][-]{section.12}{长短时记忆网络（LSTM）}{}% 61
-\BOOKMARK [1][-]{section.13}{Transformer网络}{}% 62
-\BOOKMARK [2][-]{subsection.13.1}{Transformer框架}{section.13}% 63
-\BOOKMARK [2][-]{subsection.13.2}{Transformer量化应用}{section.13}% 64
-\BOOKMARK [3][-]{subsubsection.13.2.1}{搭建colab开发环境}{subsection.13.2}% 65
-\BOOKMARK [2][-]{subsection.13.3}{tqp平台}{section.13}% 66
-\BOOKMARK [2][-]{subsection.13.4}{策略回测}{section.13}% 67
-\BOOKMARK [2][-]{subsection.13.5}{实盘模拟}{section.13}% 68
-\BOOKMARK [1][-]{section.14}{深度强化学习}{}% 69
-\BOOKMARK [2][-]{subsection.14.1}{指数平滑技术}{section.14}% 70
-\BOOKMARK [3][-]{subsubsection.14.1.1}{指数平滑定义}{subsection.14.1}% 71
-\BOOKMARK [3][-]{subsubsection.14.1.2}{趋势周期预测}{subsection.14.1}% 72
-\BOOKMARK [2][-]{subsection.14.2}{深度强化学习A2C}{section.14}% 73
-\BOOKMARK [3][-]{subsubsection.14.2.1}{概率模型分布类}{subsection.14.2}% 74
-\BOOKMARK [3][-]{subsubsection.14.2.2}{小车模型类}{subsection.14.2}% 75
-\BOOKMARK [2][-]{subsection.14.3}{比特币强化学习}{section.14}% 76
-\BOOKMARK [3][-]{subsubsection.14.3.1}{开发环境搭建}{subsection.14.3}% 77
-\BOOKMARK [3][-]{subsubsection.14.3.2}{深度强化学习环境}{subsection.14.3}% 78
-\BOOKMARK [1][-]{section.15}{Transformer实现}{}% 79
-\BOOKMARK [2][-]{subsection.15.1}{数据准备流程}{section.15}% 80
-\BOOKMARK [2][-]{subsection.15.2}{tfrecord详解}{section.15}% 81
-\BOOKMARK [3][-]{subsubsection.15.2.1}{保存数据}{subsection.15.2}% 82
-\BOOKMARK [3][-]{subsubsection.15.2.2}{读取数据}{subsection.15.2}% 83
-\BOOKMARK [1][-]{section.16}{汇总}{}% 84
+\BOOKMARK [1][-]{section
