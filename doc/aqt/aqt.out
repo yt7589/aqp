@@ -76,5 +76,9 @@
 \BOOKMARK [2][-]{subsection.14.3}{比特币强化学习}{section.14}% 76
 \BOOKMARK [3][-]{subsubsection.14.3.1}{开发环境搭建}{subsection.14.3}% 77
 \BOOKMARK [3][-]{subsubsection.14.3.2}{深度强化学习环境}{subsection.14.3}% 78
-\BOOKMARK [1][-]{section.15}{汇总}{}% 79
-\BOOKMARK [1][-]{section.16}{Transformer实现}{}% 80
+\BOOKMARK [1][-]{section.15}{Transformer实现}{}% 79
+\BOOKMARK [2][-]{subsection.15.1}{数据准备流程}{section.15}% 80
+\BOOKMARK [2][-]{subsection.15.2}{tfrecord详解}{section.15}% 81
+\BOOKMARK [3][-]{subsubsection.15.2.1}{保存数据}{subsection.15.2}% 82
+\BOOKMARK [3][-]{subsubsection.15.2.2}{读取数据}{subsection.15.2}% 83
+\BOOKMARK [1][-]{section.16}{汇总}{}% 84

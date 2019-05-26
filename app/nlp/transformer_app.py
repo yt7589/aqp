@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import tensorflow_datasets as tfds
 import tensorflow as tf
-
+import sys
 import time
 import numpy as np
 import matplotlib.pyplot as plt
@@ -19,6 +19,12 @@ class TransformerApp(object):
 
     def startup(self):
         train_dataset, val_dataset = self.load_dataset()
+
+        
+
+
+
+
         transformer_engine = TransformerEngine()
         transformer_engine.train(
             train_dataset, val_dataset,
@@ -29,6 +35,21 @@ class TransformerApp(object):
         examples, metadata = tfds.load('ted_hrlr_translate/pt_to_en', with_info=True,
                                as_supervised=True)
         train_examples, val_examples = examples['train'], examples['validation']
+        print(train_examples)
+        for item in train_examples.take(5):
+            print('src:{0}'.format(item[0].numpy()))
+            print('## dest:{0}'.format(item[1].numpy()))
+
+        tfr_file = tf.train.string_input_producer('/Users/arxanfintech/tensorflow_datasets/ted_hrlr_translate/pt_to_en/0.0.1/ted_hrlr_translate-train.tfrecord-00000-of-00001')
+        reader = tf.TFRecordReader()
+        _, rec = reader.read(tfr_file)
+        print('???????????????')
+        
+        ii = 1
+        if 1 == ii:
+            sys.exit(0)
+
+
         # tokenize
         self.tokenizer_en = tfds.features.text.SubwordTextEncoder.build_from_corpus(
             (en.numpy() for pt, en in train_examples), target_vocab_size=2**13)

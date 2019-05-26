@@ -3233,12 +3233,6 @@ class BitcoinTradingEnv(gym.Env):
 测试环境，就需要首先调用此方法：
 
 
-\section{汇总}
-t000004
-f000022
-c000011
-e000098
-
 \section{Transformer实现}
 安装所需库：
 \lstset{language=BASH}
@@ -3247,6 +3241,63 @@ pip install tensorflow_datasets
 pip install keras-layer-normalization
 # from keras_layer_normalization import LayerNormalization
 \end{lstlisting}
+\subsection{数据准备流程}
+在本节中，我们将讲述葡萄牙语到英语的翻译的Transformer网络。
+数据文件位置：/Users/arxanfintech/tensorflow\_datasets/ted\_hrlr\_translate/pt\_to\_en/0.0.1
+\subsection{tfrecord详解}
+在机器翻译或对话机器人中，其训练数据的格式为一个源字符串对应另一个目的字符串，以我们目前的这个数据集为例，就是葡萄
+牙语到英语的翻译，就是一个葡萄牙语字符串对应一个英语字符串。\newline
+我们首先来定义这个结构：
+\lstset{language=PYTHON, caption={比特币交易环境类构造函数}, label={c000018}}
+\begin{lstlisting}
+    import numpy as np
+    import tensorflow as tf
+    
+    class NlpTfrecordDataset(object):
+        feature_description = {
+                'en': tf.io.VarLenFeature(tf.string), 
+                'pt': tf.io.VarLenFeature(tf.string),
+            }
+    
+    # ......
+\end{lstlisting}
+接下来我们定义三种基本的特征类型：
+\begin{enumerate}
+\item tf.train.BytesList
+    \begin{itemize}
+        \item string
+        \item byte
+    \end{itemize}
+\item tf.train.FloatList
+    \begin{enumerate}
+        \item float(float32)
+        \item double(float64)
+    \end{enumerate}
+\item tf.train.Int64List
+    \begin{enumerate}
+        \item boolean
+        \item enum
+        \item int32 or uint32
+        \item int64 or uint64
+    \end{enumerate}
+\end{enumerate}
+\subsubsection{保存数据}
+\subsubsection{读取数据}
+
+
+
+
+\section{汇总}
+t000004
+f000022
+c000011
+e000098
+
+
+
+
+
+
 
 
 
