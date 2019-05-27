@@ -15,5 +15,5 @@ class NlpMain(object):
 
         ds_files = ['/Users/arxanfintech/tensorflow_datasets/ted_hrlr_translate/pt_to_en/0.0.1/ted_hrlr_translate-train.tfrecord-00000-of-00001']
         ds = NlpTfrecordDataset()
-        #ds.load(ds_files)
-        ds.write_to_file('')
+        ds.load_pt_en_ds(ds_files)
+        #ds.write_to_file('')

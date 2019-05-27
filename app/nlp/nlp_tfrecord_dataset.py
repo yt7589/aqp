@@ -11,6 +11,32 @@ class NlpTfrecordDataset(object):
     def __init__(self):
         self.name = 'NlpTfrecordDataset'
 
+    def load_pt_en_ds(self, ds_files):
+        raw_dataset = tf.data.TFRecordDataset(ds_files)
+        # Create a description of the features.
+        idx = 1
+        parsed_dataset = raw_dataset.map(self._parse_function)
+        pts_l = []
+        ens_l = []
+        for item in parsed_dataset:
+            print('{0} => {1}\r\n'.format(
+                str(item['pt'].values[0].numpy(), encoding='utf-8'),
+                str(item['en'].values[0].numpy(), encoding='utf-8')
+            ))
+            pts_l.append(str(item['pt'].values[0].numpy(), encoding='utf-8'))
+            ens_l.append(str(item['en'].values[0].numpy(), encoding='utf-8'))
+            idx += 1
+            if idx > 5:
+                break
+
+        pts = np.array(pts_l)
+        ens = np.array(ens_l)
+        self.features_dataset = tf.data.Dataset.from_tensor_slices((pts, ens))
+        serialized_features_dataset = self.features_dataset.map(self.tf_serialize_example)
+        filename = './work/test1.tfrecord'
+        writer = tf.data.experimental.TFRecordWriter(filename)
+        writer.write(serialized_features_dataset)
+
     def load(self, ds_files):
         raw_dataset = tf.data.TFRecordDataset(ds_files)
         print(raw_dataset)

@@ -3433,6 +3433,10 @@ class NlpTfrecordDataset(object):
 \end{lstlisting}
 首先需要注意的是，tfrecord文件是定长的文件，当数据集很大时，会保存到多个文件中，所以我们给的是一个文件名数组作为
 参数，我们先读出原始内容，然后根据feature定义对数据时行解析，最后通过遍历可以看到数据集的全部内容。
+\subsection{数据集替换}
+在这一节中，我们将读取出原始的葡萄牙语到英语数据集的tfrecord文件，我们将其重新保存为tfrecord文件，使原来的程度
+可以正确读出内容，然后我们会将训练集内容替换为我们自己的内容。
+\subsubsection{重新生成数据集}
 
 接下来，我们将探索怎样替换tfrecord文件，使其训练我们的数据集，将这个Transformer模型改造为一个对话机器人。
 
