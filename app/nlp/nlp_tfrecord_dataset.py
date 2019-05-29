@@ -25,9 +25,6 @@ class NlpTfrecordDataset(object):
             ))
             pts_l.append(str(item['pt'].values[0].numpy(), encoding='utf-8'))
             ens_l.append(str(item['en'].values[0].numpy(), encoding='utf-8'))
-            idx += 1
-            if idx > 5:
-                break
 
         pts = np.array(pts_l)
         ens = np.array(ens_l)
