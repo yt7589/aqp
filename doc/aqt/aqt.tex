@@ -3234,7 +3234,7 @@ class BitcoinTradingEnv(gym.Env):
 
 
 \section{Transformer实现}
-安装所需库：
+本部分以\cite{r000005}的模型为基础，重点是理解TensorFlow 2.0下怎样实现Transformer。安装所需库：
 \lstset{language=BASH}
 \begin{lstlisting}
 pip install tensorflow_datasets
@@ -3435,19 +3435,80 @@ class NlpTfrecordDataset(object):
 参数，我们先读出原始内容，然后根据feature定义对数据时行解析，最后通过遍历可以看到数据集的全部内容。
 \subsection{数据集替换}
 在这一节中，我们将读取出原始的葡萄牙语到英语数据集的tfrecord文件，我们将其重新保存为tfrecord文件，使原来的程度
-可以正确读出内容，然后我们会将训练集内容替换为我们自己的内容。
-\subsubsection{重新生成数据集}
+可以正确读出内容，然后我们会将训练集内容替换为我们自己的内容。\newline
+将原始train数据集tfrecord文件读出来，再重新保存为文件，替换原来的文件，模型可以正常运行。\newline
+TransformerEngine.translate就是将来的run方法。
+\subsection{模型实现}
+\subsubsection{位置嵌入算法}
+在Transformer中，使用位置嵌入来表示单词之间的位置关系，使意义相近且位置相近的词所代表的向量表示最相近。对于
+单词有50个位置，我们用512维的向量来表示位置嵌入，用$i$来表示维度的下标，用pos来代表单词在句子中的位置，可以
+使用如下公式来计算位置嵌入矩阵元素的值：
+\begin{equation}
+PE_{(pos, 2i)}=\sin{ \bigg( \frac{pos}{10000^{ \frac{2i}{d_{model}} }} \bigg) }
+\label{e000104}
+\end{equation}
+\begin{equation}
+PE_{(pos, 2i+1)}=\cos{ \bigg( \frac{pos}{10000^{ \frac{2i}{d_{model}} }} \bigg) }
+\label{e000104}
+\end{equation}
+代码实现如下所示：
+\lstset{language=PYTHON, caption={位置嵌入算法实现}, label={c000023}}
+\begin{lstlisting}
+    # in TransformerEngine Ln57
+    pos_encoding = TransformerUtil.positional_encoding(50, 512)
+    print (pos_encoding.shape)
 
-接下来，我们将探索怎样替换tfrecord文件，使其训练我们的数据集，将这个Transformer模型改造为一个对话机器人。
+    plt.pcolormesh(pos_encoding[0], cmap='RdBu')
+    plt.xlabel('Depth')
+    plt.xlim((0, 512))
+    plt.ylabel('Position')
+    plt.colorbar()
+    plt.show()
 
-1.读出并替换train.tfrecord文件，搞明白tensorflow-datasets包的用法
-2.找到一个对话机器人语料库，将其保存为tfrecord
-3.训练对话机器人
-4.将训练好的对话机器人包装为一个服务
-5.在一个云服务环境部署这个服务
-应用领域包括：养老和美女
+class TransformUtil(object):
+    @staticmethod
+    def positional_encoding(position, d_model):
+        angle_rads = TransformerUtil.get_angles(np.arange(position)[:, np.newaxis],
+                                np.arange(d_model)[np.newaxis, :],
+                                d_model)
+        print('angle_rads:type={0}; shape={1}'.format(type(angle_rads), angle_rads.shape)) # 1
+        # apply sin to even indices in the array; 2i
+        sines = np.sin(angle_rads[:, 0::2])
+        # apply cos to odd indices in the array; 2i+1
+        cosines = np.cos(angle_rads[:, 1::2])
+        pos_encoding = np.concatenate([sines, cosines], axis=-1)
+        print('1:pos_encoding.shape={0}'.format(pos_encoding.shape)) # 2
+        pos_encoding = pos_encoding[np.newaxis, ...]
+        print('2:pos_encoding.shape={0}'.format(pos_encoding.shape)) # 3
+        return tf.cast(pos_encoding, dtype=tf.float32)
 
+    @staticmethod
+    def get_angles(pos, i, d_model):
+        print('pos:type={0}; shape={1}'.format(type(pos), pos.shape)) # 4
+        print('i:type={0}; shape={1}'.format(type(i), i.shape)) # 5
+        angle_rates = 1 / np.power(10000, (2 * (i//2)) / np.float32(d_model))
+        return pos * angle_rates
+\end{lstlisting}
+运行结果如下所示：
+\begin{figure}[H]
+    \caption{位置嵌入算法运行结果}
+    \label{f000076}
+    \centering
+    \includegraphics[height=2cm]{images/f000076}
+\end{figure}
+下图是位置嵌入矩阵的可视化表示，其中纵坐标代表单词位置，横坐标代表512维向量，如下所示：
+\begin{figure}[H]
+    \caption{位置嵌入算法运行结果可视化 }
+    \label{f000077}
+    \centering
+    \includegraphics[height=5cm]{images/f000077}
+\end{figure}
+\subsubsection{掩码处理}
+有两种情况需要掩码，第一种情况是当句子长度不足50个单词时，需要将后面补0，直到长度为50为止，还有一种情况是我们要
+预测第6个单词，我们就需要只保留前5个单词，将从第6个开始的其他单词置为0。我们希望记录下来这些补0的位置信息。
+\paragraph{长度填充掩码}
 
+\paragraph{单词预测掩码}
 
 
 \section{汇总}
@@ -3456,16 +3517,14 @@ f000022
 c000011
 e000098
 
+\section{深度强化学习环境}
+在本部分，我们将以比特币交易数据为基础，建立一个深度强化学习环境。
 
 
 
 
 
 
-
-
-参考文献：
-\cite{ex1}---\cite{ex2}---\cite{refa001}
 
 \newpage
 

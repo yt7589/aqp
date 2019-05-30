@@ -64,6 +64,10 @@ class TransformerEngine(object):
         plt.colorbar()
         plt.show()
 
+        i_debug = 1
+        if 1 == i_debug:
+            return
+
         x = tf.constant([[7, 6, 0, 0, 1], [1, 2, 3, 0, 0], [0, 0, 0, 4, 5]])
         x001 = TransformerUtil.create_padding_mask(x)
         print(x001)

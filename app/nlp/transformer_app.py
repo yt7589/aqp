@@ -19,12 +19,6 @@ class TransformerApp(object):
 
     def startup(self):
         train_dataset, val_dataset = self.load_dataset()
-
-        
-
-
-
-
         transformer_engine = TransformerEngine()
         transformer_engine.train(
             train_dataset, val_dataset,
