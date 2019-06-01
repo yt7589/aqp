@@ -84,5 +84,10 @@
 \BOOKMARK [2][-]{subsection.15.3}{数据集替换}{section.15}% 84
 \BOOKMARK [2][-]{subsection.15.4}{模型实现}{section.15}% 85
 \BOOKMARK [3][-]{subsubsection.15.4.1}{位置嵌入算法}{subsection.15.4}% 86
-\BOOKMARK [1][-]{section.16}{汇总}{}% 87
-\BOOKMARK [1][-]{section.17}{深度强化学习环境}{}% 88
+\BOOKMARK [3][-]{subsubsection.15.4.2}{掩码处理}{subsection.15.4}% 87
+\BOOKMARK [2][-]{subsection.15.5}{Transformer架构}{section.15}% 88
+\BOOKMARK [2][-]{subsection.15.6}{编码器块}{section.15}% 89
+\BOOKMARK [3][-]{subsubsection.15.6.1}{Scaled Dot-Product Attention模块}{subsection.15.6}% 90
+\BOOKMARK [2][-]{subsection.15.7}{Multi\040Head\040Attention}{section.15}% 91
+\BOOKMARK [1][-]{section.16}{汇总}{}% 92
+\BOOKMARK [1][-]{section.17}{深度强化学习环境}{}% 93

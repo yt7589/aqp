@@ -8,6 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from ann.transformer.transformer_engine import TransformerEngine
+from ann.transformer.transformer_util import TransformerUtil
 
 class TransformerApp(object):
     BUFFER_SIZE = 20000
@@ -18,6 +19,14 @@ class TransformerApp(object):
         self.name = 'TransformEngine'
 
     def startup(self):
+
+        self.test_scaled_dot_product_attention()
+
+        i_debug = 1
+        if 1 == i_debug:
+            return
+
+
         train_dataset, val_dataset = self.load_dataset()
         transformer_engine = TransformerEngine()
         transformer_engine.train(
@@ -82,6 +91,49 @@ class TransformerApp(object):
 
     def tf_encode(self, pt, en):
         return tf.py_function(self.encode, [pt, en], [tf.int64, tf.int64])
+
+    def test_scaled_dot_product_attention(self):
+        # 3 * 5
+        X = np.array([
+            [1.1, 1.2, 1.3, 1.4, 1.5],
+            [2.1, 2.2, 2.3, 2.4, 2.5],
+            [3.1, 3.2, 3.3, 3.4, 3.5]
+        ], dtype=np.float32)
+        print('X:{0}!'.format(X.shape))
+        W_Q = np.array([
+            [11.1, 11.2, 11.3, 11.4],
+            [12.1, 12.2, 12.3, 12.4],
+            [13.1, 13.2, 13.3, 13.4],
+            [14.1, 14.2, 14.3, 14.4],
+            [15.1, 15.2, 15.3, 15.4]
+        ], dtype=np.float32)
+        print('W_Q:{0}!'.format(W_Q.shape))
+        W_K = np.array([
+            [21.1, 21.2, 21.3, 21.4],
+            [22.1, 22.2, 22.3, 22.4],
+            [23.1, 23.2, 23.3, 23.4],
+            [24.1, 24.2, 24.3, 24.4],
+            [25.1, 25.2, 25.3, 25.4]
+        ], dtype=np.float32)
+        print('W_K:{0}!'.format(W_K.shape))
+        W_V = np.array([
+            [31.1, 31.2, 31.3, 31.4],
+            [32.1, 32.2, 32.3, 32.4],
+            [33.1, 33.2, 33.3, 33.4],
+            [34.1, 34.2, 34.3, 34.4],
+            [35.1, 35.2, 35.3, 35.4]
+        ], dtype=np.float32)
+        print('W_V:{0}!'.format(W_V.shape))
+        Q = np.matmul(X, W_Q)
+        print('Q:{0}!'.format(Q.shape))
+        K = np.matmul(X, W_K)
+        print('K:{0}!'.format(K.shape))
+        V = np.matmul(X, W_V)
+        print('V:{0}!'.format(V.shape))
+        Z, attn = TransformerUtil.scaled_dot_product_attention(
+            Q, K, V, None)
+        print('Z:{0}!'.format(Z.shape))
+        print('attn:{0}!'.format(attn.shape))
 
 
 

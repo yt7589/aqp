@@ -1342,9 +1342,6 @@ class Aqt002(object):
 
 
 
-python的ARIMA：   https://www.colabug.com/3933896.html
-Ln125 Advanced Algorithmic Trading
-
 
 
 
@@ -3507,9 +3504,412 @@ class TransformUtil(object):
 有两种情况需要掩码，第一种情况是当句子长度不足50个单词时，需要将后面补0，直到长度为50为止，还有一种情况是我们要
 预测第6个单词，我们就需要只保留前5个单词，将从第6个开始的其他单词置为0。我们希望记录下来这些补0的位置信息。
 \paragraph{长度填充掩码}
+我们的任务就是将下面的矩阵中为0的位置标志为掩码填充，代码如下所示：
+\lstset{language=PYTHON, caption={最后填充的掩码}, label={c000024}}
+\begin{lstlisting}
+class TransformerUtil(object):
+    @staticmethod
+    def create_padding_mask(seq):
+        seq = tf.cast(tf.math.equal(seq, 0), tf.float32)
+        
+        # add extra dimensions so that we can add the padding
+        # to the attention logits.
+        return seq[:, tf.newaxis, tf.newaxis, :]  # (batch_size, 1, 1, seq_len)
 
+#测试程序
+x = tf.constant([[7, 6, 0, 0, 1], [1, 2, 3, 0, 0], [0, 0, 0, 4, 5]])
+x001 = TransformerUtil.create_padding_mask(x)
+print(x001)
+\end{lstlisting}
+上面程序所执行的逻辑为：
+\begin{equation}
+\begin{bmatrix}
+7 & 6 & 0 & 0 & 1 \\
+1 & 2 & 3 & 0 & 0 \\
+0 & 0 & 0 & 4 & 5
+\end{bmatrix} \quad => \quad 
+\begin{bmatrix}
+0 & 0 & 1 & 1 & 0 \\
+0 & 0 & 0 & 1 & 1 \\
+1 & 1 & 1 & 0 & 0
+\end{bmatrix}
+\label{e000105}
+\end{equation}
+由上表可以看出，就是将用0填充的位用1标识出来。
 \paragraph{单词预测掩码}
+下面我们生成一个3个单词的序列，分别处理已知第一个单词预测第二个，已知第一、第二个单词预测第三个，已知第一、第二、
+第三个单词，程序如下所示：
+\lstset{language=PYTHON, caption={前向预测单词掩码}, label={c000025}}
+\begin{lstlisting}
+class TransformerUtil(object):
+@staticmethod
+def create_look_ahead_mask(size):
+    mask = 1 - tf.linalg.band_part(tf.ones((size, size)), -1, 0)
+    return mask  # (seq_len, seq_len)
 
+# 测试程序
+x = tf.random.uniform((1, 3))
+print('x:{0}'.format(x))
+temp = TransformerUtil.create_look_ahead_mask(x.shape[1])
+print(temp)
+\end{lstlisting}
+运行结果如下图所示：
+\begin{figure}[H]
+    \caption{单词预测掩码运行结果}
+    \label{f000078}
+    \centering
+    \includegraphics[height=2cm]{images/f000078}
+\end{figure}
+在做了上述准备之后，我们就可以正式开始研究Transformer网络了。
+
+\subsection{Transformer架构}
+根据\cite{r000006}所述，Transformer架构如下所示：
+\begin{figure}[H]
+    \caption{Transformer架构}
+    \label{f000079}
+    \centering
+    \includegraphics[height=12cm]{images/f000079}
+\end{figure}
+如上图所示，左侧为编码器部分，由多个Nx块堆叠而成，右侧为解码器部分，由多个Nx堆叠而成，编码器块和解码器块是不同的，
+但是基本结构具有相似性。我们在前面已经向大家介绍了输入嵌入和位置嵌入，接下来我们研究编码器块。
+
+\subsection{编码器块}
+编码器块依次由Scaled Dot-Product Attention模块，Multi-Head Attension模块，合并层归一化模块，前向传播模块，合并层归一化模块组成，我们分别来进行讨论。
+\subsubsection{Scaled Dot-Product Attention模块}
+Scaled Dot-Product Attention模块的输入为经过位置嵌入后的输出，其结构图如下所示：
+\begin{figure}[H]
+    \caption{Scaled Dot-Product Attention架构}
+    \label{f000080}
+    \centering
+    \includegraphics[height=6cm]{images/f000080}
+\end{figure}
+
+我们的输入为$R^{batch \times 50 \times 512}$，其中每一个样本为$R^{50 \times 512}$，
+将其与位置嵌入结果$R^{50 \times 512}$相加，就可以得到Scaled Dot-Product Attention模块的输入信号。在
+下面的讨论中，为了表示简化的原因，我们假设我们的句子长度为3而不是50，我们以“我喜欢深度学习”为例，我们要将其
+翻译为“I like deep learning”，我们的词向量为512维，经过位置嵌入之后，Scaled Dot-Product Attention模块
+的输入为：
+\begin{equation}
+\begin{aligned}
+\boldsymbol{x}_{1} \in R^{512} \quad
+\begin{bmatrix}
+0.7 & 0.6 & 0.1 & ... & 0.5 & 1.2 
+\end{bmatrix} \\
+\boldsymbol{x}_{2} \in R^{512} \quad
+\begin{bmatrix}
+0.8 & 0.3 & 0.2 & ... & 0.5 & 1.2 
+\end{bmatrix} \\
+\boldsymbol{x}_{3} \in R^{512} \quad
+\begin{bmatrix}
+0.3 & 0.5 & 0.8 & ... & 0.5 & 1.2 
+\end{bmatrix} 
+\end{aligned}
+\label{e000105}
+\end{equation}
+接下来我们求Query向量，如下所示：
+\begin{equation}
+\begin{aligned}
+\boldsymbol{q}_{1} = W^{Q} \cdot \boldsymbol{x}_1 \quad W^{Q} \in R^{64 \times 512}, 
+\boldsymbol{x}_1 \in R^{512}, \boldsymbol{q}_1 \in R^{64} \\
+\boldsymbol{q}_{2} = W^{Q} \cdot \boldsymbol{x}_2 \quad W^{Q} \in R^{64 \times 512}, 
+\boldsymbol{x}_2 \in R^{512}, \boldsymbol{q}_2 \in R^{64} \\
+\boldsymbol{q}_{3} = W^{Q} \cdot \boldsymbol{x}_3 \quad W^{Q} \in R^{64 \times 512}, 
+\boldsymbol{x}_3 \in R^{512}, \boldsymbol{q}_3 \in R^{64} 
+\end{aligned}
+\label{e000106}
+\end{equation}
+接下来我们求出Key向量：
+\begin{equation}
+\begin{aligned}
+\boldsymbol{k}_{1} = W^{K} \cdot \boldsymbol{x}_1 \quad W^{K} \in R^{64 \times 512}, 
+\boldsymbol{x}_1 \in R^{512}, \boldsymbol{k}_1 \in R^{64} \\
+\boldsymbol{k}_{2} = W^{K} \cdot \boldsymbol{x}_2 \quad W^{K} \in R^{64 \times 512}, 
+\boldsymbol{x}_2 \in R^{512}, \boldsymbol{k}_2 \in R^{64} \\
+\boldsymbol{k}_{3} = W^{K} \cdot \boldsymbol{x}_3 \quad W^{K} \in R^{64 \times 512}, 
+\boldsymbol{x}_3 \in R^{512}, \boldsymbol{k}_3 \in R^{64} 
+\end{aligned}
+\label{e000107}
+\end{equation}
+最后我们求值向量：
+\begin{equation}
+\begin{aligned}
+\boldsymbol{v}_{1} = W^{V} \cdot \boldsymbol{x}_1 \quad W^{K} \in R^{64 \times 512}, 
+\boldsymbol{x}_1 \in R^{512}, \boldsymbol{v}_1 \in R^{64} \\
+\boldsymbol{v}_{2} = W^{V} \cdot \boldsymbol{x}_2 \quad W^{K} \in R^{64 \times 512}, 
+\boldsymbol{x}_2 \in R^{512}, \boldsymbol{v}_2 \in R^{64} \\
+\boldsymbol{v}_{3} = W^{V} \cdot \boldsymbol{x}_3 \quad W^{K} \in R^{64 \times 512}, 
+\boldsymbol{x}_3 \in R^{512}, \boldsymbol{v}_3 \in R^{64} 
+\end{aligned}
+\label{e000108}
+\end{equation}
+在得到Scaled Dot-Product Attention模块的输入信号之后，会依次进行$\boldsymbol{q}$和$\boldsymbol{k}$的
+点积，然后以$d_{k}=64$为分母进行Scale，图\ref{f000080}中的mask为可选项，我们这里省略该步，真接将结果利用
+softmax函数进行归一化。
+我们首先来处理第一个元素：
+\begin{equation}
+\begin{aligned}
+\hat{s}_{1}^{1} = \frac{ \boldsymbol{q}_1 \bigodot \boldsymbol{k}_1 }{ \sqrt{d_{k}} } \quad 
+\hat{s}_{2}^{1} = \frac{ \boldsymbol{q}_1 \bigodot \boldsymbol{k}_2 }{ \sqrt{d_{k}} } \quad 
+\hat{s}_{3}^{1} = \frac{ \boldsymbol{q}_1 \bigodot \boldsymbol{k}_3 }{ \sqrt{d_{k}} } \\
+s_{1}^{1} = \frac{ e^{\hat{s}_{1}^{1}} }{ \sum_{i=1}^{3} e^{\hat{s}_{i}^{1}} } \quad 
+s_{2}^{1} = \frac{ e^{\hat{s}_{2}^{1}} }{ \sum_{i=1}^{3} e^{\hat{s}_{i}^{1}} } \quad 
+s_{3}^{1} = \frac{ e^{\hat{s}_{3}^{1}} }{ \sum_{i=1}^{3} e^{\hat{s}_{i}^{1}} } \\
+\boldsymbol{z}_{1} = \sum_{i=1}^{3} s_{i}^{1} \cdot \boldsymbol{v}_i
+\end{aligned}
+\label{e000109}
+\end{equation}
+接下来我们处理第2个元素：
+\begin{equation}
+\begin{aligned}
+\hat{s}_{1}^{2} = \frac{ \boldsymbol{q}_2 \bigodot \boldsymbol{k}_1 }{ \sqrt{d_{k}} } \quad 
+\hat{s}_{2}^{2} = \frac{ \boldsymbol{q}_2 \bigodot \boldsymbol{k}_2 }{ \sqrt{d_{k}} } \quad 
+\hat{s}_{3}^{2} = \frac{ \boldsymbol{q}_2 \bigodot \boldsymbol{k}_3 }{ \sqrt{d_{k}} } \\
+s_{1}^{2} = \frac{ e^{\hat{s}_{1}^{2}} }{ \sum_{i=1}^{3} e^{\hat{s}_{i}^{2}} } \quad 
+s_{2}^{2} = \frac{ e^{\hat{s}_{2}^{2}} }{ \sum_{i=1}^{3} e^{\hat{s}_{i}^{2}} } \quad 
+s_{3}^{2} = \frac{ e^{\hat{s}_{3}^{2}} }{ \sum_{i=1}^{3} e^{\hat{s}_{i}^{2}} } \\
+\boldsymbol{z}_{2} = \sum_{i=1}^{3} s_{i}^{2} \cdot \boldsymbol{v}_i
+\end{aligned}
+\label{e000110}
+\end{equation}
+接下来我们处理第3个元素：
+\begin{equation}
+\begin{aligned}
+\hat{s}_{1}^{3} = \frac{ \boldsymbol{q}_3 \bigodot \boldsymbol{k}_1 }{ \sqrt{d_{k}} } \quad 
+\hat{s}_{2}^{3} = \frac{ \boldsymbol{q}_3 \bigodot \boldsymbol{k}_2 }{ \sqrt{d_{k}} } \quad 
+\hat{s}_{3}^{3} = \frac{ \boldsymbol{q}_3 \bigodot \boldsymbol{k}_3 }{ \sqrt{d_{k}} } \\
+s_{1}^{3} = \frac{ e^{\hat{s}_{1}^{3}} }{ \sum_{i=1}^{3} e^{\hat{s}_{i}^{3}} } \quad 
+s_{2}^{3} = \frac{ e^{\hat{s}_{2}^{3}} }{ \sum_{i=1}^{3} e^{\hat{s}_{i}^{3}} } \quad 
+s_{3}^{3} = \frac{ e^{\hat{s}_{3}^{3}} }{ \sum_{i=1}^{3} e^{\hat{s}_{i}^{3}} } \\
+\boldsymbol{z}_{3} = \sum_{i=1}^{3} s_{i}^{3} \cdot \boldsymbol{v}_i
+\end{aligned}
+\label{e000111}
+\end{equation}
+将$\boldsymbol{z}_1$、$\boldsymbol{z}_2$、$\boldsymbol{z}_3$拼接在一起，就是Scaled Dot-Product 
+Attention模块的输出。\newline
+以上是单个样本的处理流程，而在实际中，我们通常是通过矩阵运算来进行处理。我们假设句子长度为M，
+\begin{equation}
+\begin{aligned}
+Q = X \cdot W^{Q} \quad X \in R^{M \times 512}, W^{Q} \in R^{512 \times 64}, Q \in R^{M \times 64} \\
+K = X \cdot W^{K} \quad X \in R^{M \times 512}, W^{K} \in R^{512 \times 64}, K \in R^{M \times 64} \\
+V = X \cdot W^{V} \quad X \in R^{M \times 512}, W^{V} \in R^{512 \times 64}, V \in R^{M \times 64} \\
+Z = softmax \bigg( \frac{Q \cdot K^{T}}{\sqrt{d_{k}}} \bigg) \cdot V
+\end{aligned}
+\label{e000112}
+\end{equation}
+而在实际中，我们还需要在前面加上一维批次中的编号。
+\paragraph{代码实现}
+在讲解了基本原理之后，我们来看怎样通过代码来实现上述逻辑。我们在TransformerUtil类中定义具体的计算方法：
+\lstset{language=PYTHON, caption={Scaled Dot-Product Attention代码实现}, label={c000026}}
+\begin{lstlisting}
+    class TransformerUtil(object):
+    @staticmethod
+    def scaled_dot_product_attention(q, k, v, mask):
+        """Calculate the attention weights.
+        q, k, v must have matching leading dimensions.
+        k, v must have matching penultimate dimension, i.e.: seq_len_k = seq_len_v.
+        The mask has different shapes depending on its type(padding or look ahead) 
+        but it must be broadcastable for addition.
+        
+        Args:
+            q: query shape == (..., seq_len_q, depth)
+            k: key shape == (..., seq_len_k, depth)
+            v: value shape == (..., seq_len_v, depth_v)
+            mask: Float tensor with shape broadcastable 
+                to (..., seq_len_q, seq_len_k). Defaults to None.
+            
+        Returns:
+            output, attention_weights
+        """
+
+        matmul_qk = tf.matmul(q, k, transpose_b=True)  # (..., seq_len_q, seq_len_k)
+        
+        # scale matmul_qk
+        dk = tf.cast(tf.shape(k)[-1], tf.float32)
+        scaled_attention_logits = matmul_qk / tf.math.sqrt(dk)
+
+        # add the mask to the scaled tensor.
+        if mask is not None:
+            scaled_attention_logits += (mask * -1e9)
+
+        # softmax is normalized on the last axis (seq_len_k) so that the scores
+        # add up to 1.
+        attention_weights = tf.nn.softmax(scaled_attention_logits, axis=-1)  # (..., seq_len_q, seq_len_k)
+
+        output = tf.matmul(attention_weights, v)  # (..., seq_len_v, depth_v)
+
+        return output, attention_weights
+
+# 测试代码如下所示：
+class TransformerApp(object):
+    # .................
+    def test_scaled_dot_product_attention(self):
+        # 3 * 5
+        X = np.array([
+            [1.1, 1.2, 1.3, 1.4, 1.5],
+            [2.1, 2.2, 2.3, 2.4, 2.5],
+            [3.1, 3.2, 3.3, 3.4, 3.5]
+        ], dtype=np.float32)
+        print('X:{0}!'.format(X.shape))
+        W_Q = np.array([
+            [11.1, 11.2, 11.3, 11.4],
+            [12.1, 12.2, 12.3, 12.4],
+            [13.1, 13.2, 13.3, 13.4],
+            [14.1, 14.2, 14.3, 14.4],
+            [15.1, 15.2, 15.3, 15.4]
+        ], dtype=np.float32)
+        print('W_Q:{0}!'.format(W_Q.shape))
+        W_K = np.array([
+            [21.1, 21.2, 21.3, 21.4],
+            [22.1, 22.2, 22.3, 22.4],
+            [23.1, 23.2, 23.3, 23.4],
+            [24.1, 24.2, 24.3, 24.4],
+            [25.1, 25.2, 25.3, 25.4]
+        ], dtype=np.float32)
+        print('W_K:{0}!'.format(W_K.shape))
+        W_V = np.array([
+            [31.1, 31.2, 31.3, 31.4],
+            [32.1, 32.2, 32.3, 32.4],
+            [33.1, 33.2, 33.3, 33.4],
+            [34.1, 34.2, 34.3, 34.4],
+            [35.1, 35.2, 35.3, 35.4]
+        ], dtype=np.float32)
+        print('W_V:{0}!'.format(W_V.shape))
+        Q = np.matmul(X, W_Q)
+        print('Q:{0}!'.format(Q.shape))
+        K = np.matmul(X, W_K)
+        print('K:{0}!'.format(K.shape))
+        V = np.matmul(X, W_V)
+        print('V:{0}!'.format(V.shape))
+        Z, attn = TransformerUtil.scaled_dot_product_attention(
+            Q, K, V, None)
+        print('Z:{0}!'.format(Z.shape))
+        print('attn:{0}!'.format(attn.shape))
+\end{lstlisting}
+在上面的代码中，X代表输入的句子，W\_Q、W\_K、W\_V为权值矩阵，Z为Scaled Dot-Product Attention模块
+的输出结果，而softmax函数求出的结果就是Attention的内容。
+\subsection{Multi Head Attention}
+Multi-Head Attention模块是由H=8个Scaled Dot-Product Attention的组成，如下所示：
+\begin{equation}
+\begin{aligned}
+Q_{0} = X \cdot W^{Q} \quad X \in R^{M \times 512}, W^{Q} \in R^{512 \times 64}, Q \in R^{M \times 64} \\
+K_{0} = X \cdot W^{K} \quad X \in R^{M \times 512}, W^{K} \in R^{512 \times 64}, K \in R^{M \times 64} \\
+V_{0} = X \cdot W^{V} \quad X \in R^{M \times 512}, W^{V} \in R^{512 \times 64}, V \in R^{M \times 64} \\
+\hat{Z}_{0} = softmax \bigg( \frac{Q_{0} \cdot K^{T}_{0}}{\sqrt{d_{k}}} \bigg) \cdot V_{0}
+\end{aligned}
+\label{e000113}
+\end{equation}
+\begin{equation}
+\begin{aligned}
+Q_{1} = X \cdot W^{Q} \quad X \in R^{M \times 512}, W^{Q} \in R^{512 \times 64}, Q \in R^{M \times 64} \\
+K_{1} = X \cdot W^{K} \quad X \in R^{M \times 512}, W^{K} \in R^{512 \times 64}, K \in R^{M \times 64} \\
+V_{1} = X \cdot W^{V} \quad X \in R^{M \times 512}, W^{V} \in R^{512 \times 64}, V \in R^{M \times 64} \\
+\hat{Z}_{1} = softmax \bigg( \frac{Q_{1} \cdot K^{T}_{1}}{\sqrt{d_{k}}} \bigg) \cdot V_{1}
+\end{aligned}
+\label{e000114}
+\end{equation}
+...................
+\begin{equation}
+\begin{aligned}
+Q_{H-1} = X \cdot W^{Q} \quad X \in R^{M \times 512}, W^{Q} \in R^{512 \times 64}, Q \in R^{M \times 64} \\
+K_{H-1} = X \cdot W^{K} \quad X \in R^{M \times 512}, W^{K} \in R^{512 \times 64}, K \in R^{M \times 64} \\
+V_{H-1} = X \cdot W^{V} \quad X \in R^{M \times 512}, W^{V} \in R^{512 \times 64}, V \in R^{M \times 64} \\
+\hat{Z}_{H-1} = softmax \bigg( \frac{Q_{H-1} \cdot K^{T}_{H-1}}{\sqrt{d_{k}}} \bigg) \cdot V_{H-1}
+\end{aligned}
+\label{e000115}
+\end{equation}
+我们将这些连接在一起：
+\begin{equation}
+\begin{aligned}
+\hat{Z} = \{ \hat{Z}_{0}, \hat{Z}_{1}, ..., \hat{Z}_{H-1} \}
+\end{aligned}
+\label{e000116}
+\end{equation}
+最后得到Multi-Head Attention输出：
+\begin{equation}
+\begin{aligned}
+Z = \hat{Z} \cdot W^{o} \quad \hat{Z} \in R^{N \times (64 \cdot H)}, W^{o} \in R^{(64 \cdot H) \times 64}, Z \in R^{N \times 64}
+\end{aligned}
+\label{e000116}
+\end{equation}
+以上是Multi-Head Attention数学原理，下面来看具体的代码实现：
+\lstset{language=PYTHON, caption={Multi-Head Attention代码实现}, label={c000026}}
+\begin{lstlisting}
+    class MultiHeadAttention(tf.keras.layers.Layer):
+    def __init__(self, d_model, num_heads):
+        super(MultiHeadAttention, self).__init__()
+        self.num_heads = num_heads
+        self.d_model = d_model
+
+        assert d_model % self.num_heads == 0
+
+        self.depth = d_model // self.num_heads
+
+        self.wq = tf.keras.layers.Dense(d_model)
+        self.wk = tf.keras.layers.Dense(d_model)
+        self.wv = tf.keras.layers.Dense(d_model)
+
+        self.dense = tf.keras.layers.Dense(d_model)
+
+    def split_heads(self, x, batch_size):
+        """Split the last dimension into (num_heads, depth).
+        Transpose the result such that the shape is (batch_size, num_heads, seq_len, depth)
+        """
+        x = tf.reshape(x, (batch_size, -1, self.num_heads, self.depth))
+        return tf.transpose(x, perm=[0, 2, 1, 3])
+
+    def call(self, v, k, q, mask):
+        batch_size = tf.shape(q)[0]
+
+        q = self.wq(q)  # (batch_size, seq_len, d_model)
+        k = self.wk(k)  # (batch_size, seq_len, d_model)
+        v = self.wv(v)  # (batch_size, seq_len, d_model)
+
+        # (batch_size, num_heads, seq_len_q, depth)
+        q = self.split_heads(q, batch_size)
+        # (batch_size, num_heads, seq_len_k, depth)
+        k = self.split_heads(k, batch_size)
+        # (batch_size, num_heads, seq_len_v, depth)
+        v = self.split_heads(v, batch_size)
+
+        # scaled_attention.shape == (batch_size, num_heads, seq_len_v, depth)
+        # attention_weights.shape == (batch_size, num_heads, seq_len_q, seq_len_k)
+        scaled_attention, attention_weights = TransformerUtil.scaled_dot_product_attention(
+            q, k, v, mask)
+
+        # (batch_size, seq_len_v, num_heads, depth)
+        scaled_attention = tf.transpose(scaled_attention, perm=[0, 2, 1, 3])
+
+        concat_attention = tf.reshape(scaled_attention,
+                                      (batch_size, -1, self.d_model))  # (batch_size, seq_len_v, d_model)
+
+        # (batch_size, seq_len_v, d_model)
+        output = self.dense(concat_attention)
+
+        return output, attention_weights
+\end{lstlisting}
+在上述代码中，call方法定义了前向传播过程。
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+\paragraph{Scale}
+
+\paragraph{softmax}
+\paragraph{乘以Z}
+\paragraph{矩阵表示形式}
+
+
+
+batch, 50, 512 50*512
 
 \section{汇总}
 t000004
@@ -3520,7 +3920,8 @@ e000098
 \section{深度强化学习环境}
 在本部分，我们将以比特币交易数据为基础，建立一个深度强化学习环境。
 
-
+https://arxiv.org/pdf/1805.09692.pdf
+https://www.biorxiv.org/content/biorxiv/early/2018/07/03/360537.full.pdf
 
 
 
