@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 
 from ann.transformer.transformer_engine import TransformerEngine
 from ann.transformer.transformer_util import TransformerUtil
+from ann.transformer.multi_head_attention import MultiHeadAttention
 
 class TransformerApp(object):
     BUFFER_SIZE = 20000
@@ -20,7 +21,7 @@ class TransformerApp(object):
 
     def startup(self):
 
-        self.test_scaled_dot_product_attention()
+        self.test_multi_head_attention()
 
         i_debug = 1
         if 1 == i_debug:
@@ -134,6 +135,12 @@ class TransformerApp(object):
             Q, K, V, None)
         print('Z:{0}!'.format(Z.shape))
         print('attn:{0}!'.format(attn.shape))
+
+    def test_multi_head_attention(self):
+        temp_mha = MultiHeadAttention(d_model=512, num_heads=8)
+        y = tf.random.uniform((1, 60, 512))  # (batch_size, encoder_sequence, d_model)
+        out, attn = temp_mha(y, k=y, q=y, mask=None)
+        print('{0}   {1}'.format(out.shape, attn.shape))
 
 
 

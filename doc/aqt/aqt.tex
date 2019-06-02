@@ -3787,22 +3787,30 @@ class TransformerApp(object):
 \end{lstlisting}
 在上面的代码中，X代表输入的句子，W\_Q、W\_K、W\_V为权值矩阵，Z为Scaled Dot-Product Attention模块
 的输出结果，而softmax函数求出的结果就是Attention的内容。
+
 \subsection{Multi Head Attention}
+Multi-Head Attention模块的架构图如下所示：
+\begin{figure}[H]
+    \caption{Multi-Head Attention架构}
+    \label{f000081}
+    \centering
+    \includegraphics[height=6cm]{images/f000081}
+\end{figure}
 Multi-Head Attention模块是由H=8个Scaled Dot-Product Attention的组成，如下所示：
 \begin{equation}
 \begin{aligned}
-Q_{0} = X \cdot W^{Q} \quad X \in R^{M \times 512}, W^{Q} \in R^{512 \times 64}, Q \in R^{M \times 64} \\
-K_{0} = X \cdot W^{K} \quad X \in R^{M \times 512}, W^{K} \in R^{512 \times 64}, K \in R^{M \times 64} \\
-V_{0} = X \cdot W^{V} \quad X \in R^{M \times 512}, W^{V} \in R^{512 \times 64}, V \in R^{M \times 64} \\
+Q_{0} = X \cdot W^{Q}_{0} \quad X \in R^{N \times 512}, W^{Q}_{0} \in R^{512 \times 64}, Q_{0} \in R^{N \times 64} \\
+K_{0} = X \cdot W^{K}_{0} \quad X \in R^{N \times 512}, W^{K}_{0} \in R^{512 \times 64}, K_{0} \in R^{N \times 64} \\
+V_{0} = X \cdot W^{V}_{0} \quad X \in R^{N \times 512}, W^{V}_{0} \in R^{512 \times 64}, V_{0} \in R^{N \times 64} \\
 \hat{Z}_{0} = softmax \bigg( \frac{Q_{0} \cdot K^{T}_{0}}{\sqrt{d_{k}}} \bigg) \cdot V_{0}
 \end{aligned}
 \label{e000113}
 \end{equation}
 \begin{equation}
 \begin{aligned}
-Q_{1} = X \cdot W^{Q} \quad X \in R^{M \times 512}, W^{Q} \in R^{512 \times 64}, Q \in R^{M \times 64} \\
-K_{1} = X \cdot W^{K} \quad X \in R^{M \times 512}, W^{K} \in R^{512 \times 64}, K \in R^{M \times 64} \\
-V_{1} = X \cdot W^{V} \quad X \in R^{M \times 512}, W^{V} \in R^{512 \times 64}, V \in R^{M \times 64} \\
+Q_{1} = X \cdot W^{Q}_{1} \quad X \in R^{N \times 512}, W^{Q}_{1} \in R^{512 \times 64}, Q_{1} \in R^{N \times 64} \\
+K_{1} = X \cdot W^{K}_{1} \quad X \in R^{N \times 512}, W^{K}_{1} \in R^{512 \times 64}, K_{1} \in R^{N \times 64} \\
+V_{1} = X \cdot W^{V}_{1} \quad X \in R^{N \times 512}, W^{V}_{1} \in R^{512 \times 64}, V_{1} \in R^{N \times 64} \\
 \hat{Z}_{1} = softmax \bigg( \frac{Q_{1} \cdot K^{T}_{1}}{\sqrt{d_{k}}} \bigg) \cdot V_{1}
 \end{aligned}
 \label{e000114}
@@ -3810,9 +3818,9 @@ V_{1} = X \cdot W^{V} \quad X \in R^{M \times 512}, W^{V} \in R^{512 \times 64},
 ...................
 \begin{equation}
 \begin{aligned}
-Q_{H-1} = X \cdot W^{Q} \quad X \in R^{M \times 512}, W^{Q} \in R^{512 \times 64}, Q \in R^{M \times 64} \\
-K_{H-1} = X \cdot W^{K} \quad X \in R^{M \times 512}, W^{K} \in R^{512 \times 64}, K \in R^{M \times 64} \\
-V_{H-1} = X \cdot W^{V} \quad X \in R^{M \times 512}, W^{V} \in R^{512 \times 64}, V \in R^{M \times 64} \\
+Q_{H-1} = X \cdot W^{Q}_{H-1} \quad X \in R^{N \times 512}, W^{Q}_{H-1} \in R^{512 \times 64}, Q \in R^{N \times 64} \\
+K_{H-1} = X \cdot W^{K}_{H-1} \quad X \in R^{N \times 512}, W^{K}_{H-1} \in R^{512 \times 64}, K \in R^{N \times 64} \\
+V_{H-1} = X \cdot W^{V}_{H-1} \quad X \in R^{N \times 512}, W^{V}_{H-1} \in R^{512 \times 64}, V \in R^{N \times 64} \\
 \hat{Z}_{H-1} = softmax \bigg( \frac{Q_{H-1} \cdot K^{T}_{H-1}}{\sqrt{d_{k}}} \bigg) \cdot V_{H-1}
 \end{aligned}
 \label{e000115}
@@ -3827,7 +3835,7 @@ V_{H-1} = X \cdot W^{V} \quad X \in R^{M \times 512}, W^{V} \in R^{512 \times 64
 最后得到Multi-Head Attention输出：
 \begin{equation}
 \begin{aligned}
-Z = \hat{Z} \cdot W^{o} \quad \hat{Z} \in R^{N \times (64 \cdot H)}, W^{o} \in R^{(64 \cdot H) \times 64}, Z \in R^{N \times 64}
+Z = \hat{Z} \cdot W^{O} \quad \hat{Z} \in R^{N \times (64 \cdot H)}, W^{O} \in R^{(64 \cdot H) \times 512}, Z \in R^{N \times 512}
 \end{aligned}
 \label{e000116}
 \end{equation}
@@ -3886,8 +3894,29 @@ Z = \hat{Z} \cdot W^{o} \quad \hat{Z} \in R^{N \times (64 \cdot H)}, W^{o} \in R
         output = self.dense(concat_attention)
 
         return output, attention_weights
+
+# TransformerApp中的测试代码：
+    def test_multi_head_attention(self):
+        temp_mha = MultiHeadAttention(d_model=512, num_heads=8)
+        y = tf.random.uniform((1, 60, 512))  # (batch_size, encoder_sequence, d_model)
+        out, attn = temp_mha(y, k=y, q=y, mask=None)
+        print('{0}   {1}'.format(out.shape, attn.shape))
+
+    self.test_multi_head_attention()
 \end{lstlisting}
-在上述代码中，call方法定义了前向传播过程。
+第56行：定义Multi-Head Atttention模块，并且定义模型维主为$d_{model}=512$，注意力头为$heads=8$；\newline
+第57行：定义一个迷你批次的样本，用随机值进行初始化，并且赋值给Q、K、V，在这里迷你批次的大小为1，句子的长度为60，
+词向量维度为512；\newline
+第58行：调用Multi-Head Attention的前向传输过程；\newline
+第25行：求出迷你批次大小；\newline
+第27 $\sim$ 29行：形成k、q、v，其维度为：迷你批次序号、序列长度（60）、词向量维度（512）；\newline
+第31 $\sim$ 36行：调用split\_heads方法，将k、q、v的最后一维（512）分解为两个维度：heads（8）、深度$d_{k}$
+（depth=64），并且重组新的维度为：迷你批次序号、Heads序号、序列长度、深度$d_{k}$；\newline
+第40、41行：对每个Heads独立进行Scaled Dot-Product Attention运算；\newline
+第44行：对维度进行重排为：批次序号、序列长度、Heads序号、深度$d_{k}$；\newline
+第46行：将最后两维重新合并成一维；\newline
+
+
     
     
 
