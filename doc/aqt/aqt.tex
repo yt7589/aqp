@@ -3916,6 +3916,9 @@ Z = \hat{Z} \cdot W^{O} \quad \hat{Z} \in R^{N \times (64 \cdot H)}, W^{O} \in R
 第44行：对维度进行重排为：批次序号、序列长度、Heads序号、深度$d_{k}$；\newline
 第46行：将最后两维重新合并成一维；\newline
 
+\subsection{Position-Wise Feed Forward Network}
+Multi-Heads Attention层输出会经过两层前向神经网络，网络结构如下所示：
+
 
     
     
