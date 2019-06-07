@@ -17,14 +17,15 @@ from ann.transformer.decoder import Decoder
 from ann.transformer.transformer import Transformer
 from ann.transformer.custom_schedule import CustomSchedule
 
-@tf.function
+#@tf.function
 def train_step(transformer, loss_object,
             optimizer, train_loss, train_accuracy,
             inp, tar):
     tar_inp = tar[:, :-1]
     tar_real = tar[:, 1:]
     
-    enc_padding_mask, combined_mask, dec_padding_mask = TransformerUtil.create_masks(inp, tar_inp)
+    enc_padding_mask, combined_mask, dec_padding_mask = \
+                TransformerUtil.create_masks(inp, tar_inp)
     
     with tf.GradientTape() as tape:
         predictions, _ = transformer(inp, tar_inp, 
@@ -32,11 +33,10 @@ def train_step(transformer, loss_object,
                                     enc_padding_mask, 
                                     combined_mask, 
                                     dec_padding_mask)
-        loss = TransformerUtil.loss_function(loss_object, tar_real, predictions)
-
+        loss = TransformerUtil.loss_function(
+                        loss_object, tar_real, predictions)
     gradients = tape.gradient(loss, transformer.trainable_variables)    
     optimizer.apply_gradients(zip(gradients, transformer.trainable_variables))
-    
     train_loss(loss)
     train_accuracy(tar_real, predictions)
 
@@ -47,8 +47,143 @@ class TransformerEngine(object):
 
     def __init__(self):
         self.name = 'Transformer'
+        self.checkpoint_path = "./work/transformer_enpt"
+        self.ckpt_manager = None
 
     def train(self, train_dataset, val_dataset, tokenizer_en, tokenizer_pt):
+        transformer, train_loss, train_accuracy, loss_object, optimizer = self.build_model(train_dataset, val_dataset, tokenizer_en, tokenizer_pt)
+        EPOCHS = 2 #20
+        for epoch in range(EPOCHS):
+            start = time.time()
+            train_loss.reset_states()
+            train_accuracy.reset_states()
+            # inp -> portuguese, tar -> english
+            print('epoch:{0}'.format(epoch))
+            for (batch, (inp, tar)) in enumerate(train_dataset):
+                train_step(transformer, loss_object,
+                        optimizer, train_loss, train_accuracy,
+                        inp, tar
+                )
+                print('      batch:{0}'.format(batch))
+                if batch % 500 == 0:
+                    print ('Epoch {} Batch {} Loss {:.4f} Accuracy {:.4f}'.format(
+                        epoch + 1, batch, train_loss.result(), 
+                        train_accuracy.result())
+                    )
+            if epoch > 0: #if (epoch + 1) % 5 == 0 or epoch > 0:
+                ckpt_save_path = self.ckpt_manager.save()
+                print ('Saving checkpoint for epoch {} at {}'.format(epoch+1,
+                                                                    ckpt_save_path))
+            print ('Epoch {} Loss {:.4f} Accuracy {:.4f}'.format(epoch + 1, 
+                                                            train_loss.result(), 
+                                                            train_accuracy.result()))
+            print ('Time taken for 1 epoch: {} secs\n'.format(time.time() - start))
+
+        print('Training finished ^_^')
+ 
+    def run(self, transformer, sentence):
+        return self.translate(transformer, sentence)
+
+
+
+    def build_model(self, train_dataset, val_dataset, tokenizer_en, tokenizer_pt):
+        self.tokenizer_en = tokenizer_en
+        self.tokenizer_pt = tokenizer_pt
+        pt_batch, en_batch = next(iter(val_dataset))
+
+        num_layers = 4
+        d_model = 128
+        dff = 512
+        num_heads = 8
+
+        input_vocab_size = tokenizer_pt.vocab_size + 2
+        target_vocab_size = tokenizer_en.vocab_size + 2
+        dropout_rate = 0.1
+
+        learning_rate = CustomSchedule(d_model)
+        optimizer = tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.98, 
+                                            epsilon=1e-9)
+
+        loss_object = tf.keras.losses.SparseCategoricalCrossentropy(
+                from_logits=True, reduction='none')
+        train_loss = tf.keras.metrics.Mean(name='train_loss')
+        train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(
+            name='train_accuracy')
+        transformer = Transformer(num_layers, d_model, num_heads, dff,
+                          input_vocab_size, target_vocab_size, dropout_rate)
+
+        self.ckpt = tf.train.Checkpoint(transformer=transformer,
+                                optimizer=optimizer)
+        self.ckpt_manager = tf.train.CheckpointManager(self.ckpt, self.checkpoint_path, max_to_keep=5)
+        # if a checkpoint exists, restore the latest checkpoint.
+        if self.ckpt_manager.latest_checkpoint:
+            self.ckpt.restore(self.ckpt_manager.latest_checkpoint)
+            print ('Latest checkpoint restored!!')
+        return transformer, train_loss, train_accuracy, loss_object, optimizer
+    
+
+
+    def evaluate(self, transformer, inp_sentence):
+        start_token = [self.tokenizer_pt.vocab_size]
+        end_token = [self.tokenizer_pt.vocab_size + 1]
+        
+        # inp sentence is portuguese, hence adding the start and end token
+        inp_sentence = start_token + self.tokenizer_pt.encode(inp_sentence) + end_token
+        encoder_input = tf.expand_dims(inp_sentence, 0)
+        
+        # as the target is english, the first word to the transformer should be the
+        # english start token.
+        decoder_input = [self.tokenizer_en.vocab_size]
+        output = tf.expand_dims(decoder_input, 0)
+            
+        for i in range(TransformerEngine.MAX_LENGTH):
+            enc_padding_mask, combined_mask, dec_padding_mask = TransformerUtil.create_masks(
+                encoder_input, output)
+        
+            # predictions.shape == (batch_size, seq_len, vocab_size)
+            predictions, attention_weights = transformer(encoder_input, 
+                                                        output,
+                                                        False,
+                                                        enc_padding_mask,
+                                                        combined_mask,
+                                                        dec_padding_mask)
+            
+            # select the last word from the seq_len dimension
+            predictions = predictions[: ,-1:, :]  # (batch_size, 1, vocab_size)
+
+            predicted_id = tf.cast(tf.argmax(predictions, axis=-1), tf.int32)
+            
+            # return the result if the predicted_id is equal to the end token
+            if tf.equal(predicted_id, self.tokenizer_en.vocab_size+1):
+                return tf.squeeze(output, axis=0), attention_weights
+            
+            # concatentate the predicted_id to the output which is given to the decoder
+            # as its input.
+            output = tf.concat([output, predicted_id], axis=-1)
+
+        return tf.squeeze(output, axis=0), attention_weights
+
+    def translate(self, transformer, sentence):
+        result, attention_weights = self.evaluate(transformer, sentence)
+        predicted_sentence = self.tokenizer_en.decode([i for i in result 
+                                                    if i < self.tokenizer_en.vocab_size])
+        return format(predicted_sentence), attention_weights, result
+        #if plot:
+        #   self.plot_attention_weights(attention_weights, sentence, result, plot)
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    def study_model(self, train_dataset, val_dataset, tokenizer_en, tokenizer_pt):
         self.tokenizer_en = tokenizer_en
         self.tokenizer_pt = tokenizer_pt
         pt_batch, en_batch = next(iter(val_dataset))
@@ -224,48 +359,26 @@ class TransformerEngine(object):
 
 
 
-    
 
 
-    def evaluate(self, transformer, inp_sentence):
-        start_token = [self.tokenizer_pt.vocab_size]
-        end_token = [self.tokenizer_pt.vocab_size + 1]
-        
-        # inp sentence is portuguese, hence adding the start and end token
-        inp_sentence = start_token + self.tokenizer_pt.encode(inp_sentence) + end_token
-        encoder_input = tf.expand_dims(inp_sentence, 0)
-        
-        # as the target is english, the first word to the transformer should be the
-        # english start token.
-        decoder_input = [self.tokenizer_en.vocab_size]
-        output = tf.expand_dims(decoder_input, 0)
-            
-        for i in range(TransformerEngine.MAX_LENGTH):
-            enc_padding_mask, combined_mask, dec_padding_mask = TransformerUtil.create_masks(
-                encoder_input, output)
-        
-            # predictions.shape == (batch_size, seq_len, vocab_size)
-            predictions, attention_weights = transformer(encoder_input, 
-                                                        output,
-                                                        False,
-                                                        enc_padding_mask,
-                                                        combined_mask,
-                                                        dec_padding_mask)
-            
-            # select the last word from the seq_len dimension
-            predictions = predictions[: ,-1:, :]  # (batch_size, 1, vocab_size)
 
-            predicted_id = tf.cast(tf.argmax(predictions, axis=-1), tf.int32)
-            
-            # return the result if the predicted_id is equal to the end token
-            if tf.equal(predicted_id, self.tokenizer_en.vocab_size+1):
-                return tf.squeeze(output, axis=0), attention_weights
-            
-            # concatentate the predicted_id to the output which is given to the decoder
-            # as its input.
-            output = tf.concat([output, predicted_id], axis=-1)
 
-        return tf.squeeze(output, axis=0), attention_weights
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     def plot_attention_weights(self, attention, sentence, result, layer):
         fig = plt.figure(figsize=(16, 8))
@@ -288,15 +401,6 @@ class TransformerEngine(object):
             ax.set_xlabel('Head {}'.format(head+1))
         plt.tight_layout()
         plt.show()
-
-    def translate(self, transformer, sentence, plot=''):
-        result, attention_weights = self.evaluate(transformer, sentence)
-        predicted_sentence = self.tokenizer_en.decode([i for i in result 
-                                                    if i < self.tokenizer_en.vocab_size])  
-        print('Input: {}'.format(sentence))
-        print('Predicted translation: {}'.format(predicted_sentence))
-        if plot:
-            self.plot_attention_weights(attention_weights, sentence, result, plot)
 
 
     def print_out(self, q, k, v):

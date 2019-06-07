@@ -10,8 +10,11 @@ import matplotlib.pyplot as plt
 from ann.transformer.transformer_engine import TransformerEngine
 from ann.transformer.transformer_util import TransformerUtil
 from ann.transformer.multi_head_attention import MultiHeadAttention
+from ann.transformer.custom_schedule import CustomSchedule
 
 class TransformerApp(object):
+    MODE_TRAIN = 1
+    MODE_RUN = 2
     BUFFER_SIZE = 20000
     BATCH_SIZE = 64
     MAX_LENGTH = 40
@@ -19,21 +22,142 @@ class TransformerApp(object):
     def __init__(self):
         self.name = 'TransformEngine'
 
+    def t1(self):
+        train_dataset, val_dataset = self.load_dataset()
+        start_token = [self.tokenizer_pt.vocab_size]
+        end_token = [self.tokenizer_pt.vocab_size+1]
+        inp_sentence = 'este é um problema que temos que resolver.'
+        inp_sentence = start_token + self.tokenizer_pt.encode(inp_sentence) + end_token
+        print('\r\n*************\r\n****************\r\n****************')
+        print('inp_sentence type:{0}----{1}'.format(type(inp_sentence), inp_sentence))
+        encoder_input = tf.expand_dims(inp_sentence, 0)
+        print('encoder_input type:{0}\r\n{1}'.format(type(encoder_input), encoder_input))
+        decoder_input = [self.tokenizer_en.vocab_size]
+        print('decoder_input:{0} {1}'.format(type(decoder_input), decoder_input))
+        output = tf.expand_dims(decoder_input, 0)
+        print('output:{0} {1}'.format(type(output), output))
+        print('i=0')
+
+        transformer_engine = TransformerEngine()
+        transformer, train_loss, train_accuracy, loss_object, optimizer = \
+                        transformer_engine.build_model(
+                            train_dataset, val_dataset, 
+                            self.tokenizer_en, self.tokenizer_pt
+                        )
+
+        i = 0
+        enc_padding_mask, combined_mask, dec_padding_mask = TransformerUtil.create_masks(
+                encoder_input, output)
+        print('enc_padding_mask:{0}; {1}'.format(enc_padding_mask.shape, enc_padding_mask))
+        print('combined_mask:{0}; {1}'.format(combined_mask.shape, combined_mask))
+        print('dec_padding_mask:{0}; {1}'.format(dec_padding_mask.shape, dec_padding_mask))
+        predictions, attention_weights = transformer(encoder_input, 
+                                                        output,
+                                                        False,
+                                                        enc_padding_mask,
+                                                        combined_mask,
+                                                        dec_padding_mask)
+        print('predictions:{0}; {1}'.format(predictions.shape, predictions))
+        predictions = predictions[: ,-1:, :]
+        predicted_id = tf.cast(tf.argmax(predictions, axis=-1), tf.int32)
+        output = tf.concat([output, predicted_id], axis=-1)
+        print('id:{0}, output:{1}; {2}'.format(predicted_id, output.shape, output))
+        print('\r\ni=1\r\n')
+        # 
+        i = 1
+        enc_padding_mask, combined_mask, dec_padding_mask = TransformerUtil.create_masks(
+                encoder_input, output)
+        print('enc_padding_mask:{0}; {1}'.format(enc_padding_mask.shape, enc_padding_mask))
+        print('combined_mask:{0}; {1}'.format(combined_mask.shape, combined_mask))
+        print('dec_padding_mask:{0}; {1}'.format(dec_padding_mask.shape, dec_padding_mask))
+        predictions, attention_weights = transformer(encoder_input, 
+                                                        output,
+                                                        False,
+                                                        enc_padding_mask,
+                                                        combined_mask,
+                                                        dec_padding_mask)
+        print('predictions:{0}; {1}'.format(predictions.shape, predictions))
+        predictions = predictions[: ,-1:, :]
+        predicted_id = tf.cast(tf.argmax(predictions, axis=-1), tf.int32)
+        output = tf.concat([output, predicted_id], axis=-1)
+        print('id:{0}, output:{1}; {2}'.format(predicted_id, output.shape, output))
+        print('\r\ni=2\r\n')
+        #
+        i = 2
+        enc_padding_mask, combined_mask, dec_padding_mask = TransformerUtil.create_masks(
+                encoder_input, output)
+        print('enc_padding_mask:{0}; {1}'.format(enc_padding_mask.shape, enc_padding_mask))
+        print('combined_mask:{0}; {1}'.format(combined_mask.shape, combined_mask))
+        print('dec_padding_mask:{0}; {1}'.format(dec_padding_mask.shape, dec_padding_mask))
+        predictions, attention_weights = transformer(encoder_input, 
+                                                        output,
+                                                        False,
+                                                        enc_padding_mask,
+                                                        combined_mask,
+                                                        dec_padding_mask)
+        print('predictions:{0}; {1}'.format(predictions.shape, predictions))
+        predictions = predictions[: ,-1:, :]
+        predicted_id = tf.cast(tf.argmax(predictions, axis=-1), tf.int32)
+        output = tf.concat([output, predicted_id], axis=-1)
+        print('id:{0}, output:{1}; {2}'.format(predicted_id, output.shape, output))
+        print('\r\ni=3\r\n')
+        i = 3
+        enc_padding_mask, combined_mask, dec_padding_mask = TransformerUtil.create_masks(
+                encoder_input, output)
+        print('enc_padding_mask:{0}; {1}'.format(enc_padding_mask.shape, enc_padding_mask))
+        print('combined_mask:{0}; {1}'.format(combined_mask.shape, combined_mask))
+        print('dec_padding_mask:{0}; {1}'.format(dec_padding_mask.shape, dec_padding_mask))
+        predictions, attention_weights = transformer(encoder_input, 
+                                                        output,
+                                                        False,
+                                                        enc_padding_mask,
+                                                        combined_mask,
+                                                        dec_padding_mask)
+        print('predictions:{0}; {1}'.format(predictions.shape, predictions))
+        predictions = predictions[: ,-1:, :]
+        predicted_id = tf.cast(tf.argmax(predictions, axis=-1), tf.int32)
+        output = tf.concat([output, predicted_id], axis=-1)
+        print('id:{0}, output:{1}; {2}'.format(predicted_id, output.shape, output))
+
     def startup(self):
-
-        self.test_multi_head_attention()
-
+        self.t1()
         i_debug = 1
         if 1 == i_debug:
             return
-
-
+        mode = TransformerApp.MODE_RUN
         train_dataset, val_dataset = self.load_dataset()
         transformer_engine = TransformerEngine()
-        transformer_engine.train(
-            train_dataset, val_dataset,
-            self.tokenizer_en, self.tokenizer_pt
-        )
+        if TransformerApp.MODE_TRAIN == mode:
+            transformer_engine.train(
+                train_dataset, val_dataset,
+                self.tokenizer_en, self.tokenizer_pt
+            )
+        else:
+            transformer, train_loss, train_accuracy, loss_object, optimizer = \
+                        transformer_engine.build_model(
+                            train_dataset, val_dataset, 
+                            self.tokenizer_en, self.tokenizer_pt
+                        )
+            # first
+            print('pt: este é um problema que temos que resolver.')
+            translated, _, _ = transformer_engine.run(transformer, 'este é um problema que temos que resolver.')
+            print('translated: {0}'.format(translated))
+            print('Real translation: this is a problem we have to solve .\r\n*****\r\n')
+            # second
+            translated, _, _ = transformer_engine.run(transformer, 'os meus vizinhos ouviram sobre esta ideia.')
+            print('translated: {0}'.format(translated))
+            print('Real translation: and my neighboring homes heard about this idea .\r\n*****\r\n')
+            # third
+            translated, _, _ = transformer_engine.run(transformer, 'vou então muito rapidamente partilhar convosco algumas histórias de algumas coisas mágicas que aconteceram.')
+            print('translated: {0}'.format(translated))
+            print('Real translation: so i \'ll just share with you some stories very quickly of some magical things that have happened .\r\n*****\r\n')
+            # forth
+            sentence = 'este é o primeiro livro que eu fiz.'
+            translated, attention_weights, result = transformer_engine.run(transformer, sentence)
+            print('translated: {0}'.format(translated))
+            print('Real translation: this is the first book i\'ve ever done.\r\n*****\r\n')
+            plot = 'decoder_layer4_block2'
+            transformer_engine.plot_attention_weights(attention_weights, sentence, result, plot)
         
     def load_dataset(self):
         examples, metadata = tfds.load('ted_hrlr_translate/pt_to_en', with_info=True,
@@ -142,6 +266,12 @@ class TransformerApp(object):
         out, attn = temp_mha(y, k=y, q=y, mask=None)
         print('{0}   {1}'.format(out.shape, attn.shape))
 
-
+    def test_custom_schedule(self):
+        d_model = 128
+        temp_learning_rate_schedule = CustomSchedule(d_model)
+        plt.plot(temp_learning_rate_schedule(tf.range(40000, dtype=tf.float32)))
+        plt.ylabel("Learning Rate")
+        plt.xlabel("Train Step")
+        plt.show()
 
 

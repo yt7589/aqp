@@ -1,4 +1,4 @@
-\begin{thebibliography}{6}
+\begin{thebibliography}{7}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -15,6 +15,13 @@ Deepmind.
 Michael~L. Halls-Moore.
 \newblock \emph{Advanced Algorithmic Trading}.
 \newblock His Publisher, Publisher, 2017.
+
+\bibitem[King(2019)]{r000007}
+Adam King.
+\newblock Creating bitcoin trading bots don’t lose money.
+\newblock \emph{towardsdatascience.com}, article, 2019.
+\newblock URL
+  \url{https://towardsdatascience.com/creating-bitcoin-trading-bots-that-dont-lose-money-2e7165fb0b29}.
 
 \bibitem[PyKalman(2019)]{r000003}
 PyKalman.
