@@ -53,8 +53,11 @@ class TFmeEnv(unittest.TestCase):
         print('Before net_worth:{0}'.format(fme_env.net_worth))
         a1 = fme_env.action_space.sample()
         print('a1:{0}; {1}'.format(type(a1), a1))
+        a1[0] = 0
+        a1[1] = 6
         fme_env.step(a1)
         print('After net_worth:{0}'.format(fme_env.net_worth))
+        fme_env.render()
 
 
 

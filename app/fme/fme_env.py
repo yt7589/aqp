@@ -3,6 +3,7 @@ import pandas as pd
 import gym
 from gym import spaces
 from sklearn import preprocessing
+from app.fme.fme_render import FmeRender
 
 MAX_TRADING_SESSION = 100000
 
@@ -20,6 +21,7 @@ class FmeEnv(gym.Env):
         self.serial = serial  # Actions of the format Buy 1/10, Sell 3/10, Hold, etc.
         # Observes the OHCLV values, net worth, and trade history
         self.scaler = preprocessing.MinMaxScaler()
+        self.viewer = None
         self.action_space = spaces.MultiDiscrete([3, 10])
         self.observation_space = spaces.Box(low=0, high=1, shape=(10, 
                     lookback_window_size + 1), dtype=np.float16)
@@ -53,7 +55,7 @@ class FmeEnv(gym.Env):
 
     def _next_observation(self):
         end = self.current_step + self.lookback_window_size + 1
-        scaled_df = self.active_df.values[:end].astype('float64')
+        scaled_df = self.active_df.values[:end].astype(np.float64)
         scaled_df = self.scaler.fit_transform(scaled_df)
         scaled_df = pd.DataFrame(scaled_df, columns=self.df.columns)
         obs = np.array([
@@ -63,7 +65,7 @@ class FmeEnv(gym.Env):
             scaled_df['Close'].values[self.current_step:end],
             scaled_df['Volume_(BTC)'].values[self.current_step:end],
         ])
-        scaled_history = self.scaler.fit_transform(self.account_history)
+        scaled_history = self.scaler.fit_transform(self.account_history.astype(np.float64))
         obs = np.append(
             obs, scaled_history[:, -(self.lookback_window_size + 1):], axis=0)
         return obs
@@ -100,7 +102,7 @@ class FmeEnv(gym.Env):
         btc_sold = 0
         cost = 0
         sales = 0
-        print('action_type:{0}; amount:{1}'.format(action_type, amount))
+        print('action_type:{0}; amount:{1}; price:{2}'.format(action_type, amount, current_price))
         print('Before: btc_bought={0}; cost={1}; btc_held={2}; balance={3}'.\
                         format(btc_bought, cost, self.btc_held, self.balance))
         if action_type < 1:
@@ -128,5 +130,33 @@ class FmeEnv(gym.Env):
         print('After: btc_bought={0}; cost={1}; btc_held={2}; balance={3}'.\
                         format(btc_bought, cost, self.btc_held, self.balance))
 
-    def render(self, mode='live', close=False):
-        pass
+    def render(self, mode='human', **kwargs):
+        if mode == 'system':
+            print('Price: ' + str(self._get_current_price()))
+            print(
+                'Bought: ' + str(self.account_history[2][self.current_step + self.frame_start]))
+            print(
+                'Sold: ' + str(self.account_history[4][self.current_step + self.frame_start]))
+            print('Net worth: ' + str(self.net_worth))
+
+        elif mode == 'human':
+            if self.viewer is None:
+                self.viewer = FmeRender(
+                    self.df, kwargs.get('title', None))
+
+            print('steps_left:{0}; price:{1}; Bought:{2}; Sold:{3}; new_worth:{4}'.format(
+                self.steps_left, 
+                self._get_current_price(),
+                self.account_history[2][self.current_step + self.frame_start],
+                self.account_history[4][self.current_step + self.frame_start],
+                self.net_worth
+            ))
+            self.viewer.render(self.frame_start + self.current_step,
+                               self.net_worth,
+                               self.trades,
+                               window_size=self.lookback_window_size)
+
+    def close(self):
+        if self.viewer is not None:
+            self.viewer.close()
+            self.viewer = None
