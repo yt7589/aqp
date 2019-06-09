@@ -72,9 +72,9 @@ class FmeEnv(gym.Env):
 
 
     def step(self, action):
-        current_price = self._get_current_price() + 0.01
+        self.current_price = self._get_current_price() + 0.01
         prev_net_worth = self.net_worth
-        self._take_action(action, current_price)
+        self._take_action(action, self.current_price)
         self.steps_left -= 1
         self.current_step += 1
         done = self.net_worth <= 0
@@ -82,7 +82,7 @@ class FmeEnv(gym.Env):
             print('************************ 回测结束，净资产：'
                         '{0} *********************'.format(
                         self.net_worth))
-            self.balance += self.btc_held * current_price
+            self.balance += self.btc_held * self.current_price
             self.btc_held = 0
             self._reset_session()
             done = True
@@ -95,18 +95,14 @@ class FmeEnv(gym.Env):
                     self.current_step]
 
     def _take_action(self, action, current_price):
-        print('action: {0}; {1}'.format(type(action), action))
         action_type = action[0]
         amount = action[1] / 10
         btc_bought = 0
         btc_sold = 0
         cost = 0
         sales = 0
-        print('action_type:{0}; amount:{1}; price:{2}'.format(action_type, amount, current_price))
-        print('Before: btc_bought={0}; cost={1}; btc_held={2}; balance={3}'.\
-                        format(btc_bought, cost, self.btc_held, self.balance))
         if action_type < 1:
-            btc_bought = self.balance / current_price * amount
+            btc_bought = self.balance / (current_price*(1+self.commission+0.001)) * amount
             cost = btc_bought * current_price * (1 + self.commission)
             self.btc_held += btc_bought
             self.balance -= cost
@@ -127,12 +123,10 @@ class FmeEnv(gym.Env):
             [btc_sold],
             [sales]
         ], axis=1)
-        print('After: btc_bought={0}; cost={1}; btc_held={2}; balance={3}'.\
-                        format(btc_bought, cost, self.btc_held, self.balance))
 
     def render(self, mode='human', **kwargs):
         if mode == 'system':
-            print('Price: ' + str(self._get_current_price()))
+            print('Price: ' + str(self.current_price))
             print(
                 'Bought: ' + str(self.account_history[2][self.current_step + self.frame_start]))
             print(
@@ -144,12 +138,14 @@ class FmeEnv(gym.Env):
                 self.viewer = FmeRender(
                     self.df, kwargs.get('title', None))
 
-            print('steps_left:{0}; price:{1}; Bought:{2}; Sold:{3}; new_worth:{4}'.format(
+            print('price:{1:-10.2f} \tnet_worth:{4:-10.2f} \tbalance:{6:-10.2f} \tbtc_held:{5:-10.2f} \tBought:{2:-10.2f} \tSold:{3:-10.2f};        steps_left:{0}'.format(
                 self.steps_left, 
-                self._get_current_price(),
+                self.current_price,
                 self.account_history[2][self.current_step + self.frame_start],
                 self.account_history[4][self.current_step + self.frame_start],
-                self.net_worth
+                self.net_worth,
+                self.btc_held,
+                self.balance
             ))
             self.viewer.render(self.frame_start + self.current_step,
                                self.net_worth,
