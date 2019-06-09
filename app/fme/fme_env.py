@@ -1,3 +1,4 @@
+import random
 import numpy as np
 import pandas as pd
 import gym
@@ -14,6 +15,9 @@ class FmeEnv(gym.Env):
     ):
         self.name = 'FmeEnv'
         print('Finacial Market Env is starting up...')
+        random.seed(100)
+        self.buy_rate = 1.0 # 20%机会购买
+        self.sell_rate = 1.0 # 15%机会卖
         self.df = df.dropna().reset_index()
         self.lookback_window_size = lookback_window_size
         self.initial_balance = initial_balance
@@ -86,9 +90,9 @@ class FmeEnv(gym.Env):
             self.btc_held = 0
             self._reset_session()
             done = True
-        obs = self._next_observation()
+        self.obs = self._next_observation()
         reward = self.net_worth - prev_net_worth
-        return obs, reward, done, {}
+        return self.obs, reward, done, {}
 
     def _get_current_price(self):
         return self.df['Close'].values[self.frame_start + 
@@ -102,15 +106,20 @@ class FmeEnv(gym.Env):
         cost = 0
         sales = 0
         if action_type < 1:
-            btc_bought = self.balance / (current_price*(1+self.commission+0.001)) * amount
-            cost = btc_bought * current_price * (1 + self.commission)
-            self.btc_held += btc_bought
-            self.balance -= cost
+            if random.random() < self.buy_rate:
+                btc_bought = self.balance / (current_price*(1+self.commission+0.001)) * amount
+                btc_bought2 = self.df['Volume_(BTC)'].values[self.frame_start + self.current_step]
+                if btc_bought > btc_bought2:
+                    btc_bought = btc_bought2
+                cost = btc_bought * current_price * (1 + self.commission)
+                self.btc_held += btc_bought
+                self.balance -= cost
         elif action_type < 2:
-            btc_sold = self.btc_held * amount
-            sales = btc_sold * current_price * (1 - self.commission)
-            self.btc_held -= btc_sold
-            self.balance += sales
+            if random.random() < self.sell_rate:
+                btc_sold = self.btc_held * amount
+                sales = btc_sold * current_price * (1 - self.commission)
+                self.btc_held -= btc_sold
+                self.balance += sales
         if btc_sold > 0 or btc_bought > 0:
             self.trades.append({'step': self.frame_start + self.current_step,
                                 'amount': btc_sold if btc_sold > 0 else btc_bought, 'total': sales if btc_sold > 0 else cost,

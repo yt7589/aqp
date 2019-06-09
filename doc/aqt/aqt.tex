@@ -4775,15 +4775,350 @@ class FmeEnv(gym.Env):
         obs = self._next_observation()
         reward = self.net_worth - prev_net_worth
         return obs, reward, done, {}
+# 测试程序
+class TFmeEnv(unittest.TestCase):
+    def test_step001(self):
+        test_size = 500
+        df = pd.read_csv('./data/bitstamp.csv')
+        df = df.sort_values('Timestamp')
+        self.slice_point = int(len(df) - test_size)
+        self.train_df = df[:self.slice_point]
+        self.test_df = df[self.slice_point:]
+        fme_env = FmeEnv(self.train_df, serial=True)
+        env = DummyVecEnv(
+            [lambda: fme_env])
+        env.reset()
+        print('Before net_worth:{0}'.format(fme_env.net_worth))
+        a1 = fme_env.action_space.sample()
+        print('a1:{0}; {1}'.format(type(a1), a1))
+        fme_env.step(a1)
+        print('After net_worth:{0}'.format(fme_env.net_worth))
 \end{lstlisting}
 在上面的程序中，我们取出当前价格和当前净值，进行买入或卖出操作后，更新这些值，当我们的净值小于等于零时，回测过程结束，
 当没有达到数据集最后时，我们得到环境的下一个状态，将净值的变化作为Reward，因为当我们的操作使净值增加时，reward为正，
 而当我们的操作使净值减少时，reward为负，这样就可以使我们的模型通过深度强化学习，达到使我们的净值增加的目的。
 
+\subsubsection{可视化}
+我们可以将交易过程以图形方式显示出来，直观地看到交易过程和净值变化情况，我们定义FmeRender类，如下所示：
+\lstset{language=PYTHON, caption={交易可视化类}, label={c000037}}
+\begin{lstlisting}
+    import numpy as np
+    import matplotlib
+    import matplotlib.pyplot as plt
+    from matplotlib import style
+    from datetime import datetime
+    # finance module is no longer part of matplotlib
+    # see: https://github.com/matplotlib/mpl_finance
+    from mpl_finance import candlestick_ochl as candlestick
+    from pandas.plotting import register_matplotlib_converters
+    
+    style.use('ggplot')
+    
+    VOLUME_CHART_HEIGHT = 0.33
+    
+    class FmeRender(object):
+        """ 交易可视化类 """
+    
+        def __init__(self, df, title=None):
+            self.df = df
+            self.net_worths = np.zeros(len(df))
+            register_matplotlib_converters()
+            # Create a figure on screen and set the title
+            fig = plt.figure()
+            fig.suptitle(title)
+            # Create top subplot for net worth axis
+            self.net_worth_ax = plt.subplot2grid(
+                (6, 1), (0, 0), rowspan=2, colspan=1)
+            # Create bottom subplot for shared price/volume axis
+            self.price_ax = plt.subplot2grid(
+                (6, 1), (2, 0), rowspan=8, colspan=1, sharex=self.net_worth_ax)
+            # Create a new axis for volume which shares its x-axis with price
+            self.volume_ax = self.price_ax.twinx()
+            # Add padding to make graph easier to view
+            plt.subplots_adjust(left=0.11, bottom=0.24,
+                                right=0.90, top=0.90, wspace=0.2, hspace=0.9)
+            # Show the graph without blocking the rest of the program
+            plt.show(block=False)
+    
+        def _render_net_worth(self, current_step, net_worth, step_range, dates):
+            # Clear the frame rendered last step
+            self.net_worth_ax.clear()
+            # Plot net worths
+            self.net_worth_ax.plot_date(
+                dates, self.net_worths[step_range], '-', label='Net Worth')
+            # Show legend, which uses the label we defined for the plot above
+            self.net_worth_ax.legend()
+            legend = self.net_worth_ax.legend(loc=2, ncol=2, prop={'size': 8})
+            legend.get_frame().set_alpha(0.4)
+            last_date = self.df['Timestamp'].values[current_step]
+            last_net_worth = self.net_worths[current_step]
+            # Annotate the current net worth on the net worth graph
+            self.net_worth_ax.annotate('{0:.2f}'.format(net_worth), (last_date, last_net_worth),
+                                       xytext=(last_date, last_net_worth),
+                                       bbox=dict(boxstyle='round',
+                                                 fc='w', ec='k', lw=1),
+                                       color="black",
+                                       fontsize="small")
+            # Add space above and below min/max net worth
+            self.net_worth_ax.set_ylim(
+                min(self.net_worths[np.nonzero(self.net_worths)]) / 1.25, max(self.net_worths) * 1.25)
+    
+        def _render_price(self, current_step, net_worth, step_range, dates):
+            self.price_ax.clear()
+            # Format data for OHCL candlestick graph
+            candlesticks = zip(dates,
+                               self.df['Open'].values[step_range], self.df['Close'].values[step_range],
+                               self.df['High'].values[step_range], self.df['Low'].values[step_range])
+            # Plot price using candlestick graph from mpl_finance
+            candlestick(self.price_ax, candlesticks, width=2)
+            last_date = self.df['Timestamp'].values[current_step]
+            last_close = self.df['Close'].values[current_step]
+            last_high = self.df['High'].values[current_step]
+            # Print the current price to the price axis
+            '''
+            self.price_ax.annotate('{0:.2f}'.format(last_close), (last_date, last_close),
+                                   xytext=(last_date, last_high),
+                                   bbox=dict(boxstyle='round',
+                                             fc='w', ec='k', lw=1),
+                                   color="black",
+                                   fontsize="small")
+            '''
+            # Shift price axis up to give volume chart space
+            ylim = self.price_ax.get_ylim()
+            self.price_ax.set_ylim(ylim[0] - (ylim[1] - ylim[0])
+                                   * VOLUME_CHART_HEIGHT, ylim[1])
+    
+        def _render_volume(self, current_step, net_worth, step_range, dates):
+            self.volume_ax.clear()
+            volume = np.array(self.df['Volume_(BTC)'].values[step_range])
+            pos = self.df['Open'].values[step_range] - \
+                self.df['Close'].values[step_range] < 0
+            neg = self.df['Open'].values[step_range] - \
+                self.df['Close'].values[step_range] > 0
+            # Color volume bars based on price direction on that date
+            self.volume_ax.bar(dates[pos], volume[pos], width=2,  color='g')
+            self.volume_ax.bar(dates[neg], volume[neg], width=2, color='r')
+            self.volume_ax.yaxis.set_ticks([])
+    
+        def _render_trades(self, current_step, trades, step_range):
+            for trade in trades:
+                if trade['step'] in step_range:
+                    date = self.df['Timestamp'].values[trade['step']]
+                    close = self.df['Close'].values[trade['step']]
+                    high = self.df['High'].values[trade['step']]
+                    low = self.df['Low'].values[trade['step']]
+                    if trade['type'] == 'buy':
+                        high_low = low
+                        color = 'g'
+                    else:
+                        high_low = high
+                        color = 'r'
+                    total = '{0:.2f}'.format(trade['total'])
+                    self.price_ax.annotate('$' + str(total), (date, close),
+                                           xytext=(date, high_low),
+                                           bbox=dict(boxstyle='round',
+                                                     fc='w', ec='k', lw=1, alpha=0.4),
+                                           color=color,
+                                           alpha=0.4,
+                                           fontsize="small")
+    
+        def render(self, current_step, net_worth, trades, window_size=40):
+            self.net_worths[current_step] = net_worth
+            window_start = max(current_step - window_size, 0)
+            step_range = range(window_start, current_step + 1)
+            dates = self.df['Timestamp'].values[step_range]
+            self._render_net_worth(current_step, net_worth, step_range, dates)
+            self._render_price(current_step, net_worth, step_range, dates)
+            self._render_volume(current_step, net_worth, step_range, dates)
+            self._render_trades(current_step, trades, step_range)
+            date_labels = np.array([datetime.utcfromtimestamp(x).strftime(
+                '%Y-%m-%d %H:%M') for x in self.df['Timestamp'].values[step_range]])
+            self.price_ax.set_xticklabels(
+                date_labels, rotation=45, horizontalalignment='right')
+            # Hide duplicate net worth date labels
+            plt.setp(self.net_worth_ax.get_xticklabels(), visible=False)
+            # Necessary to view frames before they are unrendered
+            plt.pause(0.001)
+    
+        def close(self):
+            plt.close()
 
-我们这里用到的数据集是bitstamp交易所由2012年到2019年的交易数据，时间间隔为1分钟。\newline
-下面我们来看reset方法，可以重复比特币交易环境，通常我们在训练网络模型时，我们使用训练环境。在测试时，我们需要使用
-测试环境，就需要首先调用此方法：
+# 测试程序：
+class TFmeEnv(unittest.TestCase):
+    def test_step001(self):
+        test_size = 500
+        df = pd.read_csv('./data/bitstamp.csv')
+        df = df.sort_values('Timestamp')
+        self.slice_point = int(len(df) - test_size)
+        self.train_df = df[:self.slice_point]
+        self.test_df = df[self.slice_point:]
+        fme_env = FmeEnv(self.train_df, serial=True)
+        env = DummyVecEnv(
+            [lambda: fme_env])
+        env.reset()
+        print('Before net_worth:{0}'.format(fme_env.net_worth))
+        a1 = fme_env.action_space.sample()
+        print('a1:{0}; {1}'.format(type(a1), a1))
+        a1[0] = 0
+        a1[1] = 6
+        fme_env.step(a1)
+        print('After net_worth:{0}'.format(fme_env.net_worth))
+        fme_env.render()
+\end{lstlisting}
+注意：运行上面程序时，需要将plt.pause(0.001)改为plt.show()，这样才能显示图像，否则图像将一闪而过。
+
+\subsubsection{随机Agent}
+在这里我们假设Agent随机进行买卖，代码如下所示：
+\lstset{language=PYTHON, caption={随机Agent}, label={c000038}}
+\begin{lstlisting}
+import numpy as np
+import pandas as pd
+from stable_baselines.common.vec_env import DummyVecEnv
+from app.fme.fme_env import FmeEnv
+
+class FmeRandomAgent(object):
+    def __init__(self):
+        self.name = 'FmeAgent'
+        self.test_size = 500
+
+    def train(self):
+        train_env = self.build_train_env()
+        obs = train_env.reset()
+        for i in range(self.slice_point):
+            action = self.choose_action(i+self.fme_env.lookback_window_size, obs)
+            obs, rewards, done, info = train_env.step([action])
+            if done:
+                break
+            train_env.render(mode="human", title="BTC")
+        print('回测结束 ^_^')
+
+    def build_train_env(self):
+        self.df = pd.read_csv('./data/bitstamp.csv')
+        self.df = self.df.dropna().reset_index()
+        self.df = self.df.sort_values('Timestamp')
+        self.slice_point = int(len(self.df) - self.test_size)
+        self.train_df = self.df[:self.slice_point]
+        self.test_df = self.df[self.slice_point:]
+        self.fme_env = FmeEnv(self.train_df, serial=True)
+        return DummyVecEnv(
+            [lambda: self.fme_env])
+
+    def choose_action(self, idx, obs):
+        return self.fme_env.action_space.sample()
+# 测试程序：
+class TFmeRandomAgent(unittest.TestCase):
+    def test_run001(self):
+        agent = FmeRandomAgent()
+        agent.train()
+\end{lstlisting}
+\begin{figure}[H]
+    \caption{随机Agent运行结果}
+    \label{f000091}
+    \centering
+    \includegraphics[height=8cm]{images/f000091}
+\end{figure}
+由上图可以看出，随机策略的效果并不会很好。
+
+\subsubsection{先知型Agent}
+假设我们知道未来的行情，我们基于未来的信息做一个Agent，看是否可以完美的赚钱，具体策略为：
+\begin{itemize}
+\item 满仓+下跌：若跌幅超过手续费，则卖出所有比特币；否则继续持有；
+\item 满仓+上涨：继续持有比特币；
+\item 空仓+上涨：若涨幅高过手续费，则全部买入比特币；否则继续观望；
+\item 空仓+下跌：继续观望；
+\end{itemize}
+具体代码实现如下所示：
+\lstset{language=PYTHON, caption={先知型Agent}, label={c000039}}
+\begin{lstlisting}
+import numpy as np
+import pandas as pd
+from stable_baselines.common.vec_env import DummyVecEnv
+from app.fme.fme_env import FmeEnv
+
+class FmeGodAgent(object):
+    def __init__(self):
+        self.name = 'FmeGodAgent'
+        self.test_size = 500
+
+    def train(self):
+        train_env = self.build_train_env()
+        obs = train_env.reset()
+        for i in range(self.slice_point):
+            action = self.choose_action(i+self.fme_env.lookback_window_size, obs)
+            obs, rewards, done, info = train_env.step([action])
+            if done:
+                break
+            train_env.render(mode="human", title="BTC")
+        print('回测结束 ^_^')
+
+    def build_train_env(self):
+        self.df = pd.read_csv('./data/bitstamp.csv')
+        self.df = self.df.dropna().reset_index()
+        self.df = self.df.sort_values('Timestamp')
+        self.slice_point = int(len(self.df) - self.test_size)
+        self.train_df = self.df[:self.slice_point]
+        self.test_df = self.df[self.slice_point:]
+        self.fme_env = FmeEnv(self.train_df, serial=True)
+        return DummyVecEnv(
+            [lambda: self.fme_env])
+
+    def choose_action(self, idx, obs):
+        commission = self.fme_env.commission
+        time_span = 15
+        recs = self.df.iloc[idx:idx+time_span]
+        datas = np.array(recs)
+        close_idx = 5
+        current_price = datas[0][close_idx]
+        action = np.array([2,0])
+        # 判断未来涨跌
+        for i in range(1, time_span):
+            if datas[i][close_idx] > current_price*(1+commission):
+                # 空仓时买入；满仓时持有
+                if self.fme_env.btc_held <= 0.00000001:
+                    action = np.array([0, 10]) # 买入
+                    break
+                else:
+                    break
+            elif datas[i][close_idx] < current_price*(1-commission):
+                if self.fme_env.btc_held > 0.00000001:
+                    action = np.array([1, 10])
+                    break
+                else:
+                    break
+        return action
+        #return self.fme_env.action_space.sample()
+
+    def test001(self):
+        train_env = self.build_train_env()
+        obs = train_env.reset()
+        idx = self.fme_env.lookback_window_size + 1
+        action = self.choose_action(idx, obs)
+        print('action:{0}; {1}'.format(type(action), action))
+        a1 = self.fme_env.action_space.sample()
+        print('a1:{0}; {1}'.format(type(a1), a1))
+\end{lstlisting}
+具体策略实现在choose\_action方法中，运行上面的程序，结果如下所示：
+\begin{figure}[H]
+    \caption{先知型Agent运行结果}
+    \label{f000092}
+    \centering
+    \includegraphics[height=8cm]{images/f000092}
+\end{figure}
+这个策略看起来就非常威猛，仅仅几天时间，利润率就超过了60\%，运行几个月就有上万倍的收益，由此可见利润空间非常巨大。
+
+
+\subsection{策略训练}
+上节所讨论的无论随机策略还是先知型策略，都不可能在实际中应用，我们在这一节中，将训练可以用于实践的策略。
+\subsubsection{生成数据集}
+\subsubsection{多层感知器}
+\subsubsection{XGBoost策略}
+\subsubsection{Transformer策略}
+生成训练样本集，采用MLP模型进行训练：\newline
+取出lookback\_window\_size+1条数据，运行choose\_action算法，求出其应该是[0,0,0]，分别对应于买入、卖出、持有，
+然后采用TensorFlow 2.0 MLP算法作为交易策略并进行训练，将choose\_action替换为MLP的predict方法，然后运行
+测试样本集，得到最终的回测结果。必须包括当前的余额值，所以其有两个记录，分别对应满仓和空仓时的操作。\newline
+将策略算法换为XGBoost。\newline
+将策略算法换为Transformer。\newline
 
 
 
