@@ -98,4 +98,8 @@
 \BOOKMARK [1][-]{section.16}{深度强化学习环境}{}% 98
 \BOOKMARK [2][-]{subsection.16.1}{开发环境搭建}{section.16}% 99
 \BOOKMARK [2][-]{subsection.16.2}{深度强化学习环境}{section.16}% 100
-\BOOKMARK [1][-]{section.17}{汇总}{}% 101
+\BOOKMARK [3][-]{subsubsection.16.2.1}{构造函数}{subsection.16.2}% 101
+\BOOKMARK [3][-]{subsubsection.16.2.2}{重设环境}{subsection.16.2}% 102
+\BOOKMARK [3][-]{subsubsection.16.2.3}{交易会话}{subsection.16.2}% 103
+\BOOKMARK [3][-]{subsubsection.16.2.4}{采取行动}{subsection.16.2}% 104
+\BOOKMARK [1][-]{section.17}{汇总}{}% 105

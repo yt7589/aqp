@@ -4542,19 +4542,20 @@ pip install stable_baselines
 pip install mpl_finance
 \end{lstlisting}
 \subsection{深度强化学习环境}
+\subsubsection{构造函数}
 我们首先需要创建一个用于比特币交易的强化学习环境，在这里我们会扩展OpenAI的gym.Env类，我们只需要定义如下方法即可：
 \lstset{language=PYTHON, caption={强化学习环境模板类}, label={c000016}}
 \begin{lstlisting}
+import numpy as np
 import gym
 from gym import spaces
 
-class BitcoinTradingEnv(gym.Env):
-    metadata = {'render.modes': ['live', 'file', 'none']}
-
-    def __init__(self, arg1, arg2, ...):
-        super(BitcoinTradingEnv, self).__init__()
-        self.action_space = spaces.Discrete(N_DISCRETE_ACTIONS)
-        self.observation_space = spaces.Box(low=0, high=1, shape=(10, 20), dtype=np.float116)
+class FmeEnv(gym.Env):
+    def __init__(self, lookback_window_size=50):
+        super(FmeEnv, self).__init__()
+        self.action_space = spaces.MultiDiscrete([3, 10])
+        self.observation_space = spaces.Box(low=0, high=1, shape=(10, 
+                    lookback_window_size + 1), dtype=np.float16)
 
     def step(self, action):
         pass
@@ -4564,47 +4565,223 @@ class BitcoinTradingEnv(gym.Env):
 
     def render(self, mode='live', close=False):
         pass
-\end{lstlisting} 
-接下来，我们逐一来实现这些方法，我们首先创建app/drl/bitcoin\_trading\_env.py文件：
-\lstset{language=PYTHON, caption={比特币交易环境类构造函数}, label={c000017}}
-\begin{lstlisting}
-    import gym
-    import pandas as pd
-    import numpy as np
-    from gym import spaces
-    from sklearn import preprocessing
-    
-    class BitcoinTradingEnv(gym.Env):
-        metadata = {'render.modes': ['live', 'file', 'none']}
-    
-        def __init__(self, df, lookback_window_size=50,
-            commission=0.00075, initial_balance=10000,
-            serial=False
-        ):
-            self.name = 'BitcoinTradingEnv'
-            print('Bitcoin Trading Env is starting up...')
-            self.df = df.dropna().reset_index()
-            self.lookback_window_size = lookback_window_size
-            self.initial_balance = initial_balance
-            self.commission = commission
-            self.serial = serial  # Actions of the format Buy 1/10, Sell 3/10, Hold, etc.
-            # Observes the OHCLV values, net worth, and trade history
-            self.action_space = spaces.MultiDiscrete([3, 10])
-            self.observation_space = spaces.Box(low=0, high=1, shape=(10, 
-                        lookback_window_size + 1), dtype=np.float16)
 
-        def test_init(self):
-            df = pd.read_csv('./data/bitstamp.csv')
-            df = df.sort_values('Timestamp')
-            slice_point = int(len(df) - 50000)
-            train_df = df[:slice_point]
-            test_df = df[slice_point:]
-            train_env = DummyVecEnv([lambda: BitcoinTradingEnv(train_df, serial=True)])
-            self.assertTrue(True)
+# 测试程序：python -m unittest tdd.app.fme.t_fme_env.TFmeEnv.test_init
+class TFmeEnv(unittest.TestCase):
+    def test_init001(self):
+        ''' 测试action_space和observation_space '''
+        fme_evn = FmeEnv(60)
+        print('action_space:{0}; {1}'.format(type(fme_evn.action_space), 
+                    fme_evn.action_space))
+        a1 = fme_evn.action_space.sample()
+        print('a1:{0}; {1}'.format(type(a1), a1))
+        print('observation_space:{0}; {1}'.format(
+            type(fme_evn.observation_space), fme_evn.observation_space)
+        )
+\end{lstlisting} 
+其中action\_space的格式为[买/卖/持有, 比例((x+1)/10.0)]，第一维最小值为0，最大值为2，共3个值，分别代表买、
+卖和持有比特币，第2维代表数量，该值除以10后代表买卖的比例。例如其取值为[0,7]时，代表买入比特币，用手里现金的
+(7+1)/10.0=0.8，即用80\%的现金用来购买比特币；若取值为[1,0]时，表示卖出比特币，由于(0+1)/10.0=0.1，表示卖出
+手中10\%的比特币；[2,8]表示不进行买卖，这时仅第1维起作用，第2维的数字没有意义。\newline
+环增的观察值同样是2维，第1维为0$\sim$9共10个取值，分别代表：0-开盘价、1-最高价、2-收盘价、3-最低价、4-交易量、
+5-余额、6-买比特币数量、7-卖比特币数量、8-买比特币金额、9-卖比特币金额。第2维是向前看的天数，我们这里设置的是
+60天，加上今天值为61。\newline
+我们将比特币历史交易数据用df来表示，对于比特币交易，目前交易所均会收取手续费，我们还需要设置初始金额，完整的构造
+函数如下所示：
+\lstset{language=PYTHON, caption={FME环境类构造函数}, label={c000030}}
+\begin{lstlisting}
+class FmeEnv(gym.Env):
+    def __init__(self, df, lookback_window_size=50,
+        commission=0.00075, initial_balance=10000,
+        serial=False
+    ):
+        self.name = 'FmeEnv'
+        print('Finacial Market Env is starting up...')
+        self.df = df.dropna().reset_index()
+        self.lookback_window_size = lookback_window_size
+        self.initial_balance = initial_balance
+        self.commission = commission
+        self.serial = serial  # Actions of the format Buy 1/10, Sell 3/10, Hold, etc.
+        # Observes the OHCLV values, net worth, and trade history
+        self.action_space = spaces.MultiDiscrete([3, 10])
+        self.observation_space = spaces.Box(low=0, high=1, shape=(10, 
+                    lookback_window_size + 1), dtype=np.float16)
+
+# 测试程序
+class TFmeEnv(unittest.TestCase):
+    def test_init002(self):
+        ''' 测试完整的构造函数 '''
+        test_size = 500
+        df = pd.read_csv('./data/bitstamp.csv')
+        df = df.sort_values('Timestamp')
+        self.slice_point = int(len(df) - test_size)
+        self.train_df = df[:self.slice_point]
+        self.test_df = df[self.slice_point:]
+        env = DummyVecEnv(
+            [lambda: FmeEnv(self.train_df, serial=True)])
+        self.assertTrue(1>0)
 \end{lstlisting}
-其中action的格式为{0~9, 0~9, 0~9}，第一位代表将该数乘以0.1得到要用多少金额买入比特币，第二位乘以0.1代表要卖出
-多少比例的比特币，第三位代表持有，数字没有特别含义。我们这里用到的数据集是bitstamp交易所由2012年到2019年的交易
-数据，时间间隔为1分钟。\newline
+\subsubsection{重设环境}
+在每次开始训练前，我们都必须重置环境，代码如下所示：
+\lstset{language=PYTHON, caption={FME环境类重置方法}, label={c000031}}
+\begin{lstlisting}
+class FmeEnv(gym.Env):
+    def reset(self):
+        self.balance = self.initial_balance
+        self.net_worth = self.initial_balance
+        self.btc_held = 0
+        self._reset_session()
+        self.account_history = np.repeat([
+            [self.balance],
+            [0],
+            [0],
+            [0],
+            [0]
+        ], self.lookback_window_size + 1, axis=1)
+        self.trades = []
+        return self._next_observation()
+\end{lstlisting}
+在上面的代码中，\_reset\_session和\_next\_observation方法为私有方法，我们在下面分别来进行介绍。
+\subsubsection{交易会话}
+交易会话就是一次完整的交易模型过程，就是强化学习中的episode。在这里我们有两种方式，一种是序列化方式，另一种是随机
+方式。序列化方式是指将我们所有的交易数据，从头跑到尾算一个交易会话。而随机模式是指随机的从某一时点开始，一直到数据
+集结束算作一个交易会话。我们可以同时支持这两种模式，代码如下所示：
+\lstset{language=PYTHON, caption={FME环境类重复方法逻辑}, label={c000032}}
+\begin{lstlisting}
+def _reset_session(self):
+    self.current_step = 0
+    if self.serial:
+        self.steps_left = len(self.df) - self.lookback_window_size - 1
+        self.frame_start = self.lookback_window_size
+    else:
+        self.steps_left = np.random.randint(1, MAX_TRADING_SESSION)
+        self.frame_start = np.random.randint(
+            self.lookback_window_size, len(self.df) - self.steps_left)
+    self.active_df = self.df[self.frame_start - self.lookback_window_size:
+                                self.frame_start + self.steps_left]
+\end{lstlisting}
+接下来我们来看另一个方法实现，如下所示：
+\lstset{language=PYTHON, caption={初始环境观察}, label={c000033}}
+\begin{lstlisting}
+def _next_observation(self):
+    end = self.current_step + self.lookback_window_size + 1
+    scaled_df = self.active_df.values[:end].astype('float64')
+    scaled_df = self.scaler.fit_transform(scaled_df)
+    scaled_df = pd.DataFrame(scaled_df, columns=self.df.columns)
+    obs = np.array([
+        scaled_df['Open'].values[self.current_step:end],
+        scaled_df['High'].values[self.current_step:end],
+        scaled_df['Low'].values[self.current_step:end],
+        scaled_df['Close'].values[self.current_step:end],
+        scaled_df['Volume_(BTC)'].values[self.current_step:end],
+    ])
+    scaled_history = self.scaler.fit_transform(self.account_history)
+    obs = np.append(
+        obs, scaled_history[:, -(self.lookback_window_size + 1):], axis=0)
+    return obs
+\end{lstlisting}
+
+\begin{itemize}
+\item 第2行：current\_step=0而end=51，因为lookback\_window\_size=50；
+\item 第3$\sim$5行：将行情数据如价格、交易量等信息，变为(0,1)范围之间的数值；
+\item 第6$\sim$12行：形成环境观察的前5维数据，分别为：开盘价、最高价、收盘价、最低价、交易量，且取值范围均为0$\sim$1之间；
+\item 第13行：交易历史在构造函数进行的定义，其由[5, self.lookback\_window\_size+1]组成，第1维代表当前余额，初始时为
+初始时的金额，经过scaler缩放后，其值全为1，剩下的维值全为零；
+\item 第14、15行：将交易历史附加到obs后面，使obs变为[10, lookback\_window\_size+1]；
+\item 第16行：返回这个观察值。
+\end{itemize}
+
+\subsubsection{采取行动}
+在强化学习中，我们首先得到环境的观察，然后根据观察采用取某种行动，环境将变为下一个状态，同时环境会给我们一个奖励。我们
+再观测到环境的状态（可能不是状态的全部），再决定采取的行动，依此运行下去。\newline
+在gym中，这些工作在step方法中完成，我们首先来做一些准备工作。
+获取最新价格（收盘价），如下所示：
+\lstset{language=PYTHON, caption={获取最新价格（收盘价）}, label={c000034}}
+\begin{lstlisting}
+class FmeEnv(gym.Env):
+    def _get_current_price(self):
+        return self.df['Close'].values[self.frame_start + 
+                    self.current_step]
+\end{lstlisting}
+采取行动，即买卖比特币操作，如下所示：
+\lstset{language=PYTHON, caption={采取行动}, label={c000035}}
+\begin{lstlisting}
+class FmeEnv(gym.Env):    
+    def _take_action(self, action, current_price):
+        action_type = action[0]
+        amount = action[1] / 10
+        btc_bought = 0
+        btc_sold = 0
+        cost = 0
+        sales = 0
+        if action_type < 1:
+            btc_bought = self.balance / current_price * amount
+            cost = btc_bought * current_price * (1 + self.commission)
+            self.btc_held += btc_bought
+            self.balance -= cost
+        elif action_type < 2:
+            btc_sold = self.btc_held * amount
+            sales = btc_sold * current_price * (1 - self.commission)
+            self.btc_held -= btc_sold
+            self.balance += sales
+        if btc_sold > 0 or btc_bought > 0:
+            self.trades.append({'step': self.frame_start + self.current_step,
+                                'amount': btc_sold if btc_sold > 0 else btc_bought, 'total': sales if btc_sold > 0 else cost,
+                                'type': "sell" if btc_sold > 0 else "buy"})
+        self.net_worth = self.balance + self.btc_held * current_price
+        self.account_history = np.append(self.account_history, [
+            [self.balance],
+            [btc_bought],
+            [cost],
+            [btc_sold],
+            [sales]
+        ], axis=1)
+\end{lstlisting}
+\begin{itemize}
+\item 第3行：获取行动类别，由reset方法解读可以得出，action为[3, 10]，其中第1维取值为0至2，分别代表买、卖、持有；
+\item 第4行：求出买比特币时占余额的百分比，卖比特币时占比特币持有量的百分比；
+\item 第9$\sim$13行：为买比特币操作；
+\item 第10行：数量为当前余额除以当前价格，然后乘以第4行求出的百分比；
+\item 第11行：成本为购买数量，乘以当前价格，最后再加上手续费；
+\item 第12行：增加持有比特币数量；
+\item 第13行：最新余额为原来的余额减去成本；
+\item 第14$\sim$18行：为卖出比特币操作；
+\item 第15行：计算欲卖出的比特币数量；
+\item 第16行：得到的实际金额为卖出比特币数量乘以当前价格再减去手续费；
+\item 第17行：减少比特币持有量；
+\item 第18行：增加余额；
+\item 第19$\sim$22行：如果发生交易，将交易信息添加到self.trades中；
+\item 第23行：净值为余额再加上比特币持有量乘以当前价格。
+\end{itemize}
+接下来我们来看step方法，如下所示：
+\lstset{language=PYTHON, caption={环境向下一状态转换}, label={c000036}}
+\begin{lstlisting}
+class FmeEnv(gym.Env):
+    def step(self, action):
+        current_price = self._get_current_price() + 0.01
+        prev_net_worth = self.net_worth
+        self._take_action(action, current_price)
+        self.steps_left -= 1
+        self.current_step += 1
+        done = self.net_worth <= 0
+        if self.steps_left == 0:
+            print('************************ 回测结束，净资产：'
+                        '{0} *********************'.format(
+                        self.net_worth))
+            self.balance += self.btc_held * current_price
+            self.btc_held = 0
+            self._reset_session()
+            done = True
+        obs = self._next_observation()
+        reward = self.net_worth - prev_net_worth
+        return obs, reward, done, {}
+\end{lstlisting}
+在上面的程序中，我们取出当前价格和当前净值，进行买入或卖出操作后，更新这些值，当我们的净值小于等于零时，回测过程结束，
+当没有达到数据集最后时，我们得到环境的下一个状态，将净值的变化作为Reward，因为当我们的操作使净值增加时，reward为正，
+而当我们的操作使净值减少时，reward为负，这样就可以使我们的模型通过深度强化学习，达到使我们的净值增加的目的。
+
+
+我们这里用到的数据集是bitstamp交易所由2012年到2019年的交易数据，时间间隔为1分钟。\newline
 下面我们来看reset方法，可以重复比特币交易环境，通常我们在训练网络模型时，我们使用训练环境。在测试时，我们需要使用
 测试环境，就需要首先调用此方法：
 
