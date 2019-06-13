@@ -8,29 +8,53 @@ class FmeMlpAgent(object):
         self.name = 'FmeMlpAgent'
         self.test_size = 500
 
-    def train(self):
-        train_env = self.build_train_env()
+    def generate_dataset(self):
+        train_env = self.build_env()
         obs = train_env.reset()
+        sum = 0
         for i in range(self.slice_point):
-            action = self.choose_action(i+self.fme_env.lookback_window_size, obs)
+            # 空仓样本
+            action = self.choose_action(i+self.fme_env.lookback_window_size, obs, 0)
+            if 0 == action[0]:
+                y1 = np.array([1.0, 0.0, 0.0])
+            elif 1 == action[0]:
+                y1 = np.array([0.0, 1.0, 0.0])
+            elif 2 == action[0]:
+                y1 = np.array([0.0, 0.0, 1.0])
+            # 满仓样本
+            action = self.choose_action(i+self.fme_env.lookback_window_size, obs, 1)
+            if 0 == action[0]:
+                y2 = np.array([1.0, 0.0, 0.0])
+            elif 1 == action[0]:
+                y2 = np.array([0.0, 1.0, 0.0])
+            elif 2 == action[0]:
+                y2 = np.array([0.0, 0.0, 1.0])
             obs, rewards, done, info = train_env.step([action])
+            obs_t = np.reshape(obs, (obs.shape[1], obs.shape[2])).T
+            x = np.reshape(obs_t, (obs_t.shape[0]*obs_t.shape[1]))
+            print('      x={0}; y1={1}; y2={2}'.format(x.shape, y1, y2))
+            sum += 1
+            if sum > 21:
+                done = True
             if done:
                 break
-            train_env.render(mode="human", title="BTC")
+            train_env.render(mode="system", title="BTC")
         print('回测结束 ^_^')
 
-    def build_train_env(self):
+    def build_env(self):
         self.df = pd.read_csv('./data/bitstamp.csv')
         self.df = self.df.dropna().reset_index()
         self.df = self.df.sort_values('Timestamp')
         self.slice_point = int(len(self.df) - self.test_size)
-        self.train_df = self.df[:self.slice_point]
-        self.test_df = self.df[self.slice_point:]
-        self.fme_env = FmeEnv(self.train_df, serial=True)
+        self.train_df = np.array(self.df[:self.slice_point])
+        self.test_df = np.array(self.df[self.slice_point:])
+        lookback_window_size = 5
+        self.fme_env = FmeEnv(self.df, serial=True, 
+                    lookback_window_size=lookback_window_size)
         return DummyVecEnv(
             [lambda: self.fme_env])
 
-    def choose_action(self, idx, obs):
+    def choose_action(self, idx, obs, position=0):
         commission = self.fme_env.commission
         time_span = 15
         recs = self.df.iloc[idx:idx+time_span]
@@ -42,13 +66,13 @@ class FmeMlpAgent(object):
         for i in range(1, time_span):
             if datas[i][close_idx] > current_price*(1+commission):
                 # 空仓时买入；满仓时持有
-                if self.fme_env.btc_held <= 0.00000001:
+                if 0 == position:
                     action = np.array([0, 10]) # 买入
                     break
                 else:
                     break
             elif datas[i][close_idx] < current_price*(1-commission):
-                if self.fme_env.btc_held > 0.00000001:
+                if 1 == position:
                     action = np.array([1, 10])
                     break
                 else:
@@ -57,7 +81,7 @@ class FmeMlpAgent(object):
         #return self.fme_env.action_space.sample()
 
     def test001(self):
-        train_env = self.build_train_env()
+        train_env = self.build_env()
         obs = train_env.reset()
         idx = self.fme_env.lookback_window_size + 1
         action = self.choose_action(idx, obs)

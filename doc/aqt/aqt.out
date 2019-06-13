@@ -107,7 +107,7 @@
 \BOOKMARK [3][-]{subsubsection.16.2.7}{先知型Agent}{subsection.16.2}% 107
 \BOOKMARK [2][-]{subsection.16.3}{策略训练}{section.16}% 108
 \BOOKMARK [3][-]{subsubsection.16.3.1}{生成数据集}{subsection.16.3}% 109
-\BOOKMARK [3][-]{subsubsection.16.3.2}{多层感知器}{subsection.16.3}% 110
-\BOOKMARK [3][-]{subsubsection.16.3.3}{XGBoost策略}{subsection.16.3}% 111
-\BOOKMARK [3][-]{subsubsection.16.3.4}{Transformer策略}{subsection.16.3}% 112
-\BOOKMARK [1][-]{section.17}{汇总}{}% 113
+\BOOKMARK [1][-]{section.17}{汇总}{}% 110
+\BOOKMARK [2][-]{subsubsection.17.0.1}{多层感知器}{section.17}% 111
+\BOOKMARK [3][-]{subsubsection.17.0.2}{XGBoost策略}{subsubsection.17.0.1}% 112
+\BOOKMARK [3][-]{subsubsection.17.0.3}{Transformer策略}{subsubsection.17.0.1}% 113

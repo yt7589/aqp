@@ -135,12 +135,23 @@ class FmeEnv(gym.Env):
 
     def render(self, mode='human', **kwargs):
         if mode == 'system':
+            '''
             print('Price: ' + str(self.current_price))
             print(
                 'Bought: ' + str(self.account_history[2][self.current_step + self.frame_start]))
             print(
                 'Sold: ' + str(self.account_history[4][self.current_step + self.frame_start]))
             print('Net worth: ' + str(self.net_worth))
+            '''
+            print('# price:{1:-10.2f} \tnet_worth:{4:-10.2f} \tbalance:{6:-10.2f} \tbtc_held:{5:-10.2f} \tBought:{2:-10.2f} \tSold:{3:-10.2f};        steps_left:{0}'.format(
+                self.steps_left, 
+                self.current_price,
+                self.account_history[2][self.current_step + self.frame_start],
+                self.account_history[4][self.current_step + self.frame_start],
+                self.net_worth,
+                self.btc_held,
+                self.balance
+            ))
 
         elif mode == 'human':
             if self.viewer is None:

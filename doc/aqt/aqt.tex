@@ -5110,7 +5110,89 @@ class FmeGodAgent(object):
 \subsection{策略训练}
 上节所讨论的无论随机策略还是先知型策略，都不可能在实际中应用，我们在这一节中，将训练可以用于实践的策略。
 \subsubsection{生成数据集}
+我们将数据组织为\cite{r000008}所述的tfrecord格式，数据格式为31个浮点数组成的特征，共有6天数据：开盘价、最高价、
+收盘价、最低价、交易量，最后加上空仓满仓标志。标签为0$\sim$3，分别表示买入、卖出和持有。\newline
+\paragraph{试验数据}
+为了更好的理解Tfrecord的原理，我们在这里定义一个超简单的数据集，并定义一个线性关系，最终将这些数据保存到tfrecord
+文件中。
+我们定义：
+\begin{equation}
+\begin{aligned}
+\boldsymbol{a}_i \in R^{60000} \sim \mathcal{N}(0, 1), i \in {1, 2, 3, 4, 5} \\
+\boldsymbol{\delta} \in R^{60000} \sim \mathcal{N}(0, 1) \\
+\hat{\boldsymbol{x}}_6 = c_1 \cdot \boldsymbol{a}_1 + c_2 \cdot \boldsymbol{a}_2 + 
+c_3 \cdot \boldsymbol{a}_3 + c_4 \cdot \boldsymbol{a}_4 + c_5 \cdot \boldsymbol{a}_5 \\
+\boldsymbol{a}_6 = \boldsymbol{a}_6 + \boldsymbol{\delta} \\
+X = [\boldsymbol{a}_1, \boldsymbol{a}_2, \boldsymbol{a}_3, \boldsymbol{a}_4, 
+    \boldsymbol{a}_5, \boldsymbol{a}_6] \\
+y^{(m)}_{i} = \begin{cases}
+    0, \quad \hat{a}^{(m)}_6 - a^{(m)}_6 > 0.3 \\
+    1, \quad -0.3 < \hat{a}^{(m)}_6 - a^{(m)}_6 < 0.3 \\
+    2, \quad \hat{a}^{(m)}_6 - a^{(m)}_6 < -0.3
+\end{cases}
+\end{aligned}
+\label{e000121}
+\end{equation}
+代码实现如下所示：
+\lstset{language=PYTHON, caption={生成试验数据}, label={c000077}}
+\begin{lstlisting}
+class FmeDataset(object):
+    def create_exp_dataset(self, dataset_size = 60000, 
+                tfr_file = 'train_dataset.tfrecords'):
+        a1 = np.random.randn(dataset_size)
+        c1 = 1.1
+        a2 = np.random.randn(dataset_size)
+        c2 = 2.1
+        a3 = np.random.randn(dataset_size)
+        c3 = 3.2
+        a4 = np.random.randn(dataset_size)
+        c4 = 4.3
+        a5 = np.random.randn(dataset_size)
+        c5 = 5.1
+        delta = np.random.randn(dataset_size)
+        a6_ = a1*c1 + a2*c2 + a3*c3 + a4*c4 + a5*c5
+        a6 = a6_ + delta
+        y = np.zeros((dataset_size), dtype=np.int32)
+        for i in range(len(a6)):
+            if a6[i] - a6_[i] > 0.3:
+                y[i] = 0
+            elif a6[i] - a6_[i] < -0.3:
+                y[i] = 2
+            else:
+                y[i] = 1
+        X_ = np.reshape(np.array([a1, a2, a3, a4, a5, a6]).T, (dataset_size, 6, 1))
+        X = tf.data.Dataset.from_tensor_slices(tf.cast(X_, tf.float64))
+        print('X:{0}'.format(X))
+        y_ = y.T
+        y = tf.data.Dataset.from_tensor_slices(tf.cast(y_, tf.int64))
+        print('y:{0}'.format(y))
+        ds = tf.data.Dataset.from_tensor_slices((X_, y_))
+        print(ds)
+\end{lstlisting}
+在上面的程序中，我们生成了一个tf.data.Dataset对象，我们需要将该记录
+
+
+\section{汇总}
+\lstset{language=BASH, caption={编号}, label={c900038}}
+\begin{lstlisting}
+t000004
+f000022
+c000078
+e000122
+\end{lstlisting}
+
+
+
 \subsubsection{多层感知器}
+\lstset{language=PYTHON, caption={MLP in TensorFlow 2.0}, label={c000039a}}
+\begin{lstlisting}
+tf.keras.layers.Flattern(input_shape=(28, 28, 1))
+tf.keras.layers.Dense(128, activation=tf.nn.relu)
+tf.keras.layers.Dense(10, activation=tf.nn.softmax)
+\end{lstlisting}
+
+
+
 \subsubsection{XGBoost策略}
 \subsubsection{Transformer策略}
 生成训练样本集，采用MLP模型进行训练：\newline
@@ -5128,19 +5210,13 @@ class FmeGodAgent(object):
 
 
 
-\section{汇总}
-\lstset{language=BASH, caption={编号}, label={c900038}}
-\begin{lstlisting}
-t000004
-f000022
-c000011
-e000098
-\end{lstlisting}
+
 
 
 
 \lstset{language=BASH, caption={参考链接}, label={c900037}}
 \begin{lstlisting}
+\text{数学公式1}https://meta.wikimedia.org/wiki/Help:Displaying_a_formula
 https://arxiv.org/pdf/1805.09692.pdf
 https://www.biorxiv.org/content/biorxiv/early/2018/07/03/360537.full.pdf
 \end{lstlisting}
