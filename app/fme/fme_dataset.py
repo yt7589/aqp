@@ -54,7 +54,6 @@ class FmeDataset(object):
             X_raw.shape[0] - self.time_span - frame_size + 1, 
             X_raw.shape[1] * frame_size
         ))
-        print(X_train.shape[0])
         y_train = np.full((X_train.shape[0], ), 2.0)
         #start_idx = end_idx
         btc_held = 1
@@ -62,13 +61,20 @@ class FmeDataset(object):
             y_train[idx] = self._choose_action(btc_held, X_raw, idx, frame_size)
         X_train1 = np.array(X_train, copy=True)
         y_train1 = np.array(y_train, copy=True)
+        c1 = np.ones(X_train.shape[0])
+        X_train = np.c_[X_train, c1]
+        c0 = np.zeros(X_train1.shape[0])
+        X_train1 = np.c_[X_train1, c0]
         btc_held = 0
         for idx in range(y_train1.shape[0]):
             y_train1[idx] = self._choose_action(btc_held, X_raw, idx, frame_size)
         X_train = np.append(X_train, X_train1, axis=0)
         y_train = np.append(y_train, y_train1, axis=0)
-        print('X_train:{0}; {1}'.format(X_train.shape, X_train))
-        print('y_train:{0}; {1}'.format(y_train.shape, y_train))
+        #print('X_train:{0}; {1}'.format(X_train.shape, X_train))
+        #print('y_train:{0}; {1}'.format(y_train.shape, y_train))
+
+        np.savetxt('./work/btc_x_1.csv', X_train, delimiter = ',')
+        np.savetxt('./work/btc_y_1.csv', y_train, delimiter=',')
 
 
 
