@@ -26,7 +26,7 @@ class XgboostStrategy(object):
         # 作为rlw中对应样本的权重。
         rlw = np.ones((X_train.shape[0]))
         print('X_train:{0}'.format(X_train.shape))
-        print('y_train:{0}'.format(y_train))
+        print('y_train:{0}'.format(y_train.shape))
         xg_train = xgb.DMatrix(X_train, label=y_train, weight=rlw)
         xg_test = xgb.DMatrix( X_test, label=y_test)
         xgb_params = {

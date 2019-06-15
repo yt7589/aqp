@@ -5172,14 +5172,7 @@ class FmeDataset(object):
 在上面的程序中，我们生成了一个tf.data.Dataset对象，我们需要将该记录
 
 
-\section{汇总}
-\lstset{language=BASH, caption={编号}, label={c900038}}
-\begin{lstlisting}
-t000004
-f000022
-c000078
-e000122
-\end{lstlisting}
+
 
 
 
@@ -5194,6 +5187,181 @@ tf.keras.layers.Dense(10, activation=tf.nn.softmax)
 
 
 \subsubsection{XGBoost策略}
+XGBoost是一种大规模并行的Boost Tree算法，在Kaggle的竞赛中，大约有三成以上的团队采用XGBoost算法，对于我们需要
+通过前几个时间点的行情数据，选择买入、卖出和持有来说，是比较适合的算法。我们首先简单介绍一下XGBoost在人工数据集上的
+应用，然后我们将比特币交易数据做成一个数据集，以500个时间点为一个单位，做成多个数据集，按照如下方法进行训练：
+\begin{enumerate}
+    \item 拿第1个数据集训练XGBoost模型；
+    \item 拿第2个数据集作为深度强化学习环境，对每一时间点，我们用XGBoost选择买入、卖出或持有行动，我们将新净值与
+            老净值之比作为本时间点样本对应的权重，这样运行完一个episode之后，每个时间点样本将有一个新的权重，我们
+            拿新的样本集重新训练XGBoost模型，训练完成之后，我们再运行一个深度强化学习的episode，循环重复，直到
+            我们的策略达到或接进FmeGodAgent的程序为止；
+    \item 接着我们拿第3个数据重复上在的过程，依此类推，训练到倒数第2个数据集；
+    \item 我们拿最后一个数据集运行一次深度强化学习的episode，以此来作为我们算法的最终结果；
+\end{enumerate}
+\paragraph{XGBoost算法演示}
+我们首先创建一个人工数据集，如下所示：
+\begin{equation}
+\begin{aligned}
+\boldsymbol{a}_i \in R^{60000} \sim \mathcal{N}(0, 1), i \in {1, 2, 3, 4, 5} \\
+\boldsymbol{\delta} \in R^{60000} \sim \mathcal{N}(0, 1) \\
+\hat{\boldsymbol{x}}_6 = c_1 \cdot \boldsymbol{a}_1 + c_2 \cdot \boldsymbol{a}_2 + 
+c_3 \cdot \boldsymbol{a}_3 + c_4 \cdot \boldsymbol{a}_4 + c_5 \cdot \boldsymbol{a}_5 \\
+\boldsymbol{a}_6 = \boldsymbol{a}_6 + \boldsymbol{\delta} \\
+X = [\boldsymbol{a}_1, \boldsymbol{a}_2, \boldsymbol{a}_3, \boldsymbol{a}_4, 
+    \boldsymbol{a}_5, \boldsymbol{a}_6] \\
+y^{(m)}_{i} = \begin{cases}
+    0, \quad \hat{a}^{(m)}_6 - a^{(m)}_6 > 0.3 \\
+    1, \quad -0.3 < \hat{a}^{(m)}_6 - a^{(m)}_6 < 0.3 \\
+    2, \quad \hat{a}^{(m)}_6 - a^{(m)}_6 < -0.3
+\end{cases}
+\end{aligned}
+\label{e000122}
+\end{equation}
+生成代码如下所示：
+\lstset{language=PYTHON, caption={生成试验数据}, label={c000078}}
+\begin{lstlisting}
+class FmeDataset(object):
+    def create_np_dataset(self, dataset_size = 60000):
+        a1 = np.random.randn(dataset_size)
+        c1 = 1.1
+        a2 = np.random.randn(dataset_size)
+        c2 = 2.1
+        a3 = np.random.randn(dataset_size)
+        c3 = 3.2
+        a4 = np.random.randn(dataset_size)
+        c4 = 4.3
+        a5 = np.random.randn(dataset_size)
+        c5 = 5.1
+        delta = np.random.randn(dataset_size)
+        a6_ = a1*c1 + a2*c2 + a3*c3 + a4*c4 + a5*c5
+        a6 = a6_ + delta
+        y_ = np.zeros((dataset_size), dtype=np.int32)
+        for i in range(len(a6)):
+            if a6[i] - a6_[i] > 0.3:
+                y_[i] = 0
+            elif a6[i] - a6_[i] < -0.3:
+                y_[i] = 2
+            else:
+                y_[i] = 1
+        X = np.reshape(np.array([a1, a2, a3, a4, a5, a6]).T, (dataset_size, 6))
+        y = y_.T
+        return X, y
+\end{lstlisting}
+我们首先定义5个符合标准正态分布的随机变量$a_1, a_2, a_3, a_4, a_5$，然后定义其所对应的系数，我们定义$a_6$这5个
+变量的线性组合作为其真值，然后再加上一个符合标准正态分布的随机变量delta作为实际值，我们定义：
+\begin{itemize}
+    \item 当实际值减真值大于0.3时，标签值为0；
+    \item 当实际值减真值大于-0.3且小于0.3时，标签值为1；
+    \item 当实际值减真值小于-0.3时，标签值为2；
+\end{itemize}
+生成最后的设计矩阵$X \in R^{60000 \times 6}$，而$y \in R^{60000}$，其中60000为数据集大小。\newline
+XGBoost模型代码如下所示：
+\lstset{language=PYTHON, caption={XGBoost示例代码}, label={c000079}}
+\begin{lstlisting}
+class XgboostStrategy(object):
+    def __init__(self):
+        self.name = 'XgboostStrategy'
+        self.model_file = './work/a001.xgb'
+
+    def demo(self):
+        print('XgboostStrategy demo...')
+        fme_dataset = FmeDataset()
+        X_train, y_train = fme_dataset.create_np_dataset(dataset_size=60000)
+        X_validation, y_validation = fme_dataset.create_np_dataset(dataset_size=12000)
+        X_test, y_test = fme_dataset.create_np_dataset(dataset_size=10000)
+        '''
+        # 当需要控制样本权重时，可用于深度强化学习中
+        w = np.random.rand(5,1)
+        dtrain = xgb.DMatrix( data, label=label, missing = -999.0, weight=w)
+        '''
+        # 在学习过程中，见到新样本之后，会生成一个结果，我们用新净值除以老净值的比例作为reward，并将
+        # 作为rlw中对应样本的权重。
+        rlw = np.ones((X_train.shape[0]))
+        print('X_train:{0}'.format(X_train.shape))
+        print('y_train:{0}'.format(y_train))
+        xg_train = xgb.DMatrix(X_train, label=y_train, weight=rlw)
+        xg_test = xgb.DMatrix( X_test, label=y_test)
+        xgb_params = {
+            'learning_rate': 0.1,  # 步长
+            'n_estimators': 10,
+            'max_depth': 5,  # 树的最大深度
+            'objective': 'multi:softprob',
+            'num_class': 3,
+            # 决定最小叶子节点样本权重和，如果一个叶子节点的样本权重和小于
+            # min_child_weight则拆分过程结束。
+            'min_child_weight': 1, 
+            # 指定了节点分裂所需的最小损失函数下降值。
+            # 这个参数的值越大，算法越保守 
+            'gamma': 0,  
+            'silent': 0,  # 输出运行信息
+            # 每个决策树所用的子样本占总样本的比例（作用于样本）
+            'subsample': 0.8,  
+            # 建立树时对特征随机采样的比例（作用于特征）典型值：0.5-1
+            'colsample_bytree': 0.8,  
+            'nthread': 4,
+            'seed': 27
+        }
+        watchlist = [ (xg_train,'train'), (xg_test, 'test') ]
+        num_round = 60
+        if os.path.exists(self.model_file):
+            print('load xgboost model...')
+            bst = xgb.Booster({})
+            bst.load_model(self.model_file)
+        else:
+            print('build xgboost model...')
+            bst = xgb.train(xgb_params, xg_train, num_round, watchlist )
+            bst.save_model(self.model_file)
+        pred = bst.predict( xg_test )
+        print('pred:{0}; {1}=>{2}'.format(pred.shape, pred[0], np.argmax(pred[0])))
+        #print ('predicting, classification error=%f' % (sum( int(pred[i]) != y_test[i] for i in range(len(y_test))) / float(len(y_test)) ))
+        plot_importance(bst)
+        plt.show()
+\end{lstlisting}
+第8$\sim$11行：生成训练、验证、测试样本集；
+第19行：定义训练样本集中样本权重，每个样本对应一个权重，在这里初始值为1；
+第22行：定义XGBoost模型需要的训练样本集，注意这里最后一个参数为样本权重，我们在后续的强化学习中，就需要通过不断改变
+这个权重，使模型具有持续学习的能力；
+第23行：定义XGBoost模型需要的测试样本集；
+第24$\sim$43行：设置XGBoost模型的超参数，这里基本设置的是缺省值；
+第45行：设置训练样本集训练遍数；
+第46$\sim$49行：如果有之前训练好的模型文件，直接载入该模型，无需进行训练；
+第50$\sim$53行：训练模型，当训练完成后，将模型保存到文件中；
+第55行：调用训练好的模型进行预测；
+第57、58行：绘制特征的重要程度；
+运行上面程序，结果如下所示：
+\begin{figure}[H]
+    \caption{XGBoost运行结果}
+    \label{f000093}
+    \centering
+    \includegraphics[height=4cm]{images/f000093}
+\end{figure}
+\begin{figure}[H]
+    \caption{XGBoost识别出的特征重要性}
+    \label{f000094}
+    \centering
+    \includegraphics[height=10cm]{images/f000094}
+\end{figure}
+
+\subsubsection{生成数据集}
+我们将比特币行情数据，以500个时间点为单位，生成一个数据集。我们用第1个数据集训练XGBoost模型，然后从第2个开始作为
+深度强化学习环境，利用样本权重进行学习。
+
+
+
+
+\section{汇总}
+\lstset{language=BASH, caption={编号}, label={c900038}}
+\begin{lstlisting}
+t000004
+f000022
+c000078
+e000122
+\end{lstlisting}
+
+
+
+
 \subsubsection{Transformer策略}
 生成训练样本集，采用MLP模型进行训练：\newline
 取出lookback\_window\_size+1条数据，运行choose\_action算法，求出其应该是[0,0,0]，分别对应于买入、卖出、持有，
@@ -5234,3 +5402,6 @@ https://www.biorxiv.org/content/biorxiv/early/2018/07/03/360537.full.pdf
 
 
 \end{document}
+
+
+
