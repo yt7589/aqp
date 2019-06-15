@@ -1,5 +1,7 @@
 import numpy as np
+import pandas as pd
 import tensorflow as tf
+from sklearn import preprocessing
 
 
 class FmeDataset(object):
@@ -15,6 +17,92 @@ class FmeDataset(object):
 
     def __init__(self):
         self.name = 'FmeDataset'
+        self.commission = 0.007
+        self.time_span = 15
+
+    def create_bitcoin_dataset(self, dataset_size=1000):
+        ''' 根据比特币交易数据生成系列数据集，每个数据集缺省包括1000个时间点 '''
+        print('bitcoin dataset generation...')
+        dataset_size += self.time_span
+
+        df = pd.read_csv('./data/bitstamp.csv')
+        df = df.sort_values('Timestamp')
+        df = df.dropna().reset_index()
+        start_idx = 0
+        scaler = preprocessing.MinMaxScaler()
+
+
+        end_idx = start_idx + dataset_size
+        scaled_df = df.values[start_idx:end_idx].astype(np.float64)
+        scaled_df = scaler.fit_transform(scaled_df)
+        scaled_df = pd.DataFrame(scaled_df, columns=df.columns)
+        X_raw = np.array([
+            scaled_df['Open'].values[:],
+            scaled_df['High'].values[:],
+            scaled_df['Low'].values[:],
+            scaled_df['Close'].values[:],
+            scaled_df['Volume_(BTC)'].values[:],
+        ])
+        X_raw = X_raw.T
+        frame_size = 5
+        X_train = np.array([])
+        for idx in range(frame_size-1, X_raw.shape[0] - self.time_span):
+            # 形成frame
+            for i in range(idx-frame_size+1, idx+1):
+                X_train = np.append(X_train, X_raw[i])
+        X_train = X_train.reshape((
+            X_raw.shape[0] - self.time_span - frame_size + 1, 
+            X_raw.shape[1] * frame_size
+        ))
+        print(X_train.shape[0])
+        y_train = np.full((X_train.shape[0], ), 2.0)
+        #start_idx = end_idx
+        btc_held = 1
+        for idx in range(y_train.shape[0]):
+            y_train[idx] = self._choose_action(btc_held, X_raw, idx, frame_size)
+        X_train1 = np.array(X_train, copy=True)
+        y_train1 = np.array(y_train, copy=True)
+        btc_held = 0
+        for idx in range(y_train1.shape[0]):
+            y_train1[idx] = self._choose_action(btc_held, X_raw, idx, frame_size)
+        X_train = np.append(X_train, X_train1, axis=0)
+        y_train = np.append(y_train, y_train1, axis=0)
+        print('X_train:{0}; {1}'.format(X_train.shape, X_train))
+        print('y_train:{0}; {1}'.format(y_train.shape, y_train))
+
+
+
+        '''
+        self.slice_point = int(len(df) - test_size)
+        self.train_df = df[:self.slice_point]
+        self.test_df = df[self.slice_point:]
+        '''
+        print('^_^ ...... ^_^')
+        return X_train, y_train
+
+    def _choose_action(self, btc_held, X, idx, frame_size):
+        '''  '''
+        datas = X[idx+frame_size:idx+frame_size+self.time_span] #self.df.iloc[idx:idx+time_span]
+        #datas = np.array(recs)
+        close_idx = 3
+        current_price = datas[0][close_idx]
+        action = 2.0
+        # 判断未来涨跌
+        for i in range(1, self.time_span):
+            if datas[i][close_idx] > current_price*(1+self.commission):
+                # 空仓时买入；满仓时持有
+                if 0 == btc_held:
+                    action = 0.0 # 买入
+                    break
+                else:
+                    break
+            elif datas[i][close_idx] < current_price*(1-self.commission):
+                if 1 == btc_held:
+                    action = 1.0
+                    break
+                else:
+                    break
+        return action
 
     def create_np_dataset(self, dataset_size = 60000):
         a1 = np.random.randn(dataset_size)

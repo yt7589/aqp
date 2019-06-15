@@ -16,3 +16,7 @@ class TFmeDataset(unittest.TestCase):
         print(rec)
         rst = tf.train.Example.FromString(rec)
         print(rst)
+
+    def test_create_bitcoin_dataset(self):
+        fme_dataset = FmeDataset()
+        fme_dataset.create_bitcoin_dataset(dataset_size=500)
