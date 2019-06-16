@@ -17,22 +17,29 @@ class FmeDataset(object):
 
     def __init__(self):
         self.name = 'FmeDataset'
+        self.quotation_file = './data/bitstamp.csv'
+        self.ds_x_file = './work/btc_x_1.csv'
+        self.ds_y_file = './work/btc_y_1.csv'
         self.commission = 0.007
         self.time_span = 15
+
+    def load_bitcoin_dataset(self):
+        X = np.loadtxt(self.ds_x_file, delimiter=',')
+        y = np.loadtxt(self.ds_y_file, delimiter=',')
+        return X, y
 
     def create_bitcoin_dataset(self, dataset_size=1000):
         ''' 根据比特币交易数据生成系列数据集，每个数据集缺省包括1000个时间点 '''
         print('bitcoin dataset generation...')
         dataset_size += self.time_span
-
-        df = pd.read_csv('./data/bitstamp.csv')
+        # 读入比特币行情
+        df = pd.read_csv(self.quotation_file)
         df = df.sort_values('Timestamp')
         df = df.dropna().reset_index()
+        scaler = preprocessing.MinMaxScaler() # 将数值归一化到0~1
         start_idx = 0
-        scaler = preprocessing.MinMaxScaler()
-
-
         end_idx = start_idx + dataset_size
+        # 读入归一化的比特币行情数据
         scaled_df = df.values[start_idx:end_idx].astype(np.float64)
         scaled_df = scaler.fit_transform(scaled_df)
         scaled_df = pd.DataFrame(scaled_df, columns=df.columns)
@@ -44,6 +51,7 @@ class FmeDataset(object):
             scaled_df['Volume_(BTC)'].values[:],
         ])
         X_raw = X_raw.T
+        # 将之前5个时间点的行情数据作为一个训练样本
         frame_size = 5
         X_train = np.array([])
         for idx in range(frame_size-1, X_raw.shape[0] - self.time_span):
@@ -54,36 +62,28 @@ class FmeDataset(object):
             X_raw.shape[0] - self.time_span - frame_size + 1, 
             X_raw.shape[1] * frame_size
         ))
+        # 求出持有比特币时的最佳行动作为标签
         y_train = np.full((X_train.shape[0], ), 2.0)
-        #start_idx = end_idx
         btc_held = 1
         for idx in range(y_train.shape[0]):
             y_train[idx] = self._choose_action(btc_held, X_raw, idx, frame_size)
+        # 复制样本集，求出在没有持有比特币时的最佳行动并作为标签
         X_train1 = np.array(X_train, copy=True)
         y_train1 = np.array(y_train, copy=True)
+        btc_held = 0
+        for idx in range(y_train1.shape[0]):
+            y_train1[idx] = self._choose_action(btc_held, X_raw, idx, frame_size)
+        # 在训练样本最后加入一列，分别代表比特币仓位情况：1满仓；0空仓
         c1 = np.ones(X_train.shape[0])
         X_train = np.c_[X_train, c1]
         c0 = np.zeros(X_train1.shape[0])
         X_train1 = np.c_[X_train1, c0]
-        btc_held = 0
-        for idx in range(y_train1.shape[0]):
-            y_train1[idx] = self._choose_action(btc_held, X_raw, idx, frame_size)
+        # 将满仓和空仓数据集进行合并
         X_train = np.append(X_train, X_train1, axis=0)
         y_train = np.append(y_train, y_train1, axis=0)
-        #print('X_train:{0}; {1}'.format(X_train.shape, X_train))
-        #print('y_train:{0}; {1}'.format(y_train.shape, y_train))
-
-        np.savetxt('./work/btc_x_1.csv', X_train, delimiter = ',')
-        np.savetxt('./work/btc_y_1.csv', y_train, delimiter=',')
-
-
-
-        '''
-        self.slice_point = int(len(df) - test_size)
-        self.train_df = df[:self.slice_point]
-        self.test_df = df[self.slice_point:]
-        '''
-        print('^_^ ...... ^_^')
+        # 将数据集保存为文件
+        np.savetxt(self.ds_x_file, X_train, delimiter = ',')
+        np.savetxt(self.ds_y_file, y_train, delimiter=',')
         return X_train, y_train
 
     def _choose_action(self, btc_held, X, idx, frame_size):

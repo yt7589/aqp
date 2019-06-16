@@ -20,3 +20,9 @@ class TFmeDataset(unittest.TestCase):
     def test_create_bitcoin_dataset(self):
         fme_dataset = FmeDataset()
         fme_dataset.create_bitcoin_dataset(dataset_size=500)
+
+    def test_load_bitcoin_dataset(self):
+        fme_dataset = FmeDataset()
+        X, y = fme_dataset.load_bitcoin_dataset()
+        print('X:{0}; {1}'.format(X.shape, X))
+        print('y:{0}; {1}'.format(y.shape, y))
