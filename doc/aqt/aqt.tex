@@ -5318,17 +5318,19 @@ class XgboostStrategy(object):
         plot_importance(bst)
         plt.show()
 \end{lstlisting}
-第8$\sim$11行：生成训练、验证、测试样本集；
-第19行：定义训练样本集中样本权重，每个样本对应一个权重，在这里初始值为1；
-第22行：定义XGBoost模型需要的训练样本集，注意这里最后一个参数为样本权重，我们在后续的强化学习中，就需要通过不断改变
+\begin{itemize}
+\item 第8$\sim$11行：生成训练、验证、测试样本集；
+\item 第19行：定义训练样本集中样本权重，每个样本对应一个权重，在这里初始值为1；
+\item 第22行：定义XGBoost模型需要的训练样本集，注意这里最后一个参数为样本权重，我们在后续的强化学习中，就需要通过不断改变
 这个权重，使模型具有持续学习的能力；
-第23行：定义XGBoost模型需要的测试样本集；
-第24$\sim$43行：设置XGBoost模型的超参数，这里基本设置的是缺省值；
-第45行：设置训练样本集训练遍数；
-第46$\sim$49行：如果有之前训练好的模型文件，直接载入该模型，无需进行训练；
-第50$\sim$53行：训练模型，当训练完成后，将模型保存到文件中；
-第55行：调用训练好的模型进行预测；
-第57、58行：绘制特征的重要程度；
+\item 第23行：定义XGBoost模型需要的测试样本集；
+\item 第24$\sim$43行：设置XGBoost模型的超参数，这里基本设置的是缺省值；
+\item 第45行：设置训练样本集训练遍数；
+\item 第46$\sim$49行：如果有之前训练好的模型文件，直接载入该模型，无需进行训练；
+\item 第50$\sim$53行：训练模型，当训练完成后，将模型保存到文件中；
+\item 第55行：调用训练好的模型进行预测；
+\item 第57、58行：绘制特征的重要程度；
+\end{itemize}
 运行上面程序，结果如下所示：
 \begin{figure}[H]
     \caption{XGBoost运行结果}
@@ -5344,8 +5346,131 @@ class XgboostStrategy(object):
 \end{figure}
 
 \subsubsection{生成数据集}
-我们将比特币行情数据，以500个时间点为单位，生成一个数据集。我们用第1个数据集训练XGBoost模型，然后从第2个开始作为
-深度强化学习环境，利用样本权重进行学习。
+我们将比特币行情数据，以500个时间点为单位，生成一个数据集。我们用第1个数据集训练XGBoost模型。
+\lstset{language=PYTHON, caption={生成样本集}, label={c000080}}
+\begin{lstlisting}
+class FmeDataset(object):
+    def __init__(self):
+        self.name = 'FmeDataset'
+        self.quotation_file = './data/bitstamp.csv'
+        self.ds_x_file = './work/btc_x_1.csv'
+        self.ds_y_file = './work/btc_y_1.csv'
+        self.commission = 0.007
+        self.time_span = 15
+
+    def load_bitcoin_dataset(self):
+        X = np.loadtxt(self.ds_x_file, delimiter=',')
+        y = np.loadtxt(self.ds_y_file, delimiter=',')
+        return X, y
+
+    def create_bitcoin_dataset(self, dataset_size=1000):
+        ''' 根据比特币交易数据生成系列数据集，每个数据集缺省包括1000个时间点 '''
+        print('bitcoin dataset generation...')
+        dataset_size += self.time_span
+        # 读入比特币行情
+        df = pd.read_csv(self.quotation_file)
+        df = df.sort_values('Timestamp')
+        df = df.dropna().reset_index()
+        scaler = preprocessing.MinMaxScaler() # 将数值归一化到0~1
+        start_idx = 0
+        end_idx = start_idx + dataset_size
+        # 读入归一化的比特币行情数据
+        scaled_df = df.values[start_idx:end_idx].astype(np.float64)
+        scaled_df = scaler.fit_transform(scaled_df)
+        scaled_df = pd.DataFrame(scaled_df, columns=df.columns)
+        X_raw = np.array([
+            scaled_df['Open'].values[:],
+            scaled_df['High'].values[:],
+            scaled_df['Low'].values[:],
+            scaled_df['Close'].values[:],
+            scaled_df['Volume_(BTC)'].values[:],
+        ])
+        X_raw = X_raw.T
+        # 将之前5个时间点的行情数据作为一个训练样本
+        frame_size = 5
+        X_train = np.array([])
+        for idx in range(frame_size-1, X_raw.shape[0] - self.time_span):
+            # 形成frame
+            for i in range(idx-frame_size+1, idx+1):
+                X_train = np.append(X_train, X_raw[i])
+        X_train = X_train.reshape((
+            X_raw.shape[0] - self.time_span - frame_size + 1, 
+            X_raw.shape[1] * frame_size
+        ))
+        # 求出持有比特币时的最佳行动作为标签
+        y_train = np.full((X_train.shape[0], ), 2.0)
+        btc_held = 1
+        for idx in range(y_train.shape[0]):
+            y_train[idx] = self._choose_action(btc_held, X_raw, idx, frame_size)
+        # 复制样本集，求出在没有持有比特币时的最佳行动并作为标签
+        X_train1 = np.array(X_train, copy=True)
+        y_train1 = np.array(y_train, copy=True)
+        btc_held = 0
+        for idx in range(y_train1.shape[0]):
+            y_train1[idx] = self._choose_action(btc_held, X_raw, idx, frame_size)
+        # 在训练样本最后加入一列，分别代表比特币仓位情况：1满仓；0空仓
+        c1 = np.ones(X_train.shape[0])
+        X_train = np.c_[X_train, c1]
+        c0 = np.zeros(X_train1.shape[0])
+        X_train1 = np.c_[X_train1, c0]
+        # 将满仓和空仓数据集进行合并
+        X_train = np.append(X_train, X_train1, axis=0)
+        y_train = np.append(y_train, y_train1, axis=0)
+        # 将数据集保存为文件
+        np.savetxt(self.ds_x_file, X_train, delimiter = ',')
+        np.savetxt(self.ds_y_file, y_train, delimiter=',')
+        return X_train, y_train
+\end{lstlisting}
+\begin{itemize}
+\item 第15行：定义生成比特币行情数据集的方法，这里缺省的大小为1000个时间点；
+\item 第18行：由于我们需要根据后面time\_span个时间点的数据，来决定要采取的动作，因此需要多读出time\_span个时间点的数据；
+\item 第20$\sim$22行；读出比特币行情文件，去掉异常数据，按时间先后来排序；
+\item 第23行：用于将数据从任意值，按比例转化为0到1之间的数值；
+\item 第24、25行：确定记录读取的起始位置和结束位置；
+\item 第27$\sim$29行：读入开始到结束位置的数据；
+\item 第30$\sim$36行：取开盘价、最高价、最低价、收盘价、交易量数据形成numpy.ndarray；
+\item 第37行：因为5行1000列，需要将其转置为$R^{1000 \times 5}$形式；
+\item 第39行：frame\_size规定向前面取几个时间点做为一个样本；
+\item 第40$\sim$44行：从第frame\_size个时间点开始，向前取frame\_size个时间点的数据，将其组合在一起成为一个样本，
+添加到X\_train的后边；
+\item 第45$\sim$48行：将X\_train形状变为$R^{1000 \times 25}$，其中25为frame\_size $\times$ 5个特征；
+\item 第49行：定义标签集y\_train，将其缺省值设置为2.0（持有）；
+\item 第51行：满仓情况的数据集；
+\item 第52、53行：对每个训练样本，执行\_choose\_action方法，根据前frame\_size个时间点的数据，决定最佳操作：买入、
+卖出或持有，并更新标签集；
+\item 第55$\sim$59行：将上面的数据集拷贝一份，用于处理空仓情况下选取最佳交易策略；
+\item 第61、62行：在满仓样本后面加上一列元素为1的列；
+\item 第63、64行：在空仓样本后面加上一列元素为0的列；
+\item 第66、67行：将满仓数据集和空仓数据集合并在一起；
+\item 第69、70行：将数据集保存到csv文件中。
+\end{itemize}
+v0.0.2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -5387,6 +5512,8 @@ e000122
 \text{数学公式1}https://meta.wikimedia.org/wiki/Help:Displaying_a_formula
 https://arxiv.org/pdf/1805.09692.pdf
 https://www.biorxiv.org/content/biorxiv/early/2018/07/03/360537.full.pdf
+https://github.com/tensorflow/tensor2tensor/blob/master/tensor2tensor/models/evolved_transformer.py#L66
+
 \end{lstlisting}
 
 

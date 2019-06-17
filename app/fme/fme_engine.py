@@ -23,6 +23,10 @@ class FmeEngine(object):
             self.env.render(mode="human", title="BTC")
         print('回测结束 ^_^')
 
+    def build_env(self):
+        ''' 创建基于数据集的深度强化学习环境  '''
+        pass
+
     def build_raw_env(self):
         ''' 创建原始比特币行情文件生成的env，主要用于深度强化学习试验 '''
         self.df = pd.read_csv('./data/bitstamp.csv')
