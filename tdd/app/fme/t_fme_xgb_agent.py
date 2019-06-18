@@ -3,6 +3,9 @@ from app.fme.fme_dataset import FmeDataset
 from app.fme.fme_xgb_agent import FmeXgbAgent
 
 class TFmeXgbAgent(unittest.TestCase):
+    def test_init(self):
+        fme_xgb_agent = FmeXgbAgent()
+
     def test_train_baby_agent(self):
         #fme_dataset = FmeDataset()
         #fme_dataset.create_bitcoin_dataset(dataset_size=10000)

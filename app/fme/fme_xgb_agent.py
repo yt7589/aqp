@@ -10,6 +10,18 @@ class FmeXgbAgent(object):
     def __init__(self):
         self.name = 'FmeXgbAgent'
         self.model_file = './work/btc_drl.xgb'
+        fme_dataset = FmeDataset()
+        self.X, self.y = fme_dataset.load_bitcoin_dataset()
+        self.model = self.train_baby_agent()
+        # predict example
+        '''
+        x1 = np.array([self.X[0]])
+        xg1 = xgb.DMatrix( x1, label=x1)
+        pred = self.model.predict( xg1 )
+        '''
+
+    def choose_action(self, idx, obs):
+        '''  '''
 
     def train_baby_agent(self):
         ''' 在这里仅进行初步训练，得到一个基本可用的模型 '''
@@ -61,3 +73,4 @@ class FmeXgbAgent(object):
         #print ('predicting, classification error=%f' % (sum( int(pred[i]) != y_test[i] for i in range(len(y_test))) / float(len(y_test)) ))
         plot_importance(bst)
         plt.show()
+        return bst
