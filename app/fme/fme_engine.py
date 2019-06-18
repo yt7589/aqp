@@ -4,16 +4,20 @@ import pandas as pd
 from stable_baselines.common.vec_env import DummyVecEnv
 from app.fme.fme_env import FmeEnv
 from app.fme.fme_god_agent import FmeGodAgent
+from app.fme.fme_xgb_agent import FmeXgbAgent
 
 class FmeEngine(object):
     def __init__(self):
         self.name = 'FmeEngine'
         self.env = None
-        self.agent = FmeGodAgent()
+        #self.agent = FmeGodAgent()
+        self.agent = FmeXgbAgent()
         self.test_size = 1000
     
     def startup(self):
         self.env = self.build_raw_env()
+        self.agent.df = self.fme_env.df
+        self.agent.fme_env = self.fme_env
         obs = self.env.reset()
         for i in range(self.slice_point):
             action = self.agent.choose_action(i+self.fme_env.lookback_window_size, obs)

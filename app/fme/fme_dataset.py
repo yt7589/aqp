@@ -22,13 +22,14 @@ class FmeDataset(object):
         self.ds_y_file = './work/btc_y_1.csv'
         self.commission = 0.007
         self.time_span = 15
+        self.frame_size = 5
 
     def load_bitcoin_dataset(self):
         X = np.loadtxt(self.ds_x_file, delimiter=',')
         y = np.loadtxt(self.ds_y_file, delimiter=',')
         return X, y
 
-    def create_bitcoin_dataset(self, dataset_size=1000):
+    def create_bitcoin_dataset(self, dataset_size=1000, frame_size=5):
         ''' 根据比特币交易数据生成系列数据集，每个数据集缺省包括1000个时间点 '''
         print('bitcoin dataset generation...')
         dataset_size += self.time_span
@@ -52,7 +53,7 @@ class FmeDataset(object):
         ])
         X_raw = X_raw.T
         # 将之前5个时间点的行情数据作为一个训练样本
-        frame_size = 5
+        self.frame_size = frame_size
         X_train = np.array([])
         for idx in range(frame_size-1, X_raw.shape[0] - self.time_span):
             # 形成frame

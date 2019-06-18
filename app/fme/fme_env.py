@@ -19,6 +19,7 @@ class FmeEnv(gym.Env):
         self.buy_rate = 1.0 # 20%机会购买
         self.sell_rate = 1.0 # 15%机会卖
         self.df = df.dropna().reset_index()
+        print(self.df.head(10))
         self.lookback_window_size = lookback_window_size
         self.initial_balance = initial_balance
         self.commission = commission

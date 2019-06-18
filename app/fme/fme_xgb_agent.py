@@ -10,9 +10,11 @@ class FmeXgbAgent(object):
     def __init__(self):
         self.name = 'FmeXgbAgent'
         self.model_file = './work/btc_drl.xgb'
-        fme_dataset = FmeDataset()
-        self.X, self.y = fme_dataset.load_bitcoin_dataset()
+        self.fme_dataset = FmeDataset()
+        self.X, self.y = self.fme_dataset.load_bitcoin_dataset()
         self.model = self.train_baby_agent()
+        self.df = None
+        self.fme_env = None
         # predict example
         '''
         x1 = np.array([self.X[0]])
@@ -22,6 +24,41 @@ class FmeXgbAgent(object):
 
     def choose_action(self, idx, obs):
         '''  '''
+        commission = self.fme_env.commission
+        frame_size = self.fme_dataset.frame_size
+        recs = self.df.iloc[idx-frame_size+1:idx+1]
+        datas = np.array(recs)
+        ds = datas[:, 3:8]
+        print('ds.shape:{0}; frame_size={1}; idx={2}'.format(ds.shape, frame_size, idx))
+        ds = np.reshape(ds, (frame_size*5, ))
+        if self.fme_env.btc_held <= 0.00000001:
+            x = np.append(ds, [0.0])
+        else:
+            x = np.append(ds, [1.0])
+        print('x:{0:04f}, {1:04f}, {2:04f}, {3:04f}, {4:04f}, {5:04f}, '
+                '{6:04f}, {7:04f}, {8:04f}, {9:04f}, {10:04f}, {11:04f},'
+                '{12:04f}, {13:04f}, {14:04f}, {15:04f}, {16:04f}, {17:04f}, {18:04f},'
+                '{19:04f}, {20:04f}, {21:04f}, {22:04f}, {23:04f}, {24:04f}, {25:04f},'.format(
+                    x[0], x[1], x[2], x[3], x[4], 
+                    x[5], x[6], x[7], x[8], x[9],
+                    x[10], x[11], x[12], x[13], x[14],
+                    x[15], x[16], x[17], x[18], x[19],
+                    x[20], x[21], x[22], x[23], x[24], x[25]
+                ))
+        xg = xgb.DMatrix([x], label=x)
+        pred = self.model.predict(xg)
+        action_type = np.argmax(pred)
+        print('pred:{0}; [{1:02f}, {2:02f}, {3:02f}]=>{4}'.format(
+            pred.shape, pred[0][0], pred[0][1], pred[0][2],
+            np.argmax(pred[0]))
+        )
+        if 0 == action_type:
+            action = np.array([0, 10])
+        elif 1 == action_type:
+            action = np.array([1, 10])
+        else:
+            action = np.array([2, 10])
+        return action
 
     def train_baby_agent(self):
         ''' 在这里仅进行初步训练，得到一个基本可用的模型 '''
