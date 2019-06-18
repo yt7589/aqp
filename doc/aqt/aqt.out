@@ -110,5 +110,6 @@
 \BOOKMARK [3][-]{subsubsection.16.3.2}{多层感知器}{subsection.16.3}% 110
 \BOOKMARK [3][-]{subsubsection.16.3.3}{XGBoost策略}{subsection.16.3}% 111
 \BOOKMARK [3][-]{subsubsection.16.3.4}{生成数据集}{subsection.16.3}% 112
-\BOOKMARK [1][-]{section.17}{汇总}{}% 113
-\BOOKMARK [2][-]{subsubsection.17.0.1}{Transformer策略}{section.17}% 114
+\BOOKMARK [3][-]{subsubsection.16.3.5}{训练agent}{subsection.16.3}% 113
+\BOOKMARK [1][-]{section.17}{汇总}{}% 114
+\BOOKMARK [2][-]{subsubsection.17.0.1}{Transformer策略}{section.17}% 115

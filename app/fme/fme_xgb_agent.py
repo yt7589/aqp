@@ -41,7 +41,7 @@ class FmeXgbAgent(object):
             'seed': 27
         }
         watchlist = [ (xg_train,'train'), (xg_test, 'test') ]
-        num_round = 180
+        num_round = 2000
         if os.path.exists(self.model_file):
             print('load xgboost model...')
             bst = xgb.Booster({})
@@ -50,8 +50,14 @@ class FmeXgbAgent(object):
             print('build xgboost model...')
             bst = xgb.train(xgb_params, xg_train, num_round, watchlist )
             bst.save_model(self.model_file)
-        pred = bst.predict( xg_test )
-        print('pred:{0}; {1}=>{2}'.format(pred.shape, pred[0], np.argmax(pred[0])))
+        x1 = np.array([X_test[0]])
+        xg1 = xgb.DMatrix( x1, label=x1)
+        pred = bst.predict( xg1 )
+        print('x1:{0}'.format(x1))
+        print('pred:{0}; [{1:02f}, {2:02f}, {3:02f}]=>{4}'.format(
+            pred.shape, pred[0][0], pred[0][1], pred[0][2],
+            np.argmax(pred[0]))
+        )
         #print ('predicting, classification error=%f' % (sum( int(pred[i]) != y_test[i] for i in range(len(y_test))) / float(len(y_test)) ))
         plot_importance(bst)
         plt.show()

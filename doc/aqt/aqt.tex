@@ -5444,7 +5444,85 @@ class FmeDataset(object):
 \item 第66、67行：将满仓数据集和空仓数据集合并在一起；
 \item 第69、70行：将数据集保存到csv文件中。
 \end{itemize}
-v0.0.2
+
+\subsubsection{训练agent}
+我们在有了数据集之后，就可以使用定个数据集来训练XgboostAgeng了。由于在这里我们不是传统的监督学习场景，所以没有准备
+验证样本集、测试样本集，同时我们也没有采用early stopping和dropout等技术，只是想简单的训练一个模型，然后在深度
+强化学习的框架下逐步进行优化。\newline
+模型训练代码如下所示：
+\lstset{language=PYTHON, caption={训练XGBoost Agent}, label={c000081}}
+\begin{lstlisting}
+class FmeXgbAgent(object):
+    def __init__(self):
+        self.name = 'FmeXgbAgent'
+        self.model_file = './work/btc_drl.xgb'
+
+    def train_baby_agent(self):
+        ''' 在这里仅进行初步训练，得到一个基本可用的模型 '''
+        fme_dataset = FmeDataset()
+        X_train, y_train = fme_dataset.load_bitcoin_dataset()
+        X_validation, y_validation = X_train, y_train
+        X_test, y_test = X_train, y_train
+        rlw = np.ones((X_train.shape[0])) # 样本权重
+        xg_train = xgb.DMatrix(X_train, label=y_train, weight=rlw)
+        xg_test = xgb.DMatrix( X_test, label=y_test)
+        xgb_params = {
+            'learning_rate': 0.1,  # 步长
+            'n_estimators': 10,
+            'max_depth': 5,  # 树的最大深度
+            'objective': 'multi:softprob',
+            'num_class': 3,
+            # 决定最小叶子节点样本权重和，如果一个叶子节点的样本权重和小于
+            # min_child_weight则拆分过程结束。
+            'min_child_weight': 1, 
+            # 指定了节点分裂所需的最小损失函数下降值。
+            # 这个参数的值越大，算法越保守 
+            'gamma': 0,  
+            'silent': 0,  # 输出运行信息
+            # 每个决策树所用的子样本占总样本的比例（作用于样本）
+            'subsample': 0.8,  
+            # 建立树时对特征随机采样的比例（作用于特征）典型值：0.5-1
+            'colsample_bytree': 0.8,  
+            'nthread': 4,
+            'seed': 27
+        }
+        watchlist = [ (xg_train,'train'), (xg_test, 'test') ]
+        num_round = 2000
+        if os.path.exists(self.model_file):
+            print('load xgboost model...')
+            bst = xgb.Booster({})
+            bst.load_model(self.model_file)
+        else:
+            print('build xgboost model...')
+            bst = xgb.train(xgb_params, xg_train, num_round, watchlist )
+            bst.save_model(self.model_file)
+        x1 = np.array([X_test[0]])
+        xg1 = xgb.DMatrix( x1, label=x1)
+        pred = bst.predict( xg1 )
+        print('x1:{0}'.format(x1))
+        print('pred:{0}; [{1:02f}, {2:02f}, {3:02f}]=>{4}'.format(
+            pred.shape, pred[0][0], pred[0][1], pred[0][2],
+            np.argmax(pred[0]))
+        )
+        #print ('predicting, classification error=%f' % (sum( int(pred[i]) != y_test[i] for i in range(len(y_test))) / float(len(y_test)) ))
+        plot_importance(bst)
+        plt.show()
+\end{lstlisting}
+由于我们在XGBoost的demo中讲述过这部分代码，在这里就不具体讲述了。这里我们选取了10000个时间点，共训练2000个epoch，
+运行结果如下所示：
+\begin{figure}[H]
+    \caption{FmeXgbAgent运行结果：特征重要度}
+    \label{f000095}
+    \centering
+    \includegraphics[height=10cm]{images/f000095}
+\end{figure}
+运行后台数据：
+\begin{figure}[H]
+    \caption{FmeXgbAgent运行后台}
+    \label{f000096}
+    \centering
+    \includegraphics[height=4cm]{images/f000096}
+\end{figure}
 
 
 
