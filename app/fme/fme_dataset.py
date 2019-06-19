@@ -67,13 +67,15 @@ class FmeDataset(object):
         y_train = np.full((X_train.shape[0], ), 2.0)
         btc_held = 1
         for idx in range(y_train.shape[0]):
-            y_train[idx] = self._choose_action(btc_held, X_raw, idx, frame_size)
+            #y_train[idx] = self._choose_action(btc_held, X_raw, idx, frame_size)
+            y_train[idx] = self._choose_action(btc_held, X_train, idx, frame_size)
         # 复制样本集，求出在没有持有比特币时的最佳行动并作为标签
         X_train1 = np.array(X_train, copy=True)
         y_train1 = np.array(y_train, copy=True)
         btc_held = 0
         for idx in range(y_train1.shape[0]):
-            y_train1[idx] = self._choose_action(btc_held, X_raw, idx, frame_size)
+            #y_train1[idx] = self._choose_action(btc_held, X_raw, idx, frame_size)
+            y_train1[idx] = self._choose_action(btc_held, X_train1, idx, frame_size)
         # 在训练样本最后加入一列，分别代表比特币仓位情况：1满仓；0空仓
         c1 = np.ones(X_train.shape[0])
         X_train = np.c_[X_train, c1]
@@ -88,24 +90,22 @@ class FmeDataset(object):
         return X_train, y_train
 
     def _choose_action(self, btc_held, X, idx, frame_size):
-        '''  '''
-        datas = X[idx+frame_size:idx+frame_size+self.time_span] #self.df.iloc[idx:idx+time_span]
-        #datas = np.array(recs)
-        close_idx = 3
-        current_price = datas[0][close_idx]
+        current_price = X[idx, 23]
+        future_prices = X[idx+1:idx+self.time_span+1, (frame_size-1)*5+3:(frame_size-1)*5+4]
+        commission = self.commission + 0.001
+        print('current_price:{0}; future_prices:{1}'.format(current_price, future_prices))
         action = 2.0
-        # 判断未来涨跌
-        for i in range(1, self.time_span):
-            if datas[i][close_idx] > current_price*(1+self.commission):
-                # 空仓时买入；满仓时持有
-                if 0 == btc_held:
-                    action = 0.0 # 买入
+        for price in future_prices:
+            price_delta = (price - current_price) / current_price
+            if price_delta < -commission: # 跌幅过大
+                if 1 == btc_held:
+                    action = 1.0
                     break
                 else:
                     break
-            elif datas[i][close_idx] < current_price*(1-self.commission):
-                if 1 == btc_held:
-                    action = 1.0
+            elif price_delta > commission: # 涨幅过大
+                if 0 == btc_held:
+                    action = 0.0
                     break
                 else:
                     break
