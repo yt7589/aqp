@@ -18,6 +18,7 @@ class FmeDataset(object):
     def __init__(self):
         self.name = 'FmeDataset'
         self.quotation_file = './data/bitstamp.csv'
+        self.ds_max_min = './work/btc_max_min.csv'
         self.ds_x_file = './work/btc_x_1.csv'
         self.ds_y_file = './work/btc_y_1.csv'
         self.commission = 0.007
@@ -42,6 +43,17 @@ class FmeDataset(object):
         end_idx = start_idx + dataset_size
         # 读入归一化的比特币行情数据
         scaled_df = df.values[start_idx:end_idx].astype(np.float64)
+        max_min = self.get_quotation_max_min(scaled_df) # 求出最大、最小值
+        for item in max_min:
+            print(item)
+        np.savetxt(self.ds_max_min, max_min, delimiter = ',')
+
+
+        i_debug = 1
+        if 1 == i_debug:
+            return
+
+
         scaled_df = scaler.fit_transform(scaled_df)
         scaled_df = pd.DataFrame(scaled_df, columns=df.columns)
         X_raw = np.array([
@@ -194,6 +206,19 @@ class FmeDataset(object):
     def _int64_feature(value):
         """Returns an int64_list from a bool / enum / int / uint."""
         return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
+
+    def get_quotation_max_min(self, ds):
+        ''' 
+        求出行情段中开盘价、最高价、最低价、收盘价、交易量的最大值的
+        最小值，并以2*5数组形式返回
+        '''
+        raw = ds[:, 2:7]
+        print('raw:{0}'.format(raw[0:5, :]))
+        nd_max = np.amax(raw, axis=0)
+        print('nd_max:{0}; {1}'.format(nd_max.shape, nd_max))
+        nd_min = np.amin(raw, axis=0)
+        print('nd_min:{0}; {1}'.format(nd_min.shape, nd_min))
+        return np.append([nd_max], [nd_min], axis=0)
 
 
 
