@@ -29,3 +29,27 @@ class TFmeXgbAgent(unittest.TestCase):
         xg1 = xgb.DMatrix( x1, label=x1)
         pred = fme_xgb_agent.model.predict( xg1 )
         print('预测结果{0}：{1}'.format(idx, np.argmax(pred)))
+
+    def test_t001(self):
+        self.max_min_file = './work/btc_max_min.csv'
+        self.dataset_size = 10
+        cached_quotation = self.t001()
+        for i in range(20):
+            tick = np.array([i*10+1, i*10+2, 
+                    i*10+3, i*10+4, i*10+5])
+            cached_quotation = self.add_quotation_tick(cached_quotation, tick)
+        print(cached_quotation)
+
+    
+
+    def t001(self):
+        return np.loadtxt(self.max_min_file, delimiter=',')
+
+    def add_quotation_tick(self, cached_quotation, tick):
+        if cached_quotation.shape[0]<self.dataset_size:
+            cached_quotation = np.append(cached_quotation, [tick], axis=0)
+        else:
+            # 删除最前面条目
+            cached_quotation = np.delete(cached_quotation, 0, axis=0)
+            cached_quotation = np.append(cached_quotation, [tick], axis=0)
+        return cached_quotation

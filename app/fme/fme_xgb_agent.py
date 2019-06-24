@@ -10,17 +10,26 @@ class FmeXgbAgent(object):
     def __init__(self):
         self.name = 'FmeXgbAgent'
         self.model_file = './work/btc_drl.xgb'
+        self.max_min_file = './work/btc_max_min.csv'
         self.fme_dataset = FmeDataset()
         self.X, self.y = self.fme_dataset.load_bitcoin_dataset()
         self.model = self.train_baby_agent()
         self.df = None
         self.fme_env = None
+        self.max_min_file = './work/btc_max_min.csv'
+        self.dataset_size = 10
+        self.cached_quotation = np.loadtxt(self.max_min_file, delimiter=',')
         # predict example
         '''
         x1 = np.array([self.X[0]])
         xg1 = xgb.DMatrix( x1, label=x1)
         pred = self.model.predict( xg1 )
         '''
+
+    def normalize_ds(self, x, ds_max, ds_min):
+        for i in range(25):
+            x[i] = (x[i] - ds_min[i%5]) / (ds_max[i%5] - ds_min[i%5])
+
 
     def choose_action(self, idx, obs):
         '''  '''
@@ -31,10 +40,15 @@ class FmeXgbAgent(object):
         ds = datas[:, 3:8]
         print('ds.shape:{0}; frame_size={1}; idx={2}'.format(ds.shape, frame_size, idx))
         ds = np.reshape(ds, (frame_size*5, ))
+        date_quotation = ds[20:25]
         if self.fme_env.btc_held <= 0.00000001:
             x = np.append(ds, [0.0])
         else:
             x = np.append(ds, [1.0])
+        self.add_quotation_tick(self.cached_quotation, [x[20], x[21], x[22], x[23], x[24]])
+        ds_max = np.amax(self.cached_quotation, axis=0)
+        ds_min = np.amin(self.cached_quotation, axis=0)
+        self.normalize_ds(x, ds_max, ds_min)
         print('x:{0:04f}, {1:04f}, {2:04f}, {3:04f}, {4:04f}, {5:04f}, '
                 '{6:04f}, {7:04f}, {8:04f}, {9:04f}, {10:04f}, {11:04f},'
                 '{12:04f}, {13:04f}, {14:04f}, {15:04f}, {16:04f}, {17:04f}, {18:04f},'
@@ -111,3 +125,13 @@ class FmeXgbAgent(object):
         plot_importance(bst)
         plt.show()
         return bst
+        
+    def add_quotation_tick(self, cached_quotation, tick):
+        ''' 将当天的行情加入到历史行情列表中，用于计算各变量的最大最小值 '''
+        if cached_quotation.shape[0]<self.dataset_size:
+            cached_quotation = np.append(cached_quotation, [tick], axis=0)
+        else:
+            # 删除最前面条目
+            cached_quotation = np.delete(cached_quotation, 0, axis=0)
+            cached_quotation = np.append(cached_quotation, [tick], axis=0)
+        return cached_quotation
