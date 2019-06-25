@@ -74,14 +74,17 @@ class FmeXgbAgent(object):
             action = np.array([2, 10])
         return action
 
+    def train_drl_agent(self, obs):
+        pass
+
     def train_baby_agent(self):
         ''' 在这里仅进行初步训练，得到一个基本可用的模型 '''
         fme_dataset = FmeDataset()
-        X_train, y_train = fme_dataset.load_bitcoin_dataset()
-        X_validation, y_validation = X_train, y_train
-        X_test, y_test = X_train, y_train
-        rlw = np.ones((X_train.shape[0])) # 样本权重
-        xg_train = xgb.DMatrix(X_train, label=y_train, weight=rlw)
+        self.X_train, self.y_train = fme_dataset.load_bitcoin_dataset()
+        X_validation, y_validation = self.X_train, self.y_train
+        X_test, y_test = self.X_train, self.y_train
+        self.rlw = np.ones((self.X_train.shape[0])) # 样本权重
+        xg_train = xgb.DMatrix(self.X_train, label=self.y_train, weight=self.rlw)
         xg_test = xgb.DMatrix( X_test, label=y_test)
         xgb_params = {
             'learning_rate': 0.1,  # 步长
