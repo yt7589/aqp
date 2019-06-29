@@ -72,18 +72,26 @@ class FmeXgbAgent(object):
             action = np.array([1, 10])
         else:
             action = np.array([2, 10])
+        self.x = x
+        self.action = action
         return action
 
-    def train_drl_agent(self, obs):
-        pass
-
-    def train_baby_agent(self):
-        ''' 在这里仅进行初步训练，得到一个基本可用的模型 '''
-        fme_dataset = FmeDataset()
-        self.X_train, self.y_train = fme_dataset.load_bitcoin_dataset()
+    def train_drl_agent(self, weight):
+        # 将x添加到self.X_train中，将action添加到self.y_train中
+        self.X_train = np.delete(self.X_train, 0, axis=0)
+        self.X_train = np.append(self.X_train, [self.x], axis=0)
+        self.y_train = np.delete(self.y_train, 0, axis=0)
+        self.y_train = np.append(self.y_train, [self.action], axis=0)
+        # 计算执行action后的净值与之前的净值比值作为本样本的权重，
+        # 更新self.rlw的权重值
+        self.rlw = np.delete(self.rlw, 0, axis=0)
+        self.rlw = np.append(self.rlw, [weight], axis=0)
+        # 重新对训练模型k遍
+        self.train_model()
+    
+    def train_model(self, num_round = 1):
         X_validation, y_validation = self.X_train, self.y_train
         X_test, y_test = self.X_train, self.y_train
-        self.rlw = np.ones((self.X_train.shape[0])) # 样本权重
         xg_train = xgb.DMatrix(self.X_train, label=self.y_train, weight=self.rlw)
         xg_test = xgb.DMatrix( X_test, label=y_test)
         xgb_params = {
@@ -107,7 +115,6 @@ class FmeXgbAgent(object):
             'seed': 27
         }
         watchlist = [ (xg_train,'train'), (xg_test, 'test') ]
-        num_round = 2000
         if os.path.exists(self.model_file):
             print('load xgboost model...')
             bst = xgb.Booster({})
@@ -116,6 +123,17 @@ class FmeXgbAgent(object):
             print('build xgboost model...')
             bst = xgb.train(xgb_params, xg_train, num_round, watchlist )
             bst.save_model(self.model_file)
+        return bst
+
+    def train_baby_agent(self):
+        ''' 在这里仅进行初步训练，得到一个基本可用的模型 '''
+        fme_dataset = FmeDataset()
+        self.X_train, self.y_train = fme_dataset.load_bitcoin_dataset()
+        self.rlw = np.ones((self.X_train.shape[0])) # 样本权重
+        X_validation, y_validation = self.X_train, self.y_train
+        X_test, y_test = self.X_train, self.y_train
+        bst = self.train_model(num_round=2000)
+
         x1 = np.array([X_test[0]])
         xg1 = xgb.DMatrix( x1, label=x1)
         pred = bst.predict( xg1 )

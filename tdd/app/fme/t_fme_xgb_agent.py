@@ -53,3 +53,19 @@ class TFmeXgbAgent(unittest.TestCase):
             cached_quotation = np.delete(cached_quotation, 0, axis=0)
             cached_quotation = np.append(cached_quotation, [tick], axis=0)
         return cached_quotation
+
+    def test_t002(self):
+        self.X_train = np.array([
+            [1.1, 1.2, 1.3, 1.4, 1.5],
+            [2.1, 2.2, 2.3, 2.4, 2.5],
+            [3.1, 3.2, 3.3, 3.4, 3.5]
+        ])
+        x = [4.1, 4.2, 4.3, 4.4, 4.5]
+        self.X_train = np.append(self.X_train, [x], axis=0)
+        print(self.X_train)
+        self.y_train = np.array([1, 2, 3, 4, 5])
+        action = 6
+        self.y_train = np.append(self.y_train, [action], axis=0)
+        print(self.y_train)
+        self.X_train = np.delete(self.X_train, 0, axis=0)
+        print(self.X_train)

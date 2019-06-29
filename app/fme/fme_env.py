@@ -93,7 +93,7 @@ class FmeEnv(gym.Env):
             done = True
         self.obs = self._next_observation()
         reward = self.net_worth - prev_net_worth
-        return self.obs, reward, done, {}
+        return self.obs, reward, done, {'weight': 1.0 * self.net_worth / prev_net_worth}
 
     def _get_current_price(self):
         return self.df['Close'].values[self.frame_start + 
