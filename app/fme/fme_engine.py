@@ -26,6 +26,7 @@ class FmeEngine(object):
                 break
             self.env.render(mode="human", title="BTC")
             # 重新训练模型
+            self.agent.train_drl_agent(info[0]['weight'])
         print('回测结束 ^_^')
 
     def build_env(self):

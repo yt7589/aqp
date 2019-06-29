@@ -11,6 +11,7 @@ class FmeXgbAgent(object):
         self.name = 'FmeXgbAgent'
         self.model_file = './work/btc_drl.xgb'
         self.max_min_file = './work/btc_max_min.csv'
+        self.bst = None
         self.fme_dataset = FmeDataset()
         self.X, self.y = self.fme_dataset.load_bitcoin_dataset()
         self.model = self.train_baby_agent()
@@ -73,7 +74,7 @@ class FmeXgbAgent(object):
         else:
             action = np.array([2, 10])
         self.x = x
-        self.action = action
+        self.action = action_type
         return action
 
     def train_drl_agent(self, weight):
@@ -87,7 +88,7 @@ class FmeXgbAgent(object):
         self.rlw = np.delete(self.rlw, 0, axis=0)
         self.rlw = np.append(self.rlw, [weight], axis=0)
         # 重新对训练模型k遍
-        self.train_model()
+        self.train_model(num_round=1)
     
     def train_model(self, num_round = 1):
         X_validation, y_validation = self.X_train, self.y_train
@@ -115,15 +116,15 @@ class FmeXgbAgent(object):
             'seed': 27
         }
         watchlist = [ (xg_train,'train'), (xg_test, 'test') ]
-        if os.path.exists(self.model_file):
+        if self.bst is None and os.path.exists(self.model_file):
             print('load xgboost model...')
-            bst = xgb.Booster({})
-            bst.load_model(self.model_file)
+            self.bst = xgb.Booster({})
+            self.bst.load_model(self.model_file)
         else:
-            print('build xgboost model...')
-            bst = xgb.train(xgb_params, xg_train, num_round, watchlist )
-            bst.save_model(self.model_file)
-        return bst
+            print('########## build xgboost model...')
+            self.bst = xgb.train(xgb_params, xg_train, num_round, watchlist )
+            self.bst.save_model(self.model_file)
+        return self.bst
 
     def train_baby_agent(self):
         ''' 在这里仅进行初步训练，得到一个基本可用的模型 '''
