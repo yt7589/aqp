@@ -5,6 +5,8 @@ from sklearn import preprocessing
 
 
 class FmeDataset(object):
+    DATASET_SIZE = 1000
+    
     FME_LABELS = {
         'buy': 0,
         'sell': 1,

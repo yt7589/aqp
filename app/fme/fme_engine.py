@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from stable_baselines.common.vec_env import DummyVecEnv
 from app.fme.fme_env import FmeEnv
+from app.fme.fme_dataset import FmeDataset
 from app.fme.fme_god_agent import FmeGodAgent
 from app.fme.fme_xgb_agent import FmeXgbAgent
 
@@ -36,6 +37,7 @@ class FmeEngine(object):
     def build_raw_env(self):
         ''' 创建原始比特币行情文件生成的env，主要用于深度强化学习试验 '''
         self.df = pd.read_csv('./data/bitstamp.csv')
+        self.df = self.df.drop(range(FmeDataset.DATASET_SIZE))
         self.df = self.df.dropna().reset_index()
         self.df = self.df.sort_values('Timestamp')
         self.agent.df = self.df

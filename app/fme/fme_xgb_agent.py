@@ -120,10 +120,8 @@ class FmeXgbAgent(object):
             print('load xgboost model...')
             self.bst = xgb.Booster({})
             self.bst.load_model(self.model_file)
-        else:
-            print('########## build xgboost model...')
-            self.bst = xgb.train(xgb_params, xg_train, num_round, watchlist )
-            self.bst.save_model(self.model_file)
+        self.bst = xgb.train(xgb_params, xg_train, num_round, watchlist, xgb_model=self.bst)
+        self.bst.save_model(self.model_file)
         return self.bst
 
     def train_baby_agent(self):
@@ -143,9 +141,8 @@ class FmeXgbAgent(object):
             pred.shape, pred[0][0], pred[0][1], pred[0][2],
             np.argmax(pred[0]))
         )
-        #print ('predicting, classification error=%f' % (sum( int(pred[i]) != y_test[i] for i in range(len(y_test))) / float(len(y_test)) ))
-        plot_importance(bst)
-        plt.show()
+        #plot_importance(bst)
+        #plt.show()
         return bst
         
     def add_quotation_tick(self, cached_quotation, tick):
