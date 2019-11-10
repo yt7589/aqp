@@ -1,0 +1,445 @@
+\documentclass{article}
+\usepackage{xeCJK}
+% if you need to pass options to natbib, use, e.g.:
+%\PassOptionsToPackage{numbers, compress}{natbib}
+% before loading nips_2017
+%
+% to avoid loading the natbib package, add option nonatbib:
+% \usepackage[nonatbib]{nips_2017}
+
+\usepackage[final]{nips_2017}
+
+% to compile a camera-ready version, add the [final] option, e.g.:
+% \usepackage[final]{nips_2017}
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{bm}             % bold in math
+\usepackage{graphicx}       % images
+\usepackage{algorithm}      % algorithm
+\usepackage[noend]{algpseudocode} % algorithm
+\usepackage{caption}        % captionof
+\usepackage{array}          % thick column hline
+\usepackage{booktabs}       % table style
+\usepackage{pbox}           % table line break
+\usepackage{subcaption}     % multiple figures
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usepackage{amsmath}
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+\definecolor{codeBkg}{rgb}{0.85,0.85,0.85}
+
+\lstset{ 
+	backgroundcolor=\color{codeBkg},   % choose the background color; you must add \usepackage{color} or \usepackage{xcolor}; should come as last argument
+	basicstyle=\footnotesize,        % the size of the fonts that are used for the code
+	breakatwhitespace=false,         % sets if automatic breaks should only happen at whitespace
+	breaklines=true,                 % sets automatic line breaking
+	captionpos=b,                    % sets the caption-position to bottom
+	commentstyle=\color{mygreen},    % comment style
+	deletekeywords={...},            % if you want to delete keywords from the given language
+	escapeinside={\%*}{*)},          % if you want to add LaTeX within your code
+	extendedchars=true,              % lets you use non-ASCII characters; for 8-bits encodings only, does not work with UTF-8
+	frame=no,	                   % adds a frame around the code
+	keepspaces=true,                 % keeps spaces in text, useful for keeping indentation of code (possibly needs columns=flexible)
+	keywordstyle=\color{blue},       % keyword style
+	language=Octave,                 % the language of the code
+	morekeywords={*,...},            % if you want to add more keywords to the set
+	numbers=left,                    % where to put the line-numbers; possible values are (none, left, right)
+	numbersep=5pt,                   % how far the line-numbers are from the code
+	numberstyle=\tiny\color{mygray}, % the style that is used for the line-numbers
+	rulecolor=\color{black},         % if not set, the frame-color may be changed on line-breaks within not-black text (e.g. comments (green here))
+	showspaces=false,                % show spaces everywhere adding particular underscores; it overrides 'showstringspaces'
+	showstringspaces=false,          % underline spaces within strings only
+	showtabs=false,                  % show tabs within strings adding particular underscores
+	stepnumber=1,                    % the step between two line-numbers. If it's 1, each line will be numbered
+	stringstyle=\color{mymauve},     % string literal style
+	tabsize=4,	                   % sets default tabsize to 2 spaces
+	title=\lstname                   % show the filename of files included with \lstinputlisting; also try caption instead of title
+}
+
+\title{高级量化交易技术}
+
+\hypersetup{
+    colorlinks = true,
+}
+\makeatletter
+\def\BState{\State\hskip-\ALG@thistlm}
+\makeatother
+\floatname{algorithm}{Procedure}
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+\renewcommand{\algorithmicensure}{\textbf{Output:}}
+
+\newcolumntype{?}{!{\vrule width 3pt}}
+
+\author{
+  闫涛 \\
+  %% examples of more authors
+  %% \And
+  %% Nicholas Frosst \\
+  %% Affiliation \\
+  %% Address \\
+  %% \texttt{email} \\
+  %% \AND
+  %% Geoffrey E. Hinton \\
+  科技有限公司\\
+  北京 \\
+  \texttt{\{yt7589\}@qq.com} \\
+  %% Affiliation \\
+  %% Address \\
+  %% \texttt{email} \\
+  %% \And
+  %% Coauthor \\
+  %% Affiliation \\
+  %% Address \\
+  %% \texttt{email} \\
+  %% \And
+  %% Coauthor \\
+  %% Affiliation \\
+  %% Address \\
+  %% \texttt{email} \\
+}
+\date{March 2018}
+
+% \usepackage{natbib}
+% \usepackage{graphicx}
+
+\begin{document}
+
+
+
+
+
+
+\maketitle
+\begin{center}
+\Large \textbf{第1章} \quad \textbf{时间序列基本特性}
+\end{center}
+\begin{abstract}
+在本章中我们将讨论时间序列的基本特性，包括自相关性和平稳性。
+\end{abstract}
+\section{时间序列基本特性}
+时间序列的自相关性是指时间序列过去与未来存在某种关系，是我们时间序列预测的基础。主要用自协方差函数（Autocovariance Function, AF）、自相关系数函数（Autocorrelation Coefficent Function, ACF）和偏自相关系数函数（Partial Autocorrelation Coefficient Function, PACF）来描述。
+
+
+\subsection{启动过程}
+首先是FmeEngine的构造函数，如下所示：
+\lstset{language=PYTHON, caption={FmeEngine的构造函数}, label={c000086}}
+\begin{lstlisting}
+class FmeEngine(object):
+    def __init__(self):
+        self.name = 'FmeEngine'
+        self.env = None
+        self.agent = FmeXgbAgent()
+        self.test_size = 1000
+\end{lstlisting}
+这里面重要的代码是初始化一个FmeXgbAgent类的实例，该实例利用XGBoost算法来选择策略。下面来看FmeXgbAgent类的构造函数：
+\lstset{language=PYTHON, caption={FmeXgbAgent的构造函数}, label={c000087}}
+\begin{lstlisting}
+class FmeXgbAgent(object):
+    def __init__(self):
+        self.name = 'FmeXgbAgent'
+        self.model_file = './work/btc_drl.xgb'
+        self.max_min_file = './work/btc_max_min.csv'
+        self.bst = None
+        self.fme_dataset = FmeDataset()
+        self.X, self.y = self.fme_dataset.load_bitcoin_dataset()
+        self.model = self.train_baby_agent()
+        self.df = None
+        self.fme_env = None
+        self.max_min_file = './work/btc_max_min.csv'
+        self.dataset_size = 10
+        self.cached_quotation = np.loadtxt(self.max_min_file, delimiter=',')
+\end{lstlisting}
+这段代码中，最重要的是调用train\_baby\_agent方法，其用前1000个时间点，训练一个初始化的XGBoost模型，该模型可以选择适合的
+动作。这部分代码在之前已经讲述过，这里就不再复述了。\newline
+系统程序入口在FmeEngine.startup方法中，如下所示：
+\lstset{language=PYTHON, caption={程序入口点}, label={c000082}}
+\begin{lstlisting}
+def startup(self):
+    self.env = self.build_raw_env()
+    self.agent.df = self.fme_env.df
+    self.agent.fme_env = self.fme_env
+    obs = self.env.reset()
+    for i in range(self.slice_point):
+        action = self.agent.choose_action(i+self.fme_env.lookback_window_size, obs)
+        obs, rewards, done, info = self.env.step([action])
+        if done:
+            break
+        self.env.render(mode="human", title="BTC")
+        # 重新训练模型
+        self.agent.train_drl_agent(info[0]['weight'])
+    print('回测结束 ^_^')
+\end{lstlisting}
+\begin{itemize}
+\item 第2行：创建深度强化学习环境，以比特币分钟级数据为环境，划分训练样本集和测试样本集；
+\item 第3、4行：在Agent中保存数据集内容和环境，主要是便于进行训练；
+\item 第5行：重置环境；
+\item 第7$\sim$13行：每个时间点之前的几个时间点（5个）的数据组成一个样本，也是环境的一个状态，Agent将根据
+这个状态决定要采取的行动：买入、持有、卖出，在操作之后，根据新的净资产与原来净资产的大小，决定奖励信号，奖励信号
+为新净资产与老净资产的比值。以上为深度强化学习的一步，循环执行此过程，直到运行完所有时间点。在每个时间点，第11行
+以图形方式绘制交易情况和净资产变化情况，我们将奖励信号作为对应样本的权重，重新训练我们策略网络，这里我们用的是
+XGBoost。
+\end{itemize}
+深度强化学习中环境是一个非常重要的因素，我们来具体看一下环境的创建过程：
+\lstset{language=PYTHON, caption={深度强化学习环境创建}, label={c000083}}
+\begin{lstlisting}
+def build_raw_env(self):
+    ''' 创建原始比特币行情文件生成的env，主要用于深度强化学习试验 '''
+    self.df = pd.read_csv('./data/bitstamp.csv')
+    self.df = self.df.drop(range(FmeDataset.DATASET_SIZE))
+    self.df = self.df.dropna().reset_index()
+    self.df = self.df.sort_values('Timestamp')
+    self.agent.df = self.df
+    self.slice_point = int(len(self.df) - self.test_size)
+    self.train_df = self.df[:self.slice_point]
+    self.test_df = self.df[self.slice_point:]
+    self.fme_env = FmeEnv(self.train_df, serial=True)
+    self.agent.fme_env = self.fme_env
+    return DummyVecEnv(
+        [lambda: self.fme_env])
+\end{lstlisting}
+\begin{itemize}
+\item 第3行：从CSV文件中读出DataFrame格式的比特币分钟级数据；
+\item 第4行：忽略前1000个时间点，这些时间点将用于训练一个初始的Policy Gradient模型，加快学习进程；
+\item 第5、6行：去掉为空的行并重建索引，同时按时间进行排序；
+\item 第8行：slice\_point是训练样本集和测试样本集的分隔点；
+\item 第11行：是本段程序的重点，其初始化了一个深度强化学习环境；
+\end{itemize}
+下面我们来看深度强化学习环境的定义，如下所示：
+\lstset{language=PYTHON, caption={深度强化学习环境类构造函数}, label={c000084}}
+\begin{lstlisting}
+MAX_TRADING_SESSION = 100000
+
+class FmeEnv(gym.Env):
+    def __init__(self, df, lookback_window_size=50,
+        commission=0.00075, initial_balance=10000,
+        serial=False
+    ):
+        self.name = 'FmeEnv'
+        print('Finacial Market Env is starting up...')
+        random.seed(100)
+        self.buy_rate = 1.0 # 20%机会购买
+        self.sell_rate = 1.0 # 15%机会卖
+        self.df = df.dropna().reset_index()
+        print(self.df.head(10))
+        self.lookback_window_size = lookback_window_size
+        self.initial_balance = initial_balance
+        self.commission = commission
+        self.serial = serial  # Actions of the format Buy 1/10, Sell 3/10, Hold, etc.
+        # Observes the OHCLV values, net worth, and trade history
+        self.scaler = preprocessing.MinMaxScaler()
+        self.viewer = None
+        self.action_space = spaces.MultiDiscrete([3, 10])
+        self.observation_space = spaces.Box(low=0, high=1, shape=(10, 
+                    lookback_window_size + 1), dtype=np.float16)
+\end{lstlisting}
+由上面的代码可以看出，该类继承自gym.Env，除了构造函数外，还有reset和step是需要重载的方法，我们将在后面的流程中
+进行讲解。\newline
+如表\ref{c000082}系统会首先调用FmeEngine.reset方法，初始化环境，并返回环境的初始状态。下面我们来看FmeEnv类的reset
+方法：
+\lstset{language=PYTHON, caption={深度强化学习环境类重置方法}, label={c000085}}
+\begin{lstlisting}
+def reset(self):
+    self.balance = self.initial_balance
+    self.net_worth = self.initial_balance
+    self.btc_held = 0
+    self._reset_session()
+    self.account_history = np.repeat([
+        [self.balance],
+        [0],
+        [0],
+        [0],
+        [0]
+    ], self.lookback_window_size + 1, axis=1)
+    self.trades = []
+    return self._next_observation()
+
+def _reset_session(self):
+    self.current_step = 0
+    if self.serial:
+        self.steps_left = len(self.df) - self.lookback_window_size - 1
+        self.frame_start = self.lookback_window_size
+    else:
+        self.steps_left = np.random.randint(1, MAX_TRADING_SESSION)
+        self.frame_start = np.random.randint(
+            self.lookback_window_size, len(self.df) - self.steps_left)
+    self.active_df = self.df[self.frame_start - self.lookback_window_size:
+                                self.frame_start + self.steps_left]
+
+def _next_observation(self):
+    end = self.current_step + self.lookback_window_size + 1
+    scaled_df = self.active_df.values[:end].astype(np.float64)
+    scaled_df = self.scaler.fit_transform(scaled_df)
+    scaled_df = pd.DataFrame(scaled_df, columns=self.df.columns)
+    obs = np.array([
+        scaled_df['Open'].values[self.current_step:end],
+        scaled_df['High'].values[self.current_step:end],
+        scaled_df['Low'].values[self.current_step:end],
+        scaled_df['Close'].values[self.current_step:end],
+        scaled_df['Volume_(BTC)'].values[self.current_step:end],
+    ])
+    scaled_history = self.scaler.fit_transform(self.account_history.astype(np.float64))
+    obs = np.append(
+        obs, scaled_history[:, -(self.lookback_window_size + 1):], axis=0)
+    return obs
+\end{lstlisting}
+\begin{itemize}
+\item 第2$\sim$4行：重置资金余额、资产净值和比特币持有量；
+\item 第5行：重置session，这里的session与监督学习中的epoch实际上是同一概念，就是遍历所有时间点；
+\item   \begin{itemize}
+        \item 第17行：current\_step是当前时间点的指针，指向当前时间点，初始值指向第1个时间点；
+        \item 第18$\sim$20行：self.serial代表是否从第一个时间点开始，如果是否的话，则从一个随机的时间点
+        开始；这里是从第1个时间点开始的情况，lookback\_window\_size表示从当前时间点开始，向前取几个时间
+        点形成一个样本数据用于进行操作选择，因此开始时间点应该从第lookback\_window\_size开始，结束时间点
+        应该到最后一个时间点前的lookback\_window\_size个时间点结束；
+        \item 第21$\sim$24行：处理从随机的时间点开始的情况；
+        \item 第25、26行：定义active\_df是活跃的时间点记录；
+        \end{itemize}
+\item 第6$\sim$12行：设置账户的操作历史，在每个时间点，账户历史信息包括：余额、买入量、买入金额、卖出量、卖出金额；
+\item 第13行：清空交易历史；
+\item 第14行：向Agent返回当前状态；
+\item 
+    \begin{itemize}
+    \item 第29行：求出当前状态的结束时间点end；
+    \item 第30$\sim$32行：对数据进行归一化，设训练样本集最大值为$v_{max}$，最小值为$v_{min}$，公式为$\hat{v}=\frac{v - v_{min}}{v_{max}-v_{min}}$，归一化为$[0,1]$之间的数，这种方法的缺点是对异常点数据敏感，但是比特币交易数据很少会出现异常数据；
+    \item 第33$\sim$39行：将开盘价、最高价、最低价、收盘价、成交量所有时间点的数据分别作为一行（与数据集要求每一行代表一个样本相反）；
+    \item ??????? 作用以后补全；
+    \end{itemize}
+\end{itemize}
+在一个Session中，对于每个时间点，我们首先通过FmeXgbAgent来选择合适的操作，代码如下所示：
+\lstset{language=PYTHON, caption={FmeXgbAgent选择操作}, label={c000088}}
+\begin{lstlisting}
+def choose_action(self, idx, obs):
+    '''  '''
+    commission = self.fme_env.commission
+    frame_size = self.fme_dataset.frame_size
+    recs = self.df.iloc[idx-frame_size+1:idx+1]
+    datas = np.array(recs)
+    ds = datas[:, 3:8]
+    print('ds.shape:{0}; frame_size={1}; idx={2}'.format(ds.shape, frame_size, idx))
+    ds = np.reshape(ds, (frame_size*5, ))
+    date_quotation = ds[20:25]
+    if self.fme_env.btc_held <= 0.00000001:
+        x = np.append(ds, [0.0])
+    else:
+        x = np.append(ds, [1.0])
+    self.add_quotation_tick(self.cached_quotation, [x[20], x[21], x[22], x[23], x[24]])
+    ds_max = np.amax(self.cached_quotation, axis=0)
+    ds_min = np.amin(self.cached_quotation, axis=0)
+    self.normalize_ds(x, ds_max, ds_min)
+    print('x:{0:04f}, {1:04f}, {2:04f}, {3:04f}, {4:04f}, {5:04f}, '
+            '{6:04f}, {7:04f}, {8:04f}, {9:04f}, {10:04f}, {11:04f},'
+            '{12:04f}, {13:04f}, {14:04f}, {15:04f}, {16:04f}, {17:04f}, {18:04f},'
+            '{19:04f}, {20:04f}, {21:04f}, {22:04f}, {23:04f}, {24:04f}, {25:04f},'.format(
+                x[0], x[1], x[2], x[3], x[4], 
+                x[5], x[6], x[7], x[8], x[9],
+                x[10], x[11], x[12], x[13], x[14],
+                x[15], x[16], x[17], x[18], x[19],
+                x[20], x[21], x[22], x[23], x[24], x[25]
+            ))
+    xg = xgb.DMatrix([x], label=x)
+    pred = self.model.predict(xg)
+    action_type = np.argmax(pred)
+    print('pred:{0}; [{1:02f}, {2:02f}, {3:02f}]=>{4}'.format(
+        pred.shape, pred[0][0], pred[0][1], pred[0][2],
+        np.argmax(pred[0]))
+    )
+    if 0 == action_type:
+        action = np.array([0, 10])
+    elif 1 == action_type:
+        action = np.array([1, 10])
+    else:
+        action = np.array([2, 10])
+    self.x = x
+    self.action = action_type
+    return action
+\end{lstlisting}
+\begin{itemize}
+\item 第3行：指定手续费费率；
+\item 第4行：frame\_size表示从当前时间点向前看几个时间点，由这几个时间点的行情数据来选择最有利的操作；
+\item 第5行：idx参数代表当前时间点，一个样本的数据由当前时间点之前frame\_size个时间点的数据再加上当前时间点的数据，组成一个样本；
+\item 
+\end{itemize}
+
+
+
+产品经理常犯的错误：
+1 自我感觉良好
+2 知其然，不知其所以然
+3 老板的话是圣旨
+4 需求变更频繁
+5 不善于沟通
+6 不重视需求文档和原型
+7 为了做产品而做产品，没有反思和复盘
+8 项目管理混乱
+9 不做计划和总结
+
+
+
+
+\section{汇总}
+\lstset{language=BASH, caption={编号}, label={c900038}}
+\begin{lstlisting}
+t000004
+f000022
+c000089
+e000122
+\end{lstlisting}
+
+参考文献：\cite{r000001}
+
+
+\subsubsection{Transformer策略}
+生成训练样本集，采用MLP模型进行训练：\newline
+取出lookback\_window\_size+1条数据，运行choose\_action算法，求出其应该是[0,0,0]，分别对应于买入、卖出、持有，
+然后采用TensorFlow 2.0 MLP算法作为交易策略并进行训练，将choose\_action替换为MLP的predict方法，然后运行
+测试样本集，得到最终的回测结果。必须包括当前的余额值，所以其有两个记录，分别对应满仓和空仓时的操作。\newline
+将策略算法换为XGBoost。\newline
+将策略算法换为Transformer。\newline
+
+
+
+\section{XLNet模型}
+
+
+
+
+
+
+
+
+
+\lstset{language=BASH, caption={参考链接}, label={c900037}}
+\begin{lstlisting}
+\text{数学公式1}https://meta.wikimedia.org/wiki/Help:Displaying_a_formula
+https://arxiv.org/pdf/1805.09692.pdf
+https://www.biorxiv.org/content/biorxiv/early/2018/07/03/360537.full.pdf
+https://github.com/tensorflow/tensor2tensor/blob/master/tensor2tensor/models/evolved_transformer.py#L66
+
+\end{lstlisting}
+
+
+
+
+
+\newpage
+
+\bibliographystyle{plainnat}
+\bibliography{nips}
+
+\appendix
+
+
+\end{document}
+
+
+

@@ -1,0 +1,14 @@
+\begin{thebibliography}{1}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[tushare and 匠芯量化(2019)]{r000001}
+tushare and 匠芯量化.
+\newblock 机器量化分析（二）——模型评估与仓位管理.
+\newblock \emph{tushare.org}, 平台介绍, 2019.
+\newblock URL \url{https://tushare.pro/document/1?doc_id=68}.
+
+\end{thebibliography}
