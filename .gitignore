@@ -105,3 +105,10 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# latex
+doc/aqt/*.aux
+doc/aqt/*.bbl
+doc/aqt/*.blg
+doc/aqt/*.out
+doc/aqt/*.synctex.gz
