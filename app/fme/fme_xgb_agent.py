@@ -40,10 +40,6 @@ class FmeXgbAgent(object):
         datas = np.array(recs)
         ds = datas[:, 3:8]
 
-        i_debug = 1
-        if 1 == i_debug:
-            exit('test 001')
-
         print('ds.shape:{0}; frame_size={1}; idx={2}'.format(ds.shape, frame_size, idx))
         ds = np.reshape(ds, (frame_size*5, ))
         date_quotation = ds[20:25]

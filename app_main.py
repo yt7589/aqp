@@ -17,15 +17,16 @@ from app.nlp.nlp_main import NlpMain
 
 
 def call_stock_backtest():
-    stock_backtest = StockBacktest()
-    stock_backtest.startup()
+    #stock_backtest = StockBacktest()
+    #stock_backtest.startup()
+    pass
 
 def startup():
-    nlp_main = NlpMain()
-    nlp_main.startup()
+    #nlp_main = NlpMain()
+    #nlp_main.startup()
     
-    #drl_main = DrlMain()
-    #drl_main.startup()
+    drl_main = DrlMain()
+    drl_main.startup()
     
     #kftp_main = KftpMain()
     #kftp_main.startup()
