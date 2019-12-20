@@ -112,3 +112,8 @@ doc/aqt/*.bbl
 doc/aqt/*.blg
 doc/aqt/*.out
 doc/aqt/*.synctex.gz
+doc/pytorch/*.aux
+doc/pytorch/*.bbl
+doc/pytorch/*.blg
+doc/pytorch/*.out
+doc/pytorch/*.synctex.gz
