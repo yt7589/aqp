@@ -17,7 +17,6 @@ class FmeXgbAgent(object):
         self.model = self.train_baby_agent()
         self.df = None
         self.fme_env = None
-        self.max_min_file = './work/btc_max_min.csv'
         self.dataset_size = 10
         self.cached_quotation = np.loadtxt(self.max_min_file, delimiter=',')
         # predict example

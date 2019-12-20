@@ -6,6 +6,7 @@ from matplotlib.font_manager import FontProperties
 #import tensorflow as tf
 from app_registry import appRegistry as ar
 #import model.m_mysql as db
+'''
 import app.qh.qh_main as qh
 import app.pqb.pqb_main as pqb
 from app.tpsa.tpsa_main import TpsaMain
@@ -13,6 +14,8 @@ from app.hrmc.hrmc_main import HrmcMain
 from app.kftp.kftp_main import KftpMain
 from app.drl.drl_main import DrlMain
 from app.nlp.nlp_main import NlpMain
+'''
+from app.tf2.drl_base import DrlBase
 
 
 
@@ -22,11 +25,14 @@ def call_stock_backtest():
     pass
 
 def startup():
+    app = DrlBase()
+    app.startup()
+
     #nlp_main = NlpMain()
     #nlp_main.startup()
     
-    drl_main = DrlMain()
-    drl_main.startup()
+    #drl_main = DrlMain()
+    #drl_main.startup()
     
     #kftp_main = KftpMain()
     #kftp_main.startup()

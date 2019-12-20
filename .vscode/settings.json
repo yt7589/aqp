@@ -1,4 +1,6 @@
 {
     "python.venvPath": "/Users/arxanfintech/Documents/dev/dl",
-    "python.pythonPath": "D:\\software\\anaconda3\\envs\\py37\\python.exe"
+    "python.pythonPath": "D:\\software\\anaconda3\\envs\\py37\\python.exe",
+    "python.linting.pylintEnabled": true,
+    "python.linting.enabled": true
 }

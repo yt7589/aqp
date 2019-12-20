@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import tensorflow as tf
+#import tensorflow as tf
 from sklearn import preprocessing
 
 
@@ -11,10 +11,6 @@ class FmeDataset(object):
         'buy': 0,
         'sell': 1,
         'hold': 2
-    }
-    fme_features = {
-        'data': tf.io.FixedLenFeature([], tf.string),
-        'label': tf.io.FixedLenFeature([], tf.int64, default_value=2),
     }
 
     def __init__(self):

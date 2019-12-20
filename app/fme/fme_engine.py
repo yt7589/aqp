@@ -1,7 +1,7 @@
 # 控制环境运行，通知agent环境状态，执行agent所选择的操作
 import numpy as np
 import pandas as pd
-from stable_baselines.common.vec_env import DummyVecEnv
+#from stable_baselines.common.vec_env import DummyVecEnv
 from app.fme.fme_env import FmeEnv
 from app.fme.fme_dataset import FmeDataset
 from app.fme.fme_god_agent import FmeGodAgent
@@ -11,6 +11,7 @@ class FmeEngine(object):
     def __init__(self):
         self.name = 'FmeEngine'
         self.env = None
+        self.slice_point = 0 # 训练数据集到测试数据集的分割点
         #self.agent = FmeGodAgent()
         self.agent = FmeXgbAgent()
         self.test_size = 1000
@@ -22,12 +23,15 @@ class FmeEngine(object):
         obs = self.env.reset()
         for i in range(self.slice_point):
             action = self.agent.choose_action(i+self.fme_env.lookback_window_size, obs)
+            print('#### action:{0}; type:{1}; shape:{2}'.format(action, type(action), action.shape))
             obs, rewards, done, info = self.env.step([action])
             if done:
                 break
             self.env.render(mode="human", title="BTC")
             # 重新训练模型
-            self.agent.train_drl_agent(info[0]['weight'])
+            print('FmeEngine.startup: info:{0}; type:{1}'.format(info, type(info)))
+            #self.agent.train_drl_agent(info[0]['weight'])
+            self.agent.train_drl_agent(info['weight'])
         print('回测结束 ^_^')
 
     def build_env(self):
@@ -46,5 +50,6 @@ class FmeEngine(object):
         self.test_df = self.df[self.slice_point:]
         self.fme_env = FmeEnv(self.train_df, serial=True)
         self.agent.fme_env = self.fme_env
-        return DummyVecEnv(
-            [lambda: self.fme_env])
+        return self.fme_env
+        #return DummyVecEnv(
+        #    [lambda: self.fme_env])

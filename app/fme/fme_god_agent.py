@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from stable_baselines.common.vec_env import DummyVecEnv
+#from stable_baselines.common.vec_env import DummyVecEnv
 from app.fme.fme_env import FmeEnv
 
 class FmeGodAgent(object):

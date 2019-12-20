@@ -13,17 +13,24 @@ class FmeEnv(gym.Env):
         commission=0.00075, initial_balance=10000,
         serial=False
     ):
+        '''
+        df pandas数据集DataFrame
+        lookback_window_size 向前看几个时间点
+        commission 手续费费率
+        initial_balance 初始金额
+        serial 按时间顺序遍历行情数据还是随机遍历，缺省为随机
+        '''
         self.name = 'FmeEnv'
         print('Finacial Market Env is starting up...')
         random.seed(100)
-        self.buy_rate = 1.0 # 20%机会购买
-        self.sell_rate = 1.0 # 15%机会卖
+        self.buy_rate = 1.0 # 执行买入操作成功的概率，这里是100%成功
+        self.sell_rate = 1.0 # 执行卖出操作成功的概率，这里是100%成功
         self.df = df.dropna().reset_index()
-        print(self.df.head(10))
         self.lookback_window_size = lookback_window_size
         self.initial_balance = initial_balance
         self.commission = commission
-        self.serial = serial  # Actions of the format Buy 1/10, Sell 3/10, Hold, etc.
+        self.serial = serial  
+        # Actions of the format Buy 1/10, Sell 3/10, Hold, etc.
         # Observes the OHCLV values, net worth, and trade history
         self.scaler = preprocessing.MinMaxScaler()
         self.viewer = None
@@ -77,8 +84,11 @@ class FmeEnv(gym.Env):
 
 
     def step(self, action):
+        print('FmeEnv.step0: action:{0}; type:{1}'.format(action, type(action)))
         self.current_price = self._get_current_price() + 0.01
         prev_net_worth = self.net_worth
+        action = action[0]
+        print('FmeEnv.step action:{0}; type:{1}; shape:{2}'.format(action, type(action), action.shape))
         self._take_action(action, self.current_price)
         self.steps_left -= 1
         self.current_step += 1
@@ -101,6 +111,7 @@ class FmeEnv(gym.Env):
                     self.current_step]
 
     def _take_action(self, action, current_price):
+        print('FmeEnv.step action:{0}; type:{1}; shape:{2}'.format(action, type(action), action.shape))
         action_type = action[0]
         amount = action[1] / 10
         btc_bought = 0
