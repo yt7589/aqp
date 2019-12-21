@@ -7053,22 +7053,565 @@ class MlpMnistApp(object):
 \end{lstlisting}
 代码解读如下所示：
 \begin{itemize}
-\item 第行：；
-\item 第行：；
-\item 第行：；
-\item 第行：；
-\item 第行：；
-\item 第行：；
-\item 第行：；
+\item 第11行：定义载入MNIST数据集方法；
+\item 第12行：如果data/mnist目录不存在，则创建该目录；
+\item 第13行：定义下载URL；
+\item 第14行：定义下载文件；
+\item 第16$\sim$18行：如果不存在数据文件，则下载并保存该文件；
+\item 第19行：以二进制只读方式打开该文件；
+\item 第20行：从文件中读出numpy数组形式的训练数据集、验证数据集、测试数据集；
+\item 第21、22行：将训练样本集中的第一个样本转化为$28 \times 28$的黑白图像并显示；
+\item 第24$\sim$26行：将训练数据集、验证数据集、测试数据集由Numpy数组形式转换为PyTorch张量形式并返回；
 \end{itemize}
+运行结果为：
+\begin{figure}[H]
+	\caption{载入MNIST数据集运行结果}
+	\label{f000079}
+	\centering
+	\includegraphics[width=15cm]{images/f000079}
+\end{figure}
+样本图像为：
+\begin{figure}[H]
+	\caption{MNIST数据集样本图像}
+	\label{f000080}
+	\centering
+	\includegraphics[height=6cm]{images/f000080}
+\end{figure}
+\subsubsection{基本模型类}
+下面我们来定义模型类，如下所示（app/pytorch/book/chp004/e3/mlp\_mnist\_model.py）：
+\lstset{language=PYTHON, caption={定义最简模型类}, label={mlp-torch-nn-simplest-model}}
+\begin{lstlisting}
+#
+import math
+import torch
 
+class MlpMnistModel(object):
+    def __init__(self):
+        self.name = ''
+        self.weights = torch.randn(784, 10) / math.sqrt(784)
+        self.weights.requires_grad_()
+        self.bias = torch.zeros(10, requires_grad=True)
 
+    def log_softmax(self, x):
+        return x - x.exp().sum(-1).log().unsqueeze(-1)
 
+    def forward(self, xb):
+        return self.log_softmax(xb @ self.weights + self.bias)
+\end{lstlisting}
+代码解读如下所示：
+\begin{itemize}
+\item 第8行：采用均值为0方差为1的标准正态分布生成一个形状为$R^{784 \times 10}$的张量，将该张量除以$\sqrt{784}$（采用broadcast方式进行）；
+\item 第9行：设置该张量需要参与微分计算；
+\item 第10行：定义偏置值为形状为$R^{10}$的元素全为0的张量；
+\item 第12行：定义激活函数，这里的激活函数与我们前面讲述的不同，我们重点介绍一下：
+假设我们输入为：
+\begin{equation}
+\boldsymbol{x} = \begin{bmatrix}
+\begin{bmatrix}
+1.0 & 2.0 & 3.0 & 4.0 & 5.0
+\end{bmatrix} \\
+\begin{bmatrix}
+6.0 & 7.0 & 8.0 & 9.0 & 10.0
+\end{bmatrix}
+\end{bmatrix}
+\label{mlp-e3-input-x}
+\end{equation}
+先对其求指数运算得到：
+\begin{equation}
+\boldsymbol{x} = \begin{bmatrix}
+\begin{bmatrix}
+2.7183e+00 & 7.3891e+00 & 2.0086e+01 & 5.4598e+01 & 1.4841e+02
+\end{bmatrix} \\
+\begin{bmatrix}
+4.0343e+02 & 1.0966e+03 & 2.9810e+03 & 8.1031e+03 & 2.2026e+04
+\end{bmatrix}
+\end{bmatrix}
+\label{mlp-e3-input-x-exp}
+\end{equation}
+由sum(-1)的求和得到：
+\begin{equation}
+\boldsymbol{x} = \begin{bmatrix}
+233.2042 & 34610.5703
+\end{bmatrix}
+\label{mlp-e3-input-x-exp-sum}
+\end{equation}
+再对其取对数：
+\begin{equation}
+\boldsymbol{x} = \begin{bmatrix}
+5.4519 & 10.4519
+\end{bmatrix}
+\label{mlp-e3-input-x-exp-log}
+\end{equation}
+调用unsqueeze方法添加维数：
+先对其求指数运算得到：
+\begin{equation}
+\boldsymbol{x} = \begin{bmatrix}
+\begin{bmatrix}
+5.4519
+\end{bmatrix} \\
+\begin{bmatrix}
+10.4519
+\end{bmatrix}
+\end{bmatrix}
+\label{mlp-e3-input-x-exp-sum-log-unsqueeze}
+\end{equation}
+最后用$\boldsymbol{x}$减去此值：
+\begin{equation}
+\boldsymbol{x} = \begin{bmatrix}
+\begin{bmatrix}
+-4.4519 & -3.4519 & -2.4519 & -1.4519 & -0.4519
+\end{bmatrix} \\
+\begin{bmatrix}
+-4.4519 & -3.4519 & -2.4519 & -1.4519 & -0.4519
+\end{bmatrix}
+\end{bmatrix}
+\label{mlp-e3-input-x-rst}
+\end{equation}
+\item 第13行：返回所计算的值；
+\item 第15行：定义前向传播方法；
+\item 第16行：输出值$\hat{y}=\boldsymbol{w}^{T}\cdot \boldsymbol{x} + b$，式中@为矩阵相乘的意思；
+\end{itemize}
+下面我们来看怎样调用这个前向传播过程得到网络的输出：
+\lstset{language=PYTHON, caption={求网络输出值}, label={mlp-torch-nn-simplest-model-yhat}}
+\begin{lstlisting}
+    def run(self):
+        X_train, y_train, X_validate, y_validate, \
+                    X_test, y_test = self.load_dataset()
+        model = MlpMnistModel()
+        batch_size = 64
+        X0 = X_train[0:batch_size]
+        preds = model.forward(X0)
+        y_hat = torch.argmax(preds, dim=1)
+        print('preds[0]:{0}; shape:{1}'.format(preds[0], preds.shape))
+        print(y_hat)
+\end{lstlisting}
+代码解读如下所示：
+\begin{itemize}
+\item 第2、3行：；
+\item 第4行：生成模型类；
+\item 第5行：定义迷你批次的大小为64；
+\item 第6行：取出一个迷你批次；
+\item 第7行：调用前向传播过程求出网络输出；
+\item 第8行：求出输出中每行最大元素的下标作为分类结果；
+\end{itemize}
+运行结果如下所示：
+\begin{figure}[H]
+	\caption{求网络输出运行结果}
+	\label{f000081}
+	\centering
+	\includegraphics[width=15cm]{images/f000081}
+\end{figure}
+接下来我们来看代价函数定义，我们假设使用负对数似然函数作为代价函数，代码如下所示：
+\lstset{language=PYTHON, caption={负对数似然函数}, label={mlp-torch-nn-simplest-model-nll}}
+\begin{lstlisting}
+class MlpMnistModel(object):
+......
+    def nll(self, input, target):
+        return -input[range(target.shape[0]), target].mean()
+        
+    def accuracy(self, out, yb):
+        preds = torch.argmax(out, dim=1)
+        return (preds == yb).float().mean()
+# test code in mlp_mnist_app.py      
+    def run(self):
+        X_train, y_train, X_validate, y_validate, \
+                    X_test, y_test = self.load_dataset()
+        model = MlpMnistModel()
+        batch_size = 64
+        X0 = X_train[0:batch_size]
+        y0 = y_train[0:batch_size]
+        preds = model.forward(X0)
+        y_hat = torch.argmax(preds, dim=1)
+        loss = model.nll(preds, y0)
+        accuracy = model.accuracy(preds, y0)
+        print('loss={0}; accuracy={1}'.format(loss, accuracy))
+\end{lstlisting}
+代码解读如下所示：
+\begin{itemize}
+\item 第3行：定义负对数似然函数为代价函数，参数为网络的原始输出；
+\item 第4行：对网络输出进行切片操作，取所有行，每行保留的元素由target对应位置的值来决定，例如网络原始输出为：
+\begin{equation}
+\boldsymbol{x} = \begin{bmatrix}
+\begin{bmatrix}
+-0.2 & -0.3 & -0.4 
+\end{bmatrix} \\
+\begin{bmatrix}
+-1.1 & -1.2 & -1.3
+\end{bmatrix}
+\end{bmatrix}
+\label{mlp-e3-input-loss-output}
+\end{equation}
+正确值为：
+\begin{equation}
+\boldsymbol{x} = \begin{bmatrix}
+0 & 1
+\end{bmatrix}
+\label{mlp-e3-input-loss-target}
+\end{equation}
+则其结果为：
+\begin{equation}
+\boldsymbol{x} = \begin{bmatrix}
+-0.2 & -1.2
+\end{bmatrix}
+\label{mlp-e3-input-loss-result}
+\end{equation}
+\item 第6行：定义求精度方法，参数：out为网络的原始输出，yb为正确值，对于比例中迷你批次大小为64时：$out \in R^{64 \times 10}$其中最大的元素所在的下标代表类别，而$yb \in R^{64}$用0$\sim$9的数字代表类别；
+\item 第11行：对网络原始输出求出每行最大元素的下标组成新的数组；
+\item 第12行：逐元素与正确值数组进行比较，相等为1，不相等为0，然后求整个结果数组的平均值即为正确率；
+\item 第11$\sim$15行：载入MNIST数据集并载入第一个迷你批次样本；
+\item 第16行：取出第一个迷你批次的正确值；
+\item 第17行：调用前向传播过程求出网络的原始输出；
+\item 第19行：调用代价函数求出代价函数的值；
+\item 第20行：求出本迷你批次上的精度（正确率）；
+\item 第19行：打印代价函数的值和精度；
+\end{itemize}
+运行结果如下所示：
+\begin{figure}[H]
+	\caption{代价函数值}
+	\label{f000082}
+	\centering
+	\includegraphics[width=15cm]{images/f000082}
+\end{figure}
+由上图看出，我们的精度为10\%左右，这是合理的，因为我们用随机数初始化的网络参数，我们只能得到自然概率的精度。
+\subsubsection{使用DataLoader重构}
+在上面的代码中，我们手工将数据集载入并进行迷你批次划分，我们可以将这部分工作用PyTorch的DataLoader来完成这部分工作。我们首先来改造数据集载入函数：
+\lstset{language=PYTHON, caption={重构的MNIST数据集载入方法}, label={mlp-torch-nn-data-loader-reengineer}}
+\begin{lstlisting}
+    def load_dataset(self):
+        MlpMnistApp.PATH.mkdir(parents=True, exist_ok=True)
+        URL = "http://deeplearning.net/data/mnist/"
+        FILENAME = "mnist.pkl.gz"
 
+        if not (MlpMnistApp.PATH / FILENAME).exists():
+                content = requests.get(URL + FILENAME).content
+                (MlpMnistApp.PATH / FILENAME).open("wb")\
+                            .write(content)
+        with gzip.open((MlpMnistApp.PATH / FILENAME).as_posix(), "rb") as f:
+            ((X_train, y_train), (X_valid, y_valid), 
+                        (X_test, y_test)) = pickle.load(f, encoding="latin-1")
+        X_train, y_train, X_validate, y_validate, \
+                    X_test, y_test = map(
+            torch.tensor, (X_train, y_train, X_valid, y_valid, 
+            X_test, y_test)
+        )
+        batch_size = 64
+        train_ds = TensorDataset(X_train, y_train)
+        train_loader = DataLoader(train_ds, batch_size=batch_size, 
+                    shuffle=True)
+        validate_ds = TensorDataset(X_validate, y_validate)
+        validate_loader = DataLoader(validate_ds, batch_size=batch_size, 
+                    shuffle=True)
+        test_ds = TensorDataset(X_test, y_test)
+        test_loader = DataLoader(test_ds, batch_size=batch_size, 
+                    shuffle=False)
+        return train_loader, validate_loader, test_loader
+\end{lstlisting}
+程序前半部分没有变化，只是后面有些改变，我们这里只讲后面改变的代码：
+\begin{itemize}
+\item 第18行：定义迷你批次大小；
+\item 第19行：生成训练数据集的TensorDataset对象；
+\item 第20、21行：生成训练数据集的DataLoader对象，这里指定迷你批次大小，同时指定需要将样本顺充打乱重排；
+\item 第22行：生成验证数据集的TensorDataset对象；
+\item 第23、24行：生成证验数据集的DataLoader对象，这里指定迷你批次大小，同时指定需要将样本顺充打乱重排；
+\item 第25行：生成测试数据集的TensorDataset对象；
+\item 第26、27行：生成测试数据集的DataLoader对象，这里指定迷你批次大小，测试数据集不需要打乱重排；
+\item 第28行：返回训练数据集、验证数据集、测试数据集的DataLoader对象；
+\end{itemize}
+我们还需要修改训练函数中获取迷你批次的方法：
+\lstset{language=PYTHON, caption={重构训练方法}, label={mlp-torch-nn-data-loader-train-master}}
+\begin{lstlisting}
+    def run(self):
+        train_loader, validate_loader, test_loader \
+                    = self.load_dataset()
+        model = MlpMnistModel()
+        learning_rate = 0.1
+        epochs = 5
+        loss_func = model.nll
+        for epoch in range(epochs):
+            for xb,yb in train_loader:
+                pred = model.forward(xb)
+                loss = loss_func(pred, yb)
+                accuracy = model.accuracy(pred, yb)
+                loss.backward()
+                with torch.no_grad():
+                    model.weights -= model.weights.grad * learning_rate
+                    model.bias -= model.bias.grad * learning_rate
+                    model.weights.grad.zero_()
+                    model.bias.grad.zero_()
+                #print('    {0}: loss={1}; accuracy{2}'.format(i, loss, accuracy))
+            print('{0}: loss={1}; accuracy={2}'.format(epoch, loss, accuracy))
+\end{lstlisting}
+这里可以直接从train\_loader中获取迷你批次，而不用我们手动计算索引载入了。
+\subsubsection{抽象出代价函数}
+接下来我们把代价函数抽像出来，使我们可以在实际应用中切换不同的代价函数，我们定义如下代价函数（app/pytorch/book/chp004/e3/aqp\_loss.py）：
+\lstset{language=PYTHON, caption={重构训练方法}, label={mlp-torch-nn-loss-function}}
+\begin{lstlisting}
+import torch.nn.functional as F
 
+class AqpLoss(object):
+    @staticmethod
+    def nll(output, target):
+        y_hat = F.softmax(output, dim=1)
+        return -y_hat[range(target.shape[0]), target].mean()
+\end{lstlisting}
+我们在训练函数中可以指定这个函数为代价函数：
+\lstset{language=PYTHON, caption={重构训练方法}, label={mlp-torch-nn-data-loader-train-master-2}}
+\begin{lstlisting}
+    def run(self):
+        train_loader, validate_loader, test_loader \
+                    = self.load_dataset()
+        model = MlpMnistModel()
+        learning_rate = 0.1
+        epochs = 5
+        #criterion = F.cross_entropy
+        criterion = AqpLoss.nll
+        for epoch in range(epochs):
+            for xb,yb in train_loader:
+                pred = model.forward(xb)
+                loss = criterion(pred, yb)
+                accuracy = model.accuracy(pred, yb)
+                loss.backward()
+                with torch.no_grad():
+                    model.weights -= model.weights.grad * learning_rate
+                    model.bias -= model.bias.grad * learning_rate
+                    model.weights.grad.zero_()
+                    model.bias.grad.zero_()
+                #print('    {0}: loss={1}; accuracy{2}'.format(i, loss, accuracy))
+            print('{0}: loss={1}; accuracy={2}'.format(epoch, loss, accuracy))
+\end{lstlisting}
+在第7行和第8行，我们可以根据需要使用内置的交叉熵代价函数，也可以使用我们刚刚定义的负对数似然函数，二者的效果是相同的。\newline
+我们使用新的代价函数时，我们就不需要在模型类中使用激活函数了，如下所示：
+\lstset{language=PYTHON, caption={重构训练方法}, label={mlp-torch-nn-loss-function-model}}
+\begin{lstlisting}
+class MlpMnistModel(object):
+    def __init__(self):
+        self.name = ''
+        self.weights = torch.randn(784, 10) / math.sqrt(784)
+        self.weights.requires_grad_()
+        self.bias = torch.zeros(10, requires_grad=True)
+        
+    def forward(self, xb):
+        return xb @ self.weights + self.bias
+\end{lstlisting}
+\subsubsection{重构模型类}
+接下来我们将继承torch.nn.Module类，如下所示：
+\lstset{language=PYTHON, caption={重构训练方法}, label={mlp-torch-nn-loss-function-model-2}}
+\begin{lstlisting}
+class MlpMnistModel(torch.nn.Module):
+    def __init__(self):
+        super(MlpMnistModel, self).__init__()
+        self.name = ''
+        self.weights = torch.nn.Parameter(torch.randn(784, 10) / math.sqrt(784))
+        self.bias = torch.nn.Parameter(torch.zeros(10))
 
+    def forward(self, xb):
+        return xb @ self.weights + self.bias
 
+    def accuracy(self, out, yb):
+        preds = torch.argmax(out, dim=1)
+        return (preds == yb).float().mean()
+\end{lstlisting}
+代码解读如下所示：
+\begin{itemize}
+\item 第1行：继承自torch.nn.Module；
+\item 第3行：调用基类的构造函数；
+\item 第5行：将连接权值定义为基类的模型参数；
+\item 第6行：将偏置值定义为基类的模型参数；
+\end{itemize}
+在训练函数中，我们需要做如下修改：
+\lstset{language=PYTHON, caption={重构训练方法2}, label={mlp-torch-nn-loss-function-app-3}}
+\begin{lstlisting}
+    def run(self):
+        train_loader, validate_loader, test_loader \
+                    = self.load_dataset()
+        model = MlpMnistModel()
+        learning_rate = 0.1
+        epochs = 5
+        criterion = F.cross_entropy
+        #criterion = AqpLoss.nll
+        for epoch in range(epochs):
+            for xb,yb in train_loader:
+                pred = model.forward(xb)
+                loss = criterion(pred, yb)
+                accuracy = model.accuracy(pred, yb)
+                loss.backward()
+                with torch.no_grad():
+                    for p in model.parameters(): 
+                        p -= p.grad * learning_rate
+                    model.zero_grad()
+                #print('    {0}: loss={1}; accuracy{2}'.format(i, loss, accuracy))
+            print('{0}: loss={1}; accuracy={2}'.format(epoch, loss, accuracy))
+\end{lstlisting}
+主要改动在15$\sim$18行，我们就不再需要手工对每个参数进行更新和清空微分值了。
+\subsubsection{抽象出优化器}
+下面我们来设计优化器，优化器的任务就是根据网络参数的微分，以合适的学习率来更新参数，并在每遍训练时清零网络参数微分。优化器可以根据实际情况，调整学习率，从而实现更快的收敛速度。我们在这里只实现最简单的优化器，即固定的学习率。代码如下所示（app/pytorch/book/chp004/e3/aqp\_base\_optim.py）：
+\lstset{language=PYTHON, caption={最简优化器示例}, label={mlp-torch-aqp-base-optim}}
+\begin{lstlisting}
+#
+import torch
 
+class AqpBaseOptim(object):
+    def __init__(self, parameters, lr=0.1):
+        self.name = ''
+        self.params = []
+        for p in parameters:
+            self.params.append(p)
+        self.lr = lr
+
+    def step(self):
+        with torch.no_grad():
+            for p in self.params:
+                p -= p.grad * self.lr
+
+    def zero_grad(self):
+        for p in self.params:
+                p.grad.zero_()
+\end{lstlisting}
+代码解读如下所示：
+\begin{itemize}
+\item 第5行：定义构造函数，参数：parameters为网络参数，lr是初始学习率；
+\item 第7$\sim$9行：由于parameters是generator类型，只能遍历一次，因此我们需要对其进行缓存，保存在self.params；
+\item 第12$\sim$15行：根据网络参数微分更新参数；
+\item 第17$\sim$19行：清空网络参数的微分；
+\end{itemize}
+调用此优化器的代码如下所示：
+\lstset{language=PYTHON, caption={重构训练方法4}, label={mlp-torch-nn-loss-function-app-4}}
+\begin{lstlisting}
+    def run(self):
+        train_loader, validate_loader, test_loader \
+                    = self.load_dataset()
+        model = MlpMnistModel()
+        learning_rate = 0.1
+        epochs = 5
+        criterion = F.cross_entropy
+        #criterion = AqpLoss.nll
+        #optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+        optimizer = AqpBaseOptim(model.parameters(), lr=learning_rate)
+        for epoch in range(epochs):
+            for xb,yb in train_loader:
+                pred = model.forward(xb)
+                loss = criterion(pred, yb)
+                accuracy = model.accuracy(pred, yb)
+                loss.backward()
+                optimizer.step()
+                optimizer.zero_grad()
+                #print('    {0}: loss={1}; accuracy{2}'.format(i, loss, accuracy))
+            print('{0}: loss={1}; accuracy={2}'.format(epoch, loss, accuracy))
+\end{lstlisting}
+在上面的程序中，第9行是调用系统的优化器，第10行是调用我们自己的优化器，我们可以看到，这两个方法基本差不多。
+\subsubsection{验证数据集}
+在前面的程序中，我们实际上没使用验证样本集，在实际应用中，我们需要在每遍训练完训练数据集之后，需要在验证样本集上求出精度和代价函数值，然后就可以利用上节介绍的Early Stopping算法，避免过拟合（Overfitting）了。\newline
+我们首先需要改造验证数据集载入过程（app/pytorch/book/chp004/e3/mlp\_mnist\_app.py.load\_dataset）：
+\lstset{language=PYTHON, caption={重构验证样本集载入方法}, label={mlp-torch-mlp-mnist-app-1}}
+\begin{lstlisting}
+    def load_dataset(self):
+    	......
+        batch_size = 64
+        train_ds = TensorDataset(X_train, y_train)
+        train_loader = DataLoader(train_ds, batch_size=batch_size, 
+                    shuffle=True)
+        validate_ds = TensorDataset(X_validate, y_validate)
+        validate_loader = DataLoader(validate_ds, batch_size=batch_size*2, 
+                    shuffle=False)
+        test_ds = TensorDataset(X_test, y_test)
+        test_loader = DataLoader(test_ds, batch_size=batch_size*2, 
+                    shuffle=False)
+        ......
+\end{lstlisting}
+由于验证样本集不用参加训练过程，因此就不需要为其进行重新随机排序，同时验证样本集不需要求反向传播过程，因此其内存的需求量只为训练过程的一半，因此迷你批次大小应该为训练数据集迷你批次的2倍，对于测试数据集也需要按同样方法处理。\newline
+我们在每遍训练结束时，计算在验证样本集上的代价函数值，我们可以用这个值来做Early Stopping算法，同时在训练结束之后，我们可以计算在测试数据集上的精度，程序如下所示（app/pytorch/book/chp004/e3/mlp\_mnist\_app.py.run）：
+\lstset{language=PYTHON, caption={重构验证样本集载入方法}, label={mlp-torch-mlp-mnist-app-run-1}}
+\begin{lstlisting}
+    def run(self):
+        train_loader, validate_loader, test_loader \
+                    = self.load_dataset()
+        model = MlpMnistModel()
+        learning_rate = 0.1
+        epochs = 5
+        criterion = F.cross_entropy
+        #criterion = AqpLoss.nll
+        #optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+        optimizer = AqpBaseOptim(model.parameters(), lr=learning_rate)
+        for epoch in range(epochs):
+            for xb,yb in train_loader:
+                pred = model.forward(xb)
+                loss = criterion(pred, yb)
+                accuracy = model.accuracy(pred, yb)
+                loss.backward()
+                optimizer.step()
+                optimizer.zero_grad()
+            model.eval()
+            with torch.no_grad():
+                valid_loss = sum(criterion(model(xb), yb) for xb, yb in validate_loader)
+            print('{0}: loss={1}'.format(epoch, valid_loss / len(validate_loader)))
+        accuracy = self.evaluate(model, test_loader)
+        print('accuracy in test dataset: {0}'.format(accuracy))
+
+    def evaluate(self, model, test_loader):
+        accuracy = sum(model.accuracy(model(xb), yb) for xb, yb in test_loader)
+        return accuracy / len(test_loader)
+\end{lstlisting}
+程序大部分代码我们之前已经讲解过，我们这里只讲解变化的代码：
+\begin{itemize}
+\item 第20行：因为求验证数据集上的代价函数，不属于反向传播算法的一部分，因此需要将其排除在反向传播之外；
+\item 第21行：计算在整个验证数据集上代价函数之和，方法为：从验证数据集依次取出迷你批次，然后计算在此迷你批次的代价函数值，形成一个列表，最后用sum求和；
+\item 第22行：将验证数据集上代价函数之和除以验证样本集批次数之和可以得到代价函数的平均值，我们打印每遍训练结束后的代价函数平均值；
+\item 第23行：求测试数据集上的精度；
+	\begin{itemize}
+	\item 第26行：定义求精度方法；
+	\item 第27行：依次取出测试数据集上的迷你批次，求出迷你批次上的精度，并形成一个列表，最后用sum函数来求和；
+	\item 第28行：将精度之和除以测试数据集上的迷你批次数，求出精度的平均值并返回；
+	\end{itemize}
+\item 第24行：打印测试数据集上的精度
+\end{itemize}
+\subsubsection{GPU加速}
+到目前为止，我们已经讲解完成了一个完整的深度学习算法框架，大家如果想研究新的激活函数，新的优化器算法，新的网络结构，都可以找到替换PyTorch缺省实现方式，进行算法研究。这里我们讲解做深度学习研究中非常重要的一点，就是GPU加速。\newline
+加入GPU加速后训练方法如下所示：
+\lstset{language=PYTHON, caption={GPU加速方法}, label={mlp-torch-mlp-mnist-app-run-2}}
+\begin{lstlisting}
+    def run(self):
+        print('has GPU:{0}'.format(torch.cuda.is_available()))
+        dev = torch.device("cuda") if torch.cuda\
+                    .is_available() else torch\
+                    .device("cpu")
+        print('It will run on {0}!'.format(dev))
+        train_loader, validate_loader, test_loader \
+                    = self.load_dataset()
+        model = MlpMnistModel()
+        model = model.to(dev)
+        learning_rate = 0.1
+        epochs = 5
+        criterion = F.cross_entropy
+        #criterion = AqpLoss.nll
+        #optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+        optimizer = AqpBaseOptim(model.parameters(), lr=learning_rate)
+        for epoch in range(epochs):
+            for xb,yb in train_loader:
+                xb = xb.to(dev)
+                yb = yb.to(dev)
+                pred = model.forward(xb)
+                loss = criterion(pred, yb)
+                #accuracy = model.accuracy(pred, yb)
+                loss.backward()
+                optimizer.step()
+                optimizer.zero_grad()
+            model.eval()
+            with torch.no_grad():
+                valid_loss = sum(criterion(model(xb.to(dev)), yb.to(dev)) for xb, yb in validate_loader)
+            print('{0}: loss={1}'.format(epoch, valid_loss / len(validate_loader)))
+        accuracy = self.evaluate(dev, model, test_loader)
+        print('accuracy in test dataset: {0}'.format(accuracy))
+\end{lstlisting}
+对变化的代码解读如下所示：
+\begin{itemize}
+\item 第2行：我们检查计算机中是否有NVIDIA系列的CPU设备；
+\item 第3行：如果有GPU取GPU，若没有才用CPU；
+\item 第32行：将模型移到GPU中；
+\item 第41、42行：将迷你批次的样本集和标签集移到GPU中；
+\item 第29行：计算验证数据集上的代价函数值也需要将迷你批次的样本集和标签集移到GPU中；
+\end{itemize}
+\subsection{总结}
+在本章中，我们系统讲解了多层感知器模型的数学原理，并以Numpy为例，纯手工完成了一个特别初级的多层感知器模型，接着我们用标准的PyTorch方式，实现了多层感知器模型，大家可以看到PyTorch框架，极大的简化了我们的代码编写过程。但是如果我们要研究深度学习算法，PyTorch这种封装方式就不是很方便了。所以我们在第三部分，讲解了怎样将PyTorch缺省实现，替换为我们自己的实现的方法，并在最后讲解了怎样将代码转到GPU上运行的方法，可以极大加快训练学习过程。但是需要注意的是，将数据在CPU和GPU之间移动是非常耗费时间的，需要仔细权衡后再确实实现方法。
 
 
 
